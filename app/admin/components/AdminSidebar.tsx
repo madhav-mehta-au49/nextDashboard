@@ -1,5 +1,5 @@
 "use client"
-import { Box, Icon, Link, Text, VStack } from "@chakra-ui/react";
+import { Box, Text, VStack } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { useState } from "react";
 import { FiBox, FiChevronDown, FiChevronUp, FiFileText, FiHome, FiSettings, FiUsers } from "react-icons/fi";
