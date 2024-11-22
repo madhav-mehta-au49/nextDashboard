@@ -1,0 +1,1 @@
+// Example logout API route
