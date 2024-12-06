@@ -1,10 +1,10 @@
 "use client"
 
-import Header from "app/web/components/header"
-import { JobCardsGrid } from "app/web/components/jobcards/JobCardsGrid"
-import { HorizontalJobCard } from "app/web/components/jobcards/HorizontalJobCard"
-import SearchBar from "app/web/components/searchbar"
 import { Container } from "@chakra-ui/react"
+import Header from "app/web/components/header"
+import { HorizontalJobCard } from "app/web/components/jobcards/HorizontalJobCard"
+import { JobCardsGrid } from "app/web/components/jobcards/JobCardsGrid"
+import SearchBar from "app/web/components/searchbar"
 
 const dummyJobs = [
   {
