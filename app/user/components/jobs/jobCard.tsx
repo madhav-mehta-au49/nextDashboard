@@ -1,22 +1,16 @@
-// components/JobListingCard.tsx
+"use client";
 
 import {
-  Box,
-  Button,
-  Flex,
-  HStack,
-  IconButton,
-  Image,
-  Link,
-  Text,
-  VStack,
+  Box, Flex, HStack, 
+  Image, Link, Text, VStack
 } from "@chakra-ui/react";
-import React, { useState } from "react";
+import { useState } from "react";
 import { FiBookmark, FiShare2, FiThumbsUp } from "react-icons/fi";
+import { ButtonCustom } from "@/components/ui/button-custom";
 import { toaster } from "@/components/ui/toaster";
 import { Tooltip } from "@/components/ui/tooltip";
 
-interface JobListingCardProps {
+interface Job {
   title: string;
   company: string;
   location: string;
@@ -25,49 +19,40 @@ interface JobListingCardProps {
   description: string;
 }
 
-const JobListingCard: React.FC<JobListingCardProps> = ({
-  title,
-  company,
-  location,
-  logoUrl,
-  jobUrl,
-  description,
-}) => {
-  const [upvotes, setUpvotes] = useState(0);
+const JobListingCard = ({ title, company, location, logoUrl, jobUrl, description }: Job) => {
+  const [likes, setLikes] = useState(0);
   const [bookmarked, setBookmarked] = useState(false);
 
-  const handleUpvote = () => {
-    setUpvotes((prev) => prev + 1);
-    toaster.toast({
-      title: "Upvoted!",
-      description: "You have upvoted this job listing.",
+  const handleLike = () => {
+    setLikes(prev => prev + 1);
+    toaster.create({
+      title: "Liked!",
+      description: "You have liked this job listing.",
       type: "success",
       duration: 2000,
-      meta: { closable: true },
+      meta: { closable: true }
     });
   };
 
   const handleBookmark = () => {
-    setBookmarked((prev) => !prev);
-    toaster.toast({
+    setBookmarked(prev => !prev);
+    toaster.create({
       title: bookmarked ? "Bookmark Removed" : "Bookmarked!",
-      description: bookmarked
-        ? "You have removed this job from bookmarks."
-        : "You have added this job to bookmarks.",
+      description: bookmarked ? "Job removed from bookmarks." : "Job added to bookmarks.",
       type: bookmarked ? "info" : "success",
       duration: 2000,
-      meta: { closable: true },
+      meta: { closable: true }
     });
   };
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(jobUrl);
-    toaster.toast({
+    toaster.create({
       title: "Link Copied!",
-      description: "The job link has been copied to your clipboard.",
+      description: "Job link copied to clipboard.",
       type: "success",
       duration: 2000,
-      meta: { closable: true },
+      meta: { closable: true }
     });
   };
 
@@ -76,12 +61,20 @@ const JobListingCard: React.FC<JobListingCardProps> = ({
       borderWidth="1px"
       borderRadius="lg"
       p={6}
-      boxShadow="lg"
-      _hover={{ boxShadow: "xl" }}
+      width="100%"
+      height="100%"
+      minHeight="280px"
+      _hover={{
+        transform: "translateY(-4px)",
+        shadow: "2xl",
+        boxShadow: "0 25px 50px -12px #14B8A6"
+      }}
+      transition="all 0.2s"
       position="relative"
       bg="white"
     >
-      <Link href={jobUrl} isExternal position="absolute" inset={0} zIndex={0} aria-label="Job link" />
+      <Link href={jobUrl} position="absolute" inset={0} zIndex={0} aria-label="Job link" />
+      
       <Flex alignItems="center" mb={4}>
         <Image
           src={logoUrl}
@@ -90,56 +83,56 @@ const JobListingCard: React.FC<JobListingCardProps> = ({
           borderRadius="full"
           objectFit="cover"
           mr={4}
+         
         />
         <VStack align="start" gap={1}>
-          <Text fontSize="lg" fontWeight="bold">
-            {title}
-          </Text>
-          <Text fontSize="sm" color="gray.500">
-            {company}
-          </Text>
+          <Text fontSize="xl" fontWeight="bold" lineHeight="1.4" lineClamp={2}>{title}</Text>
+          <Text fontSize="sm" color="gray.500">{company}</Text>
         </VStack>
       </Flex>
-      <Text fontSize="sm" color="gray.700" noOfLines={3} mb={4}>
+
+      <Text fontSize="md" color="gray.600" lineHeight="1.6" lineClamp={3} mb={4}>
         {description}
       </Text>
+
       <HStack justify="space-between" mb={4}>
-        <Text fontSize="xs" color="gray.500">
-          {location}
-        </Text>
-        <Button as={Link} href={jobUrl} isExternal size="sm" colorScheme="blue">
-          Apply Now
-        </Button>
+        <Text fontSize="xs" color="gray.500">{location}</Text>
+        <ButtonCustom
+          intent="solid"
+          size="sm"
+          text="Apply Now"
+        />
       </HStack>
-      <HStack gap={4}>
-        <Tooltip content="Upvote">
-          <IconButton
-            icon={<FiThumbsUp />}
-            aria-label="Upvote"
-            onClick={handleUpvote}
-            colorScheme="green"
-            variant="outline"
+
+      <HStack gap={2}>
+        <Tooltip content="Like">
+          <ButtonCustom
+            intent="outline"
+            size="sm"
+            text={likes.toString()}
+            icon={<FiThumbsUp className="size-3" />}
+            onClick={handleLike}
+            className="size-8 hover:scale-110 hover:bg-gray-100 hover:opacity-90 transition-all duration-200"
           />
         </Tooltip>
-        <Text fontSize="sm" color="gray.700">
-          {upvotes} Upvotes
-        </Text>
         <Tooltip content="Bookmark">
-          <IconButton
-            icon={<FiBookmark />}
-            aria-label="Bookmark"
+          <ButtonCustom
+            intent={bookmarked ? "solid" : "outline"}
+            size="sm"
+            text=""
+            icon={<FiBookmark className="size-3" />}
             onClick={handleBookmark}
-            colorScheme="yellow"
-            variant={bookmarked ? "solid" : "outline"}
+            className="size-8 hover:scale-110 hover:bg-gray-100 hover:opacity-90 transition-all duration-200"
           />
         </Tooltip>
         <Tooltip content="Copy Link">
-          <IconButton
-            icon={<FiShare2 />}
-            aria-label="Copy Link"
+          <ButtonCustom
+            intent="outline"
+            size="sm"
+            text=""
+            icon={<FiShare2 className="size-3" />}
             onClick={handleCopyLink}
-            colorScheme="blue"
-            variant="outline"
+            className="size-8 hover:scale-110 hover:bg-gray-100 hover:opacity-90 transition-all duration-200"
           />
         </Tooltip>
       </HStack>

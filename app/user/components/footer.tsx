@@ -1,5 +1,5 @@
-import { EmailIcon, ExternalLinkIcon, InfoIcon, LockIcon, PhoneIcon, WarningIcon } from '@chakra-ui/icons';
-import { Box, Container, Flex, Grid, Heading, HStack, Icon, Link, Separator, Text, VStack } from "@chakra-ui/react";
+import { Box, Container, Flex, Grid, Heading, HStack, Link, Separator, Text, VStack } from "@chakra-ui/react";
+import { FiAlertTriangle, FiExternalLink, FiInfo, FiLock, FiMail, FiPhone } from 'react-icons/fi';
 import { useColorModeValue } from "@/components/ui/color-mode";
 import type { FooterSection } from '../types/footer';
 
@@ -7,37 +7,37 @@ const footerSections: FooterSection[] = [
     {
         title: "About Company",
         links: [
-            { label: "About Us", href: "/about", icon: <InfoIcon /> },
-            { label: "Careers", href: "/careers", icon: <ExternalLinkIcon /> },
-            { label: "Employer Home", href: "/employer", icon: <ExternalLinkIcon /> },
-            { label: "Sitemap", href: "/sitemap", icon: <ExternalLinkIcon /> },
+            { label: "About Us", href: "/about", icon: <FiInfo /> },
+            { label: "Careers", href: "/careers", icon: <FiExternalLink /> },
+            { label: "Employer Home", href: "/employer", icon: <FiExternalLink /> },
+            { label: "Sitemap", href: "/sitemap", icon: <FiExternalLink /> },
         ],
     },
     {
         title: "For Job Seekers",
         links: [
-            { label: "Browse Jobs", href: "/jobs", icon: <ExternalLinkIcon /> },
-            { label: "Companies", href: "/companies", icon: <ExternalLinkIcon /> },
-            { label: "Saved Jobs", href: "/saved-jobs", icon: <ExternalLinkIcon /> },
-            { label: "Job Alerts", href: "/job-alerts", icon: <ExternalLinkIcon /> },
+            { label: "Browse Jobs", href: "/jobs", icon: <FiExternalLink /> },
+            { label: "Companies", href: "/companies", icon: <FiExternalLink /> },
+            { label: "Saved Jobs", href: "/saved-jobs", icon: <FiExternalLink /> },
+            { label: "Job Alerts", href: "/job-alerts", icon: <FiExternalLink /> },
         ],
     },
     {
         title: "Help & Support",
         links: [
-            { label: "Help Center", href: "/help", icon: <PhoneIcon /> },
-            { label: "Grievances", href: "/grievances", icon: <WarningIcon /> },
-            { label: "Report Issue", href: "/report", icon: <WarningIcon /> },
-            { label: "Trust & Safety", href: "/trust-safety", icon: <LockIcon /> },
+            { label: "Help Center", href: "/help", icon: <FiPhone /> },
+            { label: "Grievances", href: "/grievances", icon: <FiAlertTriangle /> },
+            { label: "Report Issue", href: "/report", icon: <FiAlertTriangle /> },
+            { label: "Trust & Safety", href: "/trust-safety", icon: <FiLock /> },
         ],
     },
     {
         title: "Legal",
         links: [
-            { label: "Privacy Policy", href: "/privacy", icon: <LockIcon /> },
-            { label: "Terms & Conditions", href: "/terms", icon: <LockIcon /> },
-            { label: "Fraud Alert", href: "/fraud-alert", icon: <WarningIcon /> },
-            { label: "Contact Us", href: "/contact", icon: <EmailIcon /> },
+            { label: "Privacy Policy", href: "/privacy", icon: <FiLock /> },
+            { label: "Terms & Conditions", href: "/terms", icon: <FiLock /> },
+            { label: "Fraud Alert", href: "/fraud-alert", icon: <FiAlertTriangle /> },
+            { label: "Contact Us", href: "/contact", icon: <FiMail /> },
         ],
     },
 ];
