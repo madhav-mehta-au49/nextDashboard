@@ -70,14 +70,6 @@ const CompanyDetailsPage = () => {
   const { company, isLoggedIn } = sampleData;
 
   return (
-
-
-
-
-
-
-
-
     <>
       <Header />
       <SubHeader />
@@ -86,44 +78,34 @@ const CompanyDetailsPage = () => {
           bannerImageUrl={company.bannerImageUrl}
           logoUrl={company.logoUrl}
           name={company.name}
-
-
-
-
         />
-
-
-
-
         <Box mt="40px" px={6}>
           <CompanyInfo
             name={company.name}
             industry={company.industry}
             size={company.size}
             location={company.location}
-
-
-
             website={company.website}
           />
-
-
           <CompanyDescription description={company.description} />
           <Flex mt={6} gap={6} flexDirection={{ base: 'column', lg: 'row' }}>
             <JobListings jobs={company.jobs} companyName={company.name} />
-            <CompanyDetailsCard
-              industry={company.industry}
-              size={company.size}
-              location={company.location}
-              contactEmail={company.contactEmail}
-              contactPhone={company.contactPhone}
-              isLoggedIn={isLoggedIn}
-            />
+            <Box flex="1">
+              <CompanyDetailsCard
+                industry={company.industry}
+                size={company.size}
+                location={company.location}
+                contactEmail={company.contactEmail}
+                contactPhone={company.contactPhone}
+                isLoggedIn={isLoggedIn}
+              />
+              <Box mt={6}>
+                <Announcements announcements={company.announcements} />
+              </Box>
+            </Box>
           </Flex>
-          <Announcements announcements={company.announcements} />
         </Box>
       </Box>
-
       <Footer />
     </>
   );

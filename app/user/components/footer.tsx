@@ -1,6 +1,5 @@
 import { Box, Container, Flex, Grid, Heading, HStack, Link, Separator, Text, VStack } from "@chakra-ui/react";
 import { FiAlertTriangle, FiExternalLink, FiInfo, FiLock, FiMail, FiPhone } from 'react-icons/fi';
-import { useColorModeValue } from "@/components/ui/color-mode";
 import type { FooterSection } from '../types/footer';
 
 const footerSections: FooterSection[] = [
@@ -43,15 +42,8 @@ const footerSections: FooterSection[] = [
 ];
 
 const Footer: React.FC = () => {
-    const bgColor = useColorModeValue('gray.50', 'gray.900');
-    const textColor = useColorModeValue('gray.600', 'gray.300');
-    const borderColor = useColorModeValue('gray.200', 'gray.700');
-    const headingColor = useColorModeValue('gray.700', 'white');
-    const linkHoverColor = useColorModeValue('blue.500', 'blue.300');
-
-
     return (
-        <Box as="footer" bg={bgColor} color={textColor}>
+        <Box as="footer" bg="gray.50" color="gray.600">
             <Container maxW="1200px" py={10}>
                 <Grid
                     templateColumns={{ base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" }}
@@ -59,7 +51,7 @@ const Footer: React.FC = () => {
                 >
                     {footerSections.map((section) => (
                         <VStack key={section.title} align="flex-start" gap={4}>
-                            <Heading size="sm" color={headingColor}>
+                            <Heading size="sm" color="gray.700">
                                 {section.title}
                             </Heading>
                             <VStack align="flex-start" gap={2}>
@@ -70,7 +62,7 @@ const Footer: React.FC = () => {
                                         display="flex"
                                         alignItems="center"
                                         gap={2}
-                                        _hover={{ color: linkHoverColor }}
+                                        _hover={{ color: "blue.500" }}
                                     >
                                         {link.icon}
                                         {link.label}
@@ -81,7 +73,7 @@ const Footer: React.FC = () => {
                     ))}
                 </Grid>
 
-                <Separator my={8} borderColor={borderColor} />
+                <Separator my={8} borderColor="gray.200" />
 
                 <Flex
                     direction={{ base: "column", md: "row" }}

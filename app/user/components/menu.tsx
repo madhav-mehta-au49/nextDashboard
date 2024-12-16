@@ -63,7 +63,7 @@ const FiltersSidebar: React.FC<FiltersSidebarProps> = ({
       <Text fontSize="xl" fontWeight="bold" mb={4} color="teal.500">
         {title}
       </Text>
-      <VStack align="stretch" spacing={4}>
+      <VStack align="stretch" gap={4}>
         {sections.map(renderFilterSection)}
       </VStack>
     </Box>
