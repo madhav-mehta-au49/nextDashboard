@@ -44,7 +44,7 @@ export const SingleJobCards = ({ title, description, jobId }: { title: string; d
         borderTop="1px"
         borderColor="gray.100"
       >
-        <Link href={`/jobs/${jobId}`}>
+        <Link href={`user/jobs/${jobId}`}>
           <ButtonCustom
             intent="outline"
             size="sm"
@@ -52,7 +52,7 @@ export const SingleJobCards = ({ title, description, jobId }: { title: string; d
             icon={<FiEye className="size-3.5" />}
           />
         </Link>
-        <Link href={`/jobs/${jobId}/apply`}>
+        <Link href={`user/jobs/${jobId}/apply`}>
           <ButtonCustom
             intent="solid"
             size="sm"
