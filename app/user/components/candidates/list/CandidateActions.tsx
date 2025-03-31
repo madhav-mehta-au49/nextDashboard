@@ -1,9 +1,10 @@
+import React from 'react';
+import { VStack, IconButton } from '@chakra-ui/react';
 import { FiStar, FiMessageSquare, FiShare2, FiBookmark } from 'react-icons/fi';
 import { useColorModeValue } from '@/components/ui/color-mode';
 import { Tooltip } from '@/components/ui/tooltip';
-import { VStack, IconButton } from '@chakra-ui/react';
 
-export const CompanyActions: React.FC = () => {
+export const CandidateActions: React.FC = () => {
   const iconColor = useColorModeValue('gray.600', 'gray.400');
   const hoverBg = useColorModeValue('gray.100', 'gray.700');
 
@@ -19,6 +20,7 @@ export const CompanyActions: React.FC = () => {
           <FiStar />
         </IconButton>
       </Tooltip>
+      
       <Tooltip label="Message" placement="left">
         <IconButton
           aria-label="Message"
@@ -29,6 +31,7 @@ export const CompanyActions: React.FC = () => {
           <FiMessageSquare />
         </IconButton>
       </Tooltip>
+      
       <Tooltip label="Share profile" placement="left">
         <IconButton
           aria-label="Share profile"
@@ -39,6 +42,7 @@ export const CompanyActions: React.FC = () => {
           <FiShare2 />
         </IconButton>
       </Tooltip>
+      
       <Tooltip label="Save profile" placement="left">
         <IconButton
           aria-label="Save profile"

@@ -1,12 +1,15 @@
-import { Box, Container, Heading, HStack, Spacer, VStack } from "@chakra-ui/react"
-import { CompanyActions } from "@/app/user/components/companies/list/CompanyActions"
-import { CompanyFilterMenu } from "@/app/user/components/companies/list/CompanyFilterMenu"
-import { CompanySort } from "@/app/user/components/companies/list/CompanySort"
+"use client"
+
+import { Box, Container, Heading, HStack, Spacer, VStack } from "@chakra-ui/react";
+import { CompanyActions } from "@/app/user/components/companies/list/CompanyActions";
+import { CompanyFilterMenu } from "@/app/user/components/companies/list/CompanyFilterMenu";
+import { CompanySort } from "@/app/user/components/companies/list/CompanySort";
 import { RightSidebarCard } from '@/app/user/components/companies/list/SideCards'; 
-import Footer from '@/app/user/components/footer'
-import Header from '@/app/user/components/header'
-import SubHeader from '@/app/user/components/subheader'
-import { CompanyCard } from "../components/companies/list/CompanyCard"
+import Footer from '@/app/user/components/footer';
+import Header from '@/app/user/components/header';
+import SubHeader from '@/app/user/components/subheader';
+import { CompanyCard } from "../components/companies/list/CompanyCard";
+
 export default function CompaniesPage() {
     const companies = [
         {
@@ -39,20 +42,21 @@ export default function CompaniesPage() {
             location: "New York, NY",
             hashtags: ["Finance", "Banking", "Technology"]
         },
-        
     ];
-        // Mock data for RightSidebarCard
-        const testimonials = [
-            { id: "1", user: "John Doe", feedback: "Great company to work with!" },
-            { id: "2", user: "Jane Smith", feedback: "Innovative solutions and excellent support." },
-        ];
-    
-        const events = [
-            { id: "1", title: "Tech Conference 2023", date: "2023-11-15", link: "https://techconference.com" },
-            { id: "2", title: "Healthcare Summit", date: "2023-12-05", link: "https://healthcaresummit.com" },
-        ];
-     // Mock data for feedItems
-     const feedItems = [
+
+    // Mock data for RightSidebarCard
+    const testimonials = [
+        { id: "1", user: "John Doe", feedback: "Great company to work with!" },
+        { id: "2", user: "Jane Smith", feedback: "Innovative solutions and excellent support." },
+    ];
+
+    const events = [
+        { id: "1", title: "Tech Conference 2023", date: "2023-11-15", link: "https://techconference.com" },
+        { id: "2", title: "Healthcare Summit", date: "2023-12-05", link: "https://healthcaresummit.com" },
+    ];
+
+    // Mock data for feedItems
+    const feedItems = [
         { id: "1", title: "New Product Launch", description: "We are excited to announce our new product.", date: "2023-10-01", link: "https://example.com/product-launch" },
         { id: "2", title: "Quarterly Earnings", description: "Our quarterly earnings report is now available.", date: "2023-09-15", link: "https://example.com/earnings" },
     ];

@@ -1,16 +1,15 @@
 "use client";
 
-import {
-  Box, Flex, HStack, 
-  Image, Link, Text, VStack
-} from "@chakra-ui/react";
+import { Box, Flex, HStack, Image, Text, VStack } from "@chakra-ui/react";
 import { useState } from "react";
-import { FiBookmark, FiShare2, FiThumbsUp } from "react-icons/fi";
+import { FiBookmark, FiShare2, FiThumbsUp, FiSend } from "react-icons/fi";
 import { ButtonCustom } from "@/components/ui/button-custom";
 import { toaster } from "@/components/ui/toaster";
 import { Tooltip } from "@/components/ui/tooltip";
+import Link from "next/link";
 
 interface Job {
+  id: string;
   title: string;
   company: string;
   location: string;
@@ -19,7 +18,7 @@ interface Job {
   description: string;
 }
 
-const JobListingCard = ({ title, company, location, logoUrl, jobUrl, description }: Job) => {
+const JobListingCard = ({ id, title, company, location, logoUrl, jobUrl, description }: Job) => {
   const [likes, setLikes] = useState(0);
   const [bookmarked, setBookmarked] = useState(false);
 
@@ -73,8 +72,6 @@ const JobListingCard = ({ title, company, location, logoUrl, jobUrl, description
       position="relative"
       bg="white"
     >
-      <Link href={jobUrl} position="absolute" inset={0} zIndex={0} aria-label="Job link" />
-      
       <Flex alignItems="center" mb={4}>
         <Image
           src={logoUrl}
@@ -83,7 +80,6 @@ const JobListingCard = ({ title, company, location, logoUrl, jobUrl, description
           borderRadius="full"
           objectFit="cover"
           mr={4}
-         
         />
         <VStack align="start" gap={1}>
           <Text fontSize="xl" fontWeight="bold" lineHeight="1.4" lineClamp={2}>{title}</Text>
@@ -97,11 +93,14 @@ const JobListingCard = ({ title, company, location, logoUrl, jobUrl, description
 
       <HStack justify="space-between" mb={4}>
         <Text fontSize="xs" color="gray.500">{location}</Text>
-        <ButtonCustom
-          intent="solid"
-          size="sm"
-          text="Apply Now"
-        />
+        <Link href={`/user/jobs/apply/${id}`} passHref>
+          <ButtonCustom
+            intent="solid"
+            size="sm"
+            text="Apply Now"
+            icon={<FiSend className="size-3.5" />}
+          />
+        </Link>
       </HStack>
 
       <HStack gap={2}>

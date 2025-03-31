@@ -1,7 +1,7 @@
-import { Box, Container, Flex, Link, Text, useDisclosure } from "@chakra-ui/react"
-import React from "react"
+import { Box, Container, Flex, Link, Text } from "@chakra-ui/react"
+import React, { useEffect, useState } from "react"
 import { FiChevronDown } from "react-icons/fi"
-import { MenuContent, MenuItem, MenuRoot, MenuTrigger, MenuTriggerItem } from "@/components/ui/menu"
+import { MenuContent, MenuItem, MenuRoot, MenuTrigger } from "@/components/ui/menu"
 
 interface SubMenuItem {
   label: string
@@ -14,6 +14,24 @@ interface SubMenuItem {
 }
 
 const SubHeader: React.FC = () => {
+  const [appliedJobs, setAppliedJobs] = useState(0);
+  const [jobStatus, setJobStatus] = useState("Pending"); // Default status
+
+  useEffect(() => {
+    // Fetch job application data (mock API call or replace with real API)
+    const fetchJobApplications = async () => {
+      try {
+        const response = await fetch("/api/job-applications"); // Replace with actual API endpoint
+        const data = await response.json();
+        setAppliedJobs(data.totalApplications);
+        setJobStatus(data.latestStatus);
+      } catch (error) {
+        console.error("Error fetching job applications", error);
+      }
+    };
+    fetchJobApplications();
+  }, []);
+
   const subHeaderLinks: SubMenuItem[] = [
     { label: "All Jobs", href: "/jobs" },
     { 
@@ -124,6 +142,15 @@ const SubHeader: React.FC = () => {
               </Link>
             )
           ))}
+
+          {/* Job Application Status Section */}
+          <Flex align="center" ml={6} color="gray.700" fontWeight="medium">
+            <Text mr={2}>Applied Jobs:</Text>
+            <Text color="teal.500" fontWeight="bold">{appliedJobs}</Text>
+            <Text mx={2}>| Latest Status:</Text>
+            <Text color={jobStatus === "Accepted" ? "green.500" : "orange.500"} fontWeight="bold">{jobStatus}</Text>
+            <Link href="/my-applications" ml={3} color="teal.500" fontWeight="medium" _hover={{ textDecoration: "underline" }}>View All</Link>
+          </Flex>
         </Flex>
       </Container>
     </Box>
