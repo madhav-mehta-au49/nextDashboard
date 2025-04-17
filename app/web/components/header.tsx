@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   FiMenu, FiX, FiSearch, FiUser, FiLogIn, 
-  FiHome, FiBriefcase, FiUsers, FiInfo, FiBookOpen 
+  FiHome, FiBriefcase, FiUsers, FiInfo, FiBookOpen, FiUserPlus 
 } from "react-icons/fi";
 
 export default function Header() {
@@ -86,6 +86,17 @@ export default function Header() {
               >
                 <FiSearch className="h-5 w-5 text-white" />
               </div>
+
+              {/* Create Profile Button - NEW ADDITION for Desktop */}
+              <Link 
+                href="/user/candidate/create" 
+                className="hidden md:flex items-center px-4 py-1.5 bg-white/10 border border-white/30 rounded-full text-white hover:bg-white hover:text-teal-600 transition-all duration-300 group"
+              >
+                <FiUserPlus className="h-4 w-4 mr-2 group-hover:animate-pulse" />
+                <span className="text-sm font-medium">Create Profile</span>
+                <span className="ml-1 w-1.5 h-1.5 bg-teal-300 rounded-full animate-ping absolute"></span>
+                <span className="ml-1 w-1.5 h-1.5 bg-teal-300 rounded-full relative"></span>
+              </Link>
 
               {/* Auth Buttons */}
               <div className="hidden md:flex items-center space-x-3">
@@ -195,6 +206,16 @@ export default function Header() {
                   <span className="font-medium">{item.name}</span>
                 </Link>
               ))}
+              
+              {/* Create Profile Button - NEW ADDITION for Mobile */}
+              <Link 
+                href="/user/candidate/create" 
+                className="flex items-center space-x-3 px-3 py-3 rounded-md text-white bg-gradient-to-r from-teal-500 to-teal-400 hover:from-teal-600 hover:to-teal-500 transition-colors shadow-md"
+              >
+                <FiUserPlus className="h-5 w-5" />
+                <span className="font-medium">Create Profile</span>
+                <span className="ml-1 w-2 h-2 bg-white rounded-full animate-pulse"></span>
+              </Link>
             </div>
             <div className="px-5 py-4 border-t border-gray-200 space-y-3">
               <Link 

@@ -1,6 +1,6 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { toaster } from '@/components/ui/toaster';
+import toast from 'react-hot-toast';
 
 interface AuthState {
   isAuthenticated: boolean;
