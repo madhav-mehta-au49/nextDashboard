@@ -1,92 +1,67 @@
-// components/HeroSection.tsx
-import {
-  Box,
-  Flex,
-  Heading,
-  IconButton,
-  Stack,
-  Text,
-} from '@chakra-ui/react';
-import React, { FC } from 'react';
-import { FiEdit, FiMapPin, FiUsers } from 'react-icons/fi';
-import { Avatar } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { useColorModeValue } from '@/components/ui/color-mode';
+import React from 'react';
+import Image from 'next/image';
+import { FaMapMarkerAlt, FaUserFriends, FaEdit } from 'react-icons/fa';
 
 interface HeroSectionProps {
-  data: {
-    name: string;
-    headline: string;
-    location: string;
-    connections: number;
-    coverImage: string;
-    profilePicture: string;
-  };
+  data: any;
 }
 
-const HeroSection: FC<HeroSectionProps> = ({ data }) => {
-  const iconColor = useColorModeValue('blue.500', 'blue.300');
-
+const HeroSection: React.FC<HeroSectionProps> = ({ data }) => {
   return (
     <>
       {/* Cover Photo */}
-      <Box
-        position="relative"
-        bgImage={`url(${data.coverImage})`}
-        bgSize="cover"
-        bgPos="center"
-        height="200px"
-      >
-        <Box
-          position="absolute"
-          bottom="-50px"
-          left="50px"
-          bg="white"
-          p={1}
-          borderRadius="full"
-          boxShadow="lg"
-        >
-          <Avatar size="2xl" name={data.name} src={data.profilePicture} />
-        </Box>
-      </Box>
+      <div className="relative h-[200px] overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${data.coverImage})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/30"></div>
+        
+        <div className="absolute bottom-[-50px] left-[50px]">
+          <div className="relative w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden border-4 border-white bg-white shadow-lg">
+            <Image
+              src={data.profilePicture}
+              alt={data.name}
+              fill
+              className="object-cover"
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Header with name & headline */}
-      <Box pt={16} px={8}>
-        <Flex
-          justify="space-between"
-          align="start"
-          flexDir={['column', null, 'row']}
-        >
-          <Box>
-            <Heading fontSize="2xl" mb={1}>
+      <div className="pt-16 px-8">
+        <div className="flex flex-col md:flex-row justify-between md:items-start">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
               {data.name}
-            </Heading>
-            <Text fontSize="md" color="gray.600">
+            </h1>
+            <p className="text-md text-gray-600 dark:text-gray-400">
               {data.headline}
-            </Text>
-            <Flex alignItems="center" gap={1} color="gray.500" fontSize="sm">
-              <FiMapPin color={iconColor} />
-              <Text>{data.location}</Text>
-              <Text>•</Text>
-              <FiUsers color={iconColor} />
-              <Text>{data.connections}+ connections</Text>
-            </Flex>
-          </Box>
-          <Stack direction="row" gap={3} mt={[4, null, 0]}>
-            <Button colorScheme="blue">Connect</Button>
-            <Button variant="outline" colorScheme="blue">
+            </p>
+            <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <FaMapMarkerAlt className="text-blue-600 mr-1" />
+              <span>{data.location}</span>
+              <span className="mx-2">•</span>
+              <FaUserFriends className="text-blue-600 mr-1" />
+              <span>{data.connections}+ connections</span>
+            </div>
+          </div>
+          <div className="flex gap-3 mt-4 md:mt-0">
+            <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+              Connect
+            </button>
+            <button className="px-4 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition-colors">
               Message
-            </Button>
-            <IconButton
-              aria-label="More options"              
-              variant="outline"
-              colorScheme="blue"
-            >
-                <FiEdit /></IconButton>
-          </Stack>
-        </Flex>
-      </Box>
+            </button>
+            <button className="p-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition-colors">
+              <FaEdit />
+            </button>
+          </div>
+        </div>
+      </div>
     </>
   );
 };
+
 export default HeroSection;

@@ -1,127 +1,75 @@
 import React from 'react';
 import { 
-  VStack, 
-  HStack,
-  Box,
-  Text,
-  Flex,
-  Icon
-} from '@chakra-ui/react';
-import { Button } from "@/components/ui/button";
-import { 
-  FiStar, 
-  FiMessageSquare, 
-  FiShare2, 
-  FiBookmark, 
-  FiBriefcase, 
-  FiBell, 
-  FiFlag 
-} from 'react-icons/fi';
-import { useColorModeValue } from '@/components/ui/color-mode';
+  Star, 
+  MessageSquare, 
+  Share2, 
+  Bookmark, 
+  Briefcase, 
+  Bell, 
+  Flag 
+} from 'lucide-react';
 
 interface CompanyActionsProps {
   companyId: string;
 }
 
 export const CompanyActions: React.FC<CompanyActionsProps> = ({ companyId }) => {
-  const iconColor = useColorModeValue('gray.600', 'gray.400');
-  const hoverBg = useColorModeValue('gray.100', 'gray.700');
-  const bgColor = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-
   return (
-    <Box 
-      borderWidth="1px" 
-      borderColor={borderColor} 
-      borderRadius="lg" 
-      overflow="hidden"
-      bg={bgColor}
-      p={4}
-    >
-      <VStack spacing={3} align="stretch">
-        <Text fontSize="sm" fontWeight="medium" color="gray.500" mb={1}>
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+      <div className="p-5">
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">
           Company Actions
-        </Text>
+        </h3>
         
-        <VStack spacing={2} align="stretch">
-          <Button 
-            variant="ghost"
-            className="justify-start text-gray-600 hover:text-yellow-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-            size="sm"
-          >
-            <FiStar className="mr-2" />
-            Add to favorites
-          </Button>
+        <div className="space-y-2">
+          <button className="w-full flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors group">
+            <Star className="h-4 w-4 mr-3 text-gray-500 group-hover:text-yellow-500 transition-colors" />
+            <span className="group-hover:text-gray-900 dark:group-hover:text-white transition-colors">Add to favorites</span>
+          </button>
           
-          <Button 
-            variant="ghost"
-            className="justify-start text-gray-600 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-            size="sm"
-          >
-            <FiMessageSquare className="mr-2" />
-            Message company
-          </Button>
+          <button className="w-full flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors group">
+            <MessageSquare className="h-4 w-4 mr-3 text-gray-500 group-hover:text-blue-500 transition-colors" />
+            <span className="group-hover:text-gray-900 dark:group-hover:text-white transition-colors">Message company</span>
+          </button>
           
-          <Button 
-            variant="ghost"
-            className="justify-start text-gray-600 hover:text-green-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-            size="sm"
-          >
-            <FiShare2 className="mr-2" />
-            Share profile
-          </Button>
+          <button className="w-full flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors group">
+            <Share2 className="h-4 w-4 mr-3 text-gray-500 group-hover:text-green-500 transition-colors" />
+            <span className="group-hover:text-gray-900 dark:group-hover:text-white transition-colors">Share profile</span>
+          </button>
           
-          <Button 
-            variant="ghost"
-            className="justify-start text-gray-600 hover:text-purple-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-            size="sm"
-          >
-            <FiBookmark className="mr-2" />
-            Save profile
-          </Button>
-        </VStack>
+          <button className="w-full flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors group">
+            <Bookmark className="h-4 w-4 mr-3 text-gray-500 group-hover:text-purple-500 transition-colors" />
+            <span className="group-hover:text-gray-900 dark:group-hover:text-white transition-colors">Save profile</span>
+          </button>
+        </div>
         
-        <hr className="my-2" />
+        <hr className="my-4 border-gray-200 dark:border-gray-700" />
         
-        <VStack spacing={2} align="stretch">
-          <Button 
-            variant="ghost"
-            className="justify-start text-gray-600 hover:text-cyan-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-            size="sm"
-          >
-            <FiBriefcase className="mr-2" />
-            View all jobs
-          </Button>
+        <div className="space-y-2">
+          <button className="w-full flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors group">
+            <Briefcase className="h-4 w-4 mr-3 text-gray-500 group-hover:text-cyan-500 transition-colors" />
+            <span className="group-hover:text-gray-900 dark:group-hover:text-white transition-colors">View all jobs</span>
+          </button>
           
-          <Button 
-            variant="ghost"
-            className="justify-start text-gray-600 hover:text-orange-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-            size="sm"
-          >
-            <FiBell className="mr-2" />
-            Get job alerts
-          </Button>
-        </VStack>
+          <button className="w-full flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors group">
+            <Bell className="h-4 w-4 mr-3 text-gray-500 group-hover:text-orange-500 transition-colors" />
+            <span className="group-hover:text-gray-900 dark:group-hover:text-white transition-colors">Get job alerts</span>
+          </button>
+        </div>
         
-        <hr className="my-2" />
+        <hr className="my-4 border-gray-200 dark:border-gray-700" />
         
-        <Button 
-          variant="ghost"
-          className="justify-start text-gray-600 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-          size="sm"
-        >
-          <FiFlag className="mr-2" />
-          Report company
-        </Button>
+        <button className="w-full flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors group">
+          <Flag className="h-4 w-4 mr-3 text-gray-500 group-hover:text-red-500 transition-colors" />
+          <span className="group-hover:text-gray-900 dark:group-hover:text-white transition-colors">Report company</span>
+        </button>
         
-        <Box mt={4}>
-          <HStack justifyContent="center">
-            <Text fontSize="xs" color="gray.500">
-              ID: {companyId}
-            </Text>
-          </HStack>
-        </Box>
-      </VStack>
-    </Box>
+        <div className="mt-5 text-center">
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            ID: {companyId}
+          </span>
+        </div>
+      </div>
+    </div>
   );
 };

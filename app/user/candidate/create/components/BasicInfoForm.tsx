@@ -63,7 +63,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
             value={profileData.name}
             onChange={handleProfileChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
             placeholder="e.g., John Doe"
           />
         </div>
@@ -79,7 +79,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
             value={profileData.headline}
             onChange={handleProfileChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
             placeholder="e.g., Senior Software Engineer at Tech Company"
           />
         </div>
@@ -95,7 +95,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
             value={profileData.location}
             onChange={handleProfileChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
             placeholder="e.g., San Francisco, CA"
           />
         </div>
@@ -111,7 +111,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
             value={profileData.email}
             onChange={handleProfileChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
             placeholder="e.g., john.doe@example.com"
           />
         </div>
@@ -126,7 +126,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
             name="phone"
             value={profileData.phone}
             onChange={handleProfileChange}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
             placeholder="e.g., (123) 456-7890"
           />
         </div>
@@ -141,7 +141,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
             name="website"
             value={profileData.website}
             onChange={handleProfileChange}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
             placeholder="e.g., https://yourportfolio.com"
           />
         </div>
@@ -157,7 +157,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
           value={profileData.about}
           onChange={handleProfileChange}
           rows={4}
-          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
           placeholder="Write a brief summary about yourself, your experience, and your career goals..."
         />
       </div>
@@ -182,7 +182,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
               )}
             </div>
             <div className="flex flex-col space-y-2">
-              <label className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 cursor-pointer text-sm text-center">
+              <label className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 cursor-pointer text-sm text-center">
                 <FaUpload className="inline-block mr-2" />
                 Upload Photo
                 <input
@@ -225,7 +225,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
               )}
             </div>
             <div className="flex space-x-2">
-              <label className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 cursor-pointer text-sm text-center flex-1">
+              <label className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 cursor-pointer text-sm text-center flex-1">
                 <FaUpload className="inline-block mr-2" />
                 Upload Cover
                 <input

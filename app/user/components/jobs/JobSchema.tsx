@@ -1,26 +1,36 @@
-export const JobSchema = (job: any) => ({
-    "@context": "https://schema.org",
+export const JobSchema = (job) => {
+  return {
+    "@context": "https://schema.org/",
     "@type": "JobPosting",
-    title: job.title,
-    description: job.description,
-    datePosted: job.postedDate,
-    employmentType: job.employmentType,
-    hiringOrganization: {
+    "title": job.title,
+    "description": job.description,
+    "datePosted": new Date().toISOString(), // This should be the actual date in a real app
+    "validThrough": new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString(), // Example: valid for 1 month
+    "employmentType": job.employmentType,
+    "hiringOrganization": {
       "@type": "Organization",
-      name: job.company,
-      logo: job.logoUrl,
+      "name": job.company,
+      "sameAs": job.companyDetails.website,
+      "logo": job.logoUrl
     },
-    jobLocation: {
+    "jobLocation": {
       "@type": "Place",
-      address: {
+      "address": {
         "@type": "PostalAddress",
-        addressLocality: job.location,
-      },
+        "addressLocality": job.location.split(",")[0],
+        "addressRegion": job.location.split(",")[1]?.trim() || "",
+        "addressCountry": "US"
+      }
     },
-    baseSalary: {
+    "baseSalary": {
       "@type": "MonetaryAmount",
-      currency: "USD",
-      value: job.salary,
-    },
-  });
-  
+      "currency": "USD",
+      "value": {
+        "@type": "QuantitativeValue",
+        "minValue": parseInt(job.salary.replace(/[^0-9]/g, '')),
+        "maxValue": parseInt(job.salary.split("-")[1]?.replace(/[^0-9]/g, '') || "0"),
+        "unitText": "YEAR"
+      }
+    }
+  };
+};

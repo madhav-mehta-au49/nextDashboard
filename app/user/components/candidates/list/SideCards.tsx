@@ -1,16 +1,5 @@
 import React from 'react';
-import {
-  Box,
-  VStack,
-  Heading,
-  Text,
-  Link,
-  HStack,
-  Badge,
-} from '@chakra-ui/react';
-import { FiCalendar, FiTrendingUp, FiBookOpen, FiUser } from 'react-icons/fi';
-import { useColorModeValue } from '@/components/ui/color-mode';
-import { Avatar } from '@/components/ui/avatar';
+import { FiExternalLink, FiTrendingUp } from 'react-icons/fi';
 
 interface FeaturedCandidate {
   id: string;
@@ -33,7 +22,7 @@ interface Resource {
   link: string;
 }
 
-interface TrendingSkill {
+interface Skill {
   id: string;
   title: string;
   link: string;
@@ -43,7 +32,7 @@ interface RightSidebarCardProps {
   featuredCandidates: FeaturedCandidate[];
   upcomingEvents: Event[];
   careerResources: Resource[];
-  trendingSkills: TrendingSkill[];
+  trendingSkills: Skill[];
 }
 
 export const RightSidebarCard: React.FC<RightSidebarCardProps> = ({
@@ -52,149 +41,104 @@ export const RightSidebarCard: React.FC<RightSidebarCardProps> = ({
   careerResources,
   trendingSkills
 }) => {
-  const bgColor = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const headingColor = useColorModeValue('blue.600', 'blue.300');
-  const iconColor = useColorModeValue('blue.500', 'blue.300');
-
   return (
-    <VStack gap={6} align="stretch" position="sticky" top="20px">
-      {/* Featured Candidates Section */}
-      <Box
-        bg={bgColor}
-        borderWidth="1px"
-        borderColor={borderColor}
-        borderRadius="lg"
-        overflow="hidden"
-        p={4}
-      >
-        <HStack mb={4}>
-          <FiUser color={iconColor} />
-          <Heading size="sm" color={headingColor}>
-            Featured Candidates
-          </Heading>
-        </HStack>
-        
-        <VStack gap={4} align="stretch">
+    <div className="space-y-6">
+      {/* Featured Candidates */}
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Featured Candidates</h3>
+        <div className="space-y-4">
           {featuredCandidates.map((candidate) => (
-            <Box key={candidate.id} p={2} _hover={{ bg: 'gray.50' }} borderRadius="md">
-              <HStack>
-                <Avatar size="sm" name={candidate.name} />
-                <Box>
-                  <Text fontWeight="bold" fontSize="sm">{candidate.name}</Text>
-                  <Text fontSize="xs" color="gray.600">{candidate.title}</Text>
-                  <HStack mt={1} gap={1}>
-                    {candidate.skills.map((skill, index) => (
-                      <Badge key={index} colorScheme="blue" variant="subtle" fontSize="2xs">
-                        {skill}
-                      </Badge>
-                    ))}
-                  </HStack>
-                </Box>
-              </HStack>
-            </Box>
+            <div key={candidate.id} className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold">
+                {candidate.name.charAt(0)}
+              </div>
+              <div>
+                <h4 className="font-medium text-gray-800">{candidate.name}</h4>
+                <p className="text-sm text-gray-600">{candidate.title}</p>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {candidate.skills.map((skill, index) => (
+                    <span key={index} className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
           ))}
-        </VStack>
-        
-        <Link color="blue.500" fontSize="sm" display="block" textAlign="center" mt={2}>
+        </div>
+        <button className="w-full mt-4 text-sm text-blue-600 hover:text-blue-800 font-medium">
           View all featured candidates
-        </Link>
-      </Box>
+        </button>
+      </div>
 
-      {/* Upcoming Events Section */}
-      <Box
-        bg={bgColor}
-        borderWidth="1px"
-        borderColor={borderColor}
-        borderRadius="lg"
-        overflow="hidden"
-        p={4}
-      >
-        <HStack mb={4}>
-          <FiCalendar color={iconColor} />
-          <Heading size="sm" color={headingColor}>
-            Upcoming Events
-          </Heading>
-        </HStack>
-        
-        <VStack gap={3} align="stretch">
+      {/* Upcoming Events */}
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Upcoming Events</h3>
+        <div className="space-y-3">
           {upcomingEvents.map((event) => (
-            <Box key={event.id}>
-              <Link href={event.link}>
-                <Text fontWeight="medium" fontSize="sm">{event.title}</Text>
-              </Link>
-              <Text fontSize="xs" color="gray.500">{event.date}</Text>
-            </Box>
+            <div key={event.id} className="border-b border-gray-100 pb-3 last:border-0 last:pb-0">
+              <h4 className="font-medium text-gray-800">{event.title}</h4>
+              <p className="text-sm text-gray-600 mb-1">{formatDate(event.date)}</p>
+              <a 
+                href={event.link} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              >
+                Learn more <FiExternalLink className="w-3 h-3" />
+              </a>
+            </div>
           ))}
-        </VStack>
-        
-        <Link color="blue.500" fontSize="sm" display="block" textAlign="center" mt={2}>
-          View all events
-        </Link>
-      </Box>
+        </div>
+      </div>
 
-      {/* Career Resources Section */}
-      <Box
-        bg={bgColor}
-        borderWidth="1px"
-        borderColor={borderColor}
-        borderRadius="lg"
-        overflow="hidden"
-        p={4}
-      >
-        <HStack mb={4}>
-          <FiBookOpen color={iconColor} />
-          <Heading size="sm" color={headingColor}>
-            Career Resources
-          </Heading>
-        </HStack>
-        
-        <VStack gap={4} align="stretch">
+      {/* Career Resources */}
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Career Resources</h3>
+        <div className="space-y-3">
           {careerResources.map((resource) => (
-            <Box key={resource.id}>
-              <Link href={resource.link} >
-                <Text fontWeight="medium" fontSize="sm">{resource.title}</Text>
-              </Link>
-              <Text fontSize="xs" color="gray.600">{resource.description}</Text>
-            </Box>
+            <div key={resource.id} className="border-b border-gray-100 pb-3 last:border-0 last:pb-0">
+              <h4 className="font-medium text-gray-800">{resource.title}</h4>
+              <p className="text-sm text-gray-600 mb-1">{resource.description}</p>
+              <a 
+                href={resource.link} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              >
+                Read more <FiExternalLink className="w-3 h-3" />
+              </a>
+            </div>
           ))}
-        </VStack>
-        
-        <Link color="blue.500" fontSize="sm" display="block" textAlign="center" mt={2}>
-          View all resources
-        </Link>
-      </Box>
+        </div>
+      </div>
 
-      {/* Trending Skills Section */}
-      <Box
-        bg={bgColor}
-        borderWidth="1px"
-        borderColor={borderColor}
-        borderRadius="lg"
-        overflow="hidden"
-        p={4}
-      >
-        <HStack mb={4}>
-          <FiTrendingUp color={iconColor} />
-          <Heading size="sm" color={headingColor}>
-            Trending Skills
-          </Heading>
-        </HStack>
-        
-        <VStack gap={2} align="stretch">
+      {/* Trending Skills */}
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <FiTrendingUp className="text-blue-500" />
+          Trending Skills
+        </h3>
+        <div className="flex flex-wrap gap-2">
           {trendingSkills.map((skill) => (
-            <Link key={skill.id} href={skill.link} >
-              <HStack>
-                <Text fontSize="sm">{skill.title}</Text>
-              </HStack>
-            </Link>
+            <a 
+              key={skill.id} 
+              href={skill.link}
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-sm font-medium hover:bg-blue-100 transition-colors"
+            >
+              {skill.title}
+            </a>
           ))}
-        </VStack>
-        
-        <Link color="blue.500" fontSize="sm" display="block" textAlign="center" mt={2}>
-          View all trending skills
-        </Link>
-      </Box>
-    </VStack>
+        </div>
+      </div>
+    </div>
   );
+};
+
+// Helper function to format date
+const formatDate = (dateString: string) => {
+  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
+  return new Date(dateString).toLocaleDateString('en-US', options);
 };

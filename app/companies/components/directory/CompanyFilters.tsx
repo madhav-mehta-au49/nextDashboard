@@ -1,22 +1,6 @@
 import React, { useState } from 'react';
-import { 
-  Box, 
-  Flex, 
-  Input, 
-  Text,
-} from '@chakra-ui/react';
-import { FiFilter, FiSearch, FiX } from 'react-icons/fi';
-import { Button } from "@/components/ui/button";
-import {
-  MenuCheckboxItem,
-  MenuContent,
-  MenuItemGroup,
-  MenuRoot,
-  MenuSeparator,
-  MenuTrigger
-} from "@/components/ui/menu";
+import { SearchIcon, FilterIcon, XIcon } from 'lucide-react';
 import { CompanyFilter } from '../../types';
-import { useColorModeValue } from '@/components/ui/color-mode';
 
 interface CompanyFiltersProps {
   filters: CompanyFilter;
@@ -27,30 +11,17 @@ export const CompanyFilters: React.FC<CompanyFiltersProps> = ({
   filters, 
   onFilterChange 
 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [localFilters, setLocalFilters] = useState<CompanyFilter>(filters);
   
-  const bgColor = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setLocalFilters(prev => ({ ...prev, [name]: value }));
-    onFilterChange({ [name]: value });
   };
 
-  const handleIndustryChange = (industry: string) => {
-    setLocalFilters(prev => ({ ...prev, industry }));
-    onFilterChange({ industry });
-  };
-
-  const handleSizeChange = (size: string) => {
-    setLocalFilters(prev => ({ ...prev, size }));
-    onFilterChange({ size });
-  };
-
-  const handleLocationChange = (location: string) => {
-    setLocalFilters(prev => ({ ...prev, location }));
-    onFilterChange({ location });
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onFilterChange(localFilters);
   };
 
   const handleClear = () => {
@@ -64,227 +35,188 @@ export const CompanyFilters: React.FC<CompanyFiltersProps> = ({
     onFilterChange(emptyFilters);
   };
 
+  const hasActiveFilters = Boolean(
+    filters.industry || 
+    filters.size || 
+    filters.location || 
+    filters.searchTerm
+  );
+
   return (
-    <Box 
-      as="section" 
-      bg={bgColor} 
-      borderWidth="1px" 
-      borderColor={borderColor} 
-      borderRadius="lg" 
-      p={4} 
-      mb={6}
-      shadow="sm"
-    >
-      <Flex direction="column" gap={4}>
-        <Flex gap={2} align="center">
-          <Box position="relative" flex={1}>
-            <Input
-              name="searchTerm"
-              placeholder="Search companies..."
-              value={localFilters.searchTerm || ''}
-              onChange={handleInputChange}
-              pl={10}
-              borderRadius="md"
-              _focus={{ borderColor: 'blue.400', boxShadow: '0 0 0 1px var(--chakra-colors-blue-400)' }}
-            />
-            <Box position="absolute" left={3} top="50%" transform="translateY(-50%)">
-              <FiSearch color="gray.400" />
-            </Box>
-          </Box>
+    <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+      <form onSubmit={handleSubmit}>
+        <div className="flex flex-col gap-4">
+          <div className="flex gap-2 items-center">
+            <div className="relative flex-1">
+              <input
+                name="searchTerm"
+                placeholder="Search companies..."
+                value={localFilters.searchTerm || ''}
+                onChange={handleInputChange}
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              />
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <SearchIcon className="w-5 h-5" />
+              </div>
+            </div>
+            
+            <button 
+              type="button"
+              className={`px-4 py-2.5 rounded-lg border flex items-center gap-2 ${
+                isExpanded 
+                  ? 'bg-teal-50 text-teal-700 border-teal-200' 
+                  : 'border-gray-300 text-gray-700 hover:border-gray-400'
+              } transition-colors`}
+              onClick={() => setIsExpanded(!isExpanded)}
+              aria-expanded={isExpanded}
+            >
+              <FilterIcon className="w-5 h-5" />
+              <span>Filters</span>
+            </button>
+            
+            <button 
+              type="submit" 
+              className="px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+            >
+              Search
+            </button>
+          </div>
           
-          <MenuRoot>
-            <MenuTrigger asChild>
-              <Button variant="outline">
-                <FiFilter className="mr-2 size-4" />
-                Filters
-              </Button>
-            </MenuTrigger>
-            <MenuContent>
-              <MenuItemGroup title="Industry">
-                <MenuCheckboxItem 
-                  value="Technology"
-                  checked={localFilters.industry === "Technology"}
-                  onCheckedChange={() => handleIndustryChange("Technology")}
-                >
-                  Technology
-                </MenuCheckboxItem>
-                <MenuCheckboxItem 
-                  value="Healthcare"
-                  checked={localFilters.industry === "Healthcare"}
-                  onCheckedChange={() => handleIndustryChange("Healthcare")}
-                >
-                  Healthcare
-                </MenuCheckboxItem>
-                <MenuCheckboxItem 
-                  value="Finance"
-                  checked={localFilters.industry === "Finance"}
-                  onCheckedChange={() => handleIndustryChange("Finance")}
-                >
-                  Finance
-                </MenuCheckboxItem>
-                <MenuCheckboxItem 
-                  value="Education"
-                  checked={localFilters.industry === "Education"}
-                  onCheckedChange={() => handleIndustryChange("Education")}
-                >
-                  Education
-                </MenuCheckboxItem>
-                <MenuCheckboxItem 
-                  value="Retail"
-                  checked={localFilters.industry === "Retail"}
-                  onCheckedChange={() => handleIndustryChange("Retail")}
-                >
-                  Retail
-                </MenuCheckboxItem>
-              </MenuItemGroup>
+          {isExpanded && (
+            <div className="pt-4 border-t border-gray-200">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Industry</label>
+                  <select 
+                    name="industry"
+                    value={localFilters.industry || ''}
+                    onChange={handleInputChange}
+                    className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent appearance-none bg-white"
+                  >
+                    <option value="">All Industries</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="Finance">Finance</option>
+                    <option value="Education">Education</option>
+                    <option value="Retail">Retail</option>
+                    <option value="Energy">Energy</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Company Size</label>
+                  <select 
+                    name="size"
+                    value={localFilters.size || ''}
+                    onChange={handleInputChange}
+                    className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent appearance-none bg-white"
+                  >
+                    <option value="">Any Size</option>
+                    <option value="1-10">1-10 employees</option>
+                    <option value="11-50">11-50 employees</option>
+                    <option value="51-200">51-200 employees</option>
+                    <option value="201-500">201-500 employees</option>
+                    <option value="501-1000">501-1000 employees</option>
+                    <option value="1001+">1001+ employees</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                  <select 
+                    name="location"
+                    value={localFilters.location || ''}
+                    onChange={handleInputChange}
+                    className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent appearance-none bg-white"
+                  >
+                    <option value="">Any Location</option>
+                    <option value="Remote">Remote</option>
+                    <option value="United States">United States</option>
+                    <option value="Europe">Europe</option>
+                    <option value="Asia">Asia</option>
+                    <option value="Australia">Australia</option>
+                    <option value="Africa">Africa</option>
+                  </select>
+                </div>
+              </div>
               
-              <MenuSeparator />
-              
-              <MenuItemGroup title="Company Size">
-                <MenuCheckboxItem 
-                  value="1-10"
-                  checked={localFilters.size === "1-10"}
-                  onCheckedChange={() => handleSizeChange("1-10")}
+              <div className="flex justify-end mt-4">
+                <button 
+                  type="button" 
+                  className="px-4 py-2 text-gray-700 hover:text-gray-900 mr-2"
+                  onClick={handleClear}
                 >
-                  1-10 employees
-                </MenuCheckboxItem>
-                <MenuCheckboxItem 
-                  value="11-50"
-                  checked={localFilters.size === "11-50"}
-                  onCheckedChange={() => handleSizeChange("11-50")}
+                  Clear All
+                </button>
+                <button 
+                  type="submit"
+                  className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
                 >
-                  11-50 employees
-                </MenuCheckboxItem>
-                <MenuCheckboxItem 
-                  value="51-200"
-                  checked={localFilters.size === "51-200"}
-                  onCheckedChange={() => handleSizeChange("51-200")}
-                >
-                  51-200 employees
-                </MenuCheckboxItem>
-                <MenuCheckboxItem 
-                  value="201-500"
-                  checked={localFilters.size === "201-500"}
-                  onCheckedChange={() => handleSizeChange("201-500")}
-                >
-                  201-500 employees
-                </MenuCheckboxItem>
-                <MenuCheckboxItem 
-                  value="501-1000"
-                  checked={localFilters.size === "501-1000"}
-                  onCheckedChange={() => handleSizeChange("501-1000")}
-                >
-                  501-1000 employees
-                </MenuCheckboxItem>
-                <MenuCheckboxItem 
-                  value="1001+"
-                  checked={localFilters.size === "1001+"}
-                  onCheckedChange={() => handleSizeChange("1001+")}
-                >
-                  1001+ employees
-                </MenuCheckboxItem>
-              </MenuItemGroup>
-              
-              <MenuSeparator />
-              
-              <MenuItemGroup title="Location">
-                <MenuCheckboxItem 
-                  value="Remote"
-                  checked={localFilters.location === "Remote"}
-                  onCheckedChange={() => handleLocationChange("Remote")}
-                >
-                  Remote
-                </MenuCheckboxItem>
-                <MenuCheckboxItem 
-                  value="United States"
-                  checked={localFilters.location === "United States"}
-                  onCheckedChange={() => handleLocationChange("United States")}
-                >
-                  United States
-                </MenuCheckboxItem>
-                <MenuCheckboxItem 
-                  value="Europe"
-                  checked={localFilters.location === "Europe"}
-                  onCheckedChange={() => handleLocationChange("Europe")}
-                >
-                  Europe
-                </MenuCheckboxItem>
-                <MenuCheckboxItem 
-                  value="Asia"
-                  checked={localFilters.location === "Asia"}
-                  onCheckedChange={() => handleLocationChange("Asia")}
-                >
-                  Asia
-                </MenuCheckboxItem>
-                <MenuCheckboxItem 
-                  value="Australia"
-                  checked={localFilters.location === "Australia"}
-                  onCheckedChange={() => handleLocationChange("Australia")}
-                >
-                  Australia
-                </MenuCheckboxItem>
-              </MenuItemGroup>
-            </MenuContent>
-          </MenuRoot>
+                  Apply Filters
+                </button>
+              </div>
+            </div>
+          )}
           
-          <Button 
-            variant="default"
-            onClick={handleClear}
-          >
-            Clear
-          </Button>
-        </Flex>
-        
-        {(filters.industry || filters.size || filters.location || filters.searchTerm) && (
-          <Flex gap={2} mt={2} flexWrap="wrap" align="center">
-            <Text fontSize="sm" fontWeight="medium">Active filters:</Text>
-            
-            {filters.industry && (
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={() => onFilterChange({ industry: '' })}
-              >
-                Industry: {filters.industry}
-                <FiX className="ml-2 size-3" />
-              </Button>
-            )}
-            
-            {filters.size && (
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={() => onFilterChange({ size: '' })}
-              >
-                Size: {filters.size}
-                <FiX className="ml-2 size-3" />
-              </Button>
-            )}
-            
-            {filters.location && (
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={() => onFilterChange({ location: '' })}
-              >
-                Location: {filters.location}
-                <FiX className="ml-2 size-3" />
-              </Button>
-            )}
-            
-            {filters.searchTerm && (
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={() => onFilterChange({ searchTerm: '' })}
-              >
-                Search: {filters.searchTerm}
-                <FiX className="ml-2 size-3" />
-              </Button>
-            )}
-          </Flex>
-        )}
-      </Flex>
-    </Box>
+          {hasActiveFilters && !isExpanded && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              <div className="text-sm font-medium text-gray-700">Active filters:</div>
+              
+              {filters.industry && (
+                <div className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-50 text-blue-700">
+                  Industry: {filters.industry}
+                  <button
+                    type="button"
+                    onClick={() => onFilterChange({ industry: '' })}
+                    className="ml-2 text-blue-500 hover:text-blue-700"
+                  >
+                    <XIcon className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+              
+              {filters.size && (
+                <div className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-50 text-green-700">
+                  Size: {filters.size}
+                  <button
+                    type="button"
+                    onClick={() => onFilterChange({ size: '' })}
+                    className="ml-2 text-green-500 hover:text-green-700"
+                  >
+                    <XIcon className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+              
+              {filters.location && (
+                <div className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-50 text-purple-700">
+                  Location: {filters.location}
+                  <button
+                    type="button"
+                    onClick={() => onFilterChange({ location: '' })}
+                    className="ml-2 text-purple-500 hover:text-purple-700"
+                  >
+                    <XIcon className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+              
+              {filters.searchTerm && (
+                <div className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-50 text-orange-700">
+                  Search: {filters.searchTerm}
+                  <button
+                    type="button"
+                    onClick={() => onFilterChange({ searchTerm: '' })}
+                    className="ml-2 text-orange-500 hover:text-orange-700"
+                  >
+                    <XIcon className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </form>
+    </div>
   );
 };

@@ -6,9 +6,9 @@ import {
   Image, Link, Text} from "@chakra-ui/react";
 import { useState } from "react";
 import { FiBookmark, FiShare2, FiThumbsUp } from "react-icons/fi";
-import { ButtonCustom } from "@/components/ui/button-custom";
-import { toaster } from "@/components/ui/toaster";
-import { Tooltip } from "@/components/ui/tooltip";
+// import { ButtonCustom } from "@/components/ui/button-custom";
+// import { toaster } from "@/components/ui/toaster";
+// import { Tooltip } from "@/components/ui/tooltip";
 
 interface Job {
   title: string;

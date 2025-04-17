@@ -46,7 +46,7 @@ const ReviewProfile: React.FC<ReviewProfileProps> = ({
           <button
             type="button"
             onClick={() => setCurrentStep(1)}
-            className="text-blue-600 hover:text-blue-800 text-sm"
+            className="text-teal-600 hover:text-teal-800 text-sm"
           >
             Edit
           </button>
@@ -91,7 +91,7 @@ const ReviewProfile: React.FC<ReviewProfileProps> = ({
           <button
             type="button"
             onClick={() => setCurrentStep(2)}
-            className="text-blue-600 hover:text-blue-800 text-sm"
+            className="text-teal-600 hover:text-teal-800 text-sm"
           >
             Edit
           </button>
@@ -128,7 +128,7 @@ const ReviewProfile: React.FC<ReviewProfileProps> = ({
           <button
             type="button"
             onClick={() => setCurrentStep(3)}
-            className="text-blue-600 hover:text-blue-800 text-sm"
+            className="text-teal-600 hover:text-teal-800 text-sm"
           >
             Edit
           </button>
@@ -164,7 +164,7 @@ const ReviewProfile: React.FC<ReviewProfileProps> = ({
           <button
             type="button"
             onClick={() => setCurrentStep(4)}
-            className="text-blue-600 hover:text-blue-800 text-sm"
+            className="text-teal-600 hover:text-teal-800 text-sm"
           >
             Edit
           </button>
@@ -175,7 +175,7 @@ const ReviewProfile: React.FC<ReviewProfileProps> = ({
               {skills.map((skill) => (
                 <span 
                   key={skill.id} 
-                  className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm"
+                  className="bg-teal-100 dark:bg-teal-900 text-teal-800 dark:text-teal-200 px-3 py-1 rounded-full text-sm"
                 >
                   {skill.name}
                 </span>
@@ -186,7 +186,7 @@ const ReviewProfile: React.FC<ReviewProfileProps> = ({
           )}
         </div>
       </div>
-      
+    
       {/* Certifications */}
       <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
         <div className="bg-gray-50 dark:bg-gray-800 px-4 py-3 flex justify-between items-center">
@@ -194,7 +194,7 @@ const ReviewProfile: React.FC<ReviewProfileProps> = ({
           <button
             type="button"
             onClick={() => setCurrentStep(5)}
-            className="text-blue-600 hover:text-blue-800 text-sm"
+            className="text-teal-600 hover:text-teal-800 text-sm"
           >
             Edit
           </button>
@@ -245,7 +245,7 @@ const ReviewProfile: React.FC<ReviewProfileProps> = ({
           type="button"
           onClick={handleSubmit}
           disabled={isSubmitting}
-          className={`px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 ${
+          className={`px-6 py-3 bg-teal-600 text-white rounded-md hover:bg-teal-700 ${
             isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
           }`}
         >

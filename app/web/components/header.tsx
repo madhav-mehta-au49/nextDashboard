@@ -1,94 +1,220 @@
 "use client";
 
-import {
-  Box,
-  Button,
-  Flex,
-  IconButton,
-  HStack,
-  Link,
-} from "@chakra-ui/react";
-import React, { useState } from "react";
-import { FiMenu } from "react-icons/fi";
-import {
-  MenuContent,
-  MenuItem,
-  MenuRoot,
-  MenuSeparator,
-  MenuTrigger,
-} from "@/components/ui/menu";
+import React, { useState, useRef, useEffect } from "react";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  FiMenu, FiX, FiSearch, FiUser, FiLogIn, 
+  FiHome, FiBriefcase, FiUsers, FiInfo, FiBookOpen 
+} from "react-icons/fi";
 
 export default function Header() {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   
-    const toggleMenu = () => setIsMenuOpen((prev) => !prev);
-    const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
+  // Close menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    }
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Focus search input when opened
+  useEffect(() => {
+    if (isSearchOpen && searchRef.current) {
+      searchRef.current.focus();
+    }
+  }, [isSearchOpen]);
+
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const toggleSearch = () => setIsSearchOpen(!isSearchOpen);
 
   return (
-    <Box as="header" bg="teal.500" color="white" px={4} py={3}>
-      <Flex align="center" justify="space-between">
-        {/* Left Section: Logo */}
-        <Box fontSize="xl" fontWeight="bold">
-          JobSite
-        </Box>
+    <header className="relative z-50">
+      {/* Gradient background with glass effect */}
+      <div className="bg-gradient-to-r from-teal-500 via-teal-400 to-teal-500 backdrop-blur-sm shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 md:h-20">
+            {/* Logo Section */}
+            <div className="flex-shrink-0 flex items-center">
+              <Link href="/" className="flex items-center space-x-2 group">
+                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-md transform group-hover:rotate-6 transition-transform duration-300">
+                  <span className="text-teal-500 font-bold text-xl">JS</span>
+                </div>
+                <span className="text-white font-bold text-xl tracking-tight">JobSite</span>
+              </Link>
+            </div>
 
-        {/* Center Section: Nav Links */}
-        <HStack gap={8} display={{ base: "none", md: "flex" }} position="absolute" left="50%" transform="translateX(-50%)">
-          <Link _hover={{ color: "gray.200" }} fontWeight="medium">Home</Link>
-          <Link _hover={{ color: "gray.200" }} fontWeight="medium">Jobs</Link>
-          <Link _hover={{ color: "gray.200" }} fontWeight="medium">Companies</Link>
-          <Link _hover={{ color: "gray.200" }} fontWeight="medium">About Us</Link>
-          <Link _hover={{ color: "gray.200" }} fontWeight="medium">Blogs</Link>
-        </HStack>
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center space-x-1">
+              {[
+                { name: 'Home', href: '/', icon: FiHome },
+                { name: 'Jobs', href: '/user/jobs', icon: FiBriefcase },
+                { name: 'Companies', href: '/companies', icon: FiUsers },
+                { name: 'About', href: '/about', icon: FiInfo },
+                { name: 'Blog', href: '/blog', icon: FiBookOpen },
+              ].map((item) => (
+                <Link 
+                  key={item.name} 
+                  href={item.href}
+                  className="relative px-4 py-2 text-white group"
+                >
+                  <span className="flex items-center space-x-1">
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.name}</span>
+                  </span>
+                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-white scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+                </Link>
+              ))}
+            </nav>
 
-        {/* Right Section: Auth Buttons and Menu */}
-        <Flex align="center" gap={4}>
-          <Flex display={{ base: "none", md: "flex" }} gap={3}>
-            <Button 
-              colorScheme="whiteAlpha" 
-              variant="ghost"
-              _hover={{ bg: "teal.600" }}
-            >
-              Sign In
-            </Button>
-            <Button 
-              bg="white" 
-              color="teal.500"
-              _hover={{ bg: "gray.100" }}
-              fontWeight="bold"
-              px={6}
-            >
-              Sign Up
-            </Button>
-          </Flex>
+            {/* Right Section: Search & Auth */}
+            <div className="flex items-center space-x-4">
+              {/* Search Button */}
+              <div 
+                className="p-2 rounded-full hover:bg-white/20 cursor-pointer transition-colors"
+                onClick={toggleSearch}
+              >
+                <FiSearch className="h-5 w-5 text-white" />
+              </div>
 
-          {/* Mobile Menu */}
-          <MenuRoot>
-            <MenuTrigger>
-              <IconButton
-                icon={<FiMenu />}
-                variant="ghost"
-                aria-label="Menu"
-                display={{ base: "flex", md: "none" }}
-                onClick={toggleMobileMenu}
-              />
-            </MenuTrigger>
-            {isMobileMenuOpen && (
-              <MenuContent>
-                <MenuItem>Home</MenuItem>
-                <MenuItem>Jobs</MenuItem>
-                <MenuItem>Companies</MenuItem>
-                <MenuItem>About Us</MenuItem>
-                <MenuItem>Blogs</MenuItem>
-                <MenuSeparator />
-                <MenuItem>Sign Up</MenuItem>
-                <MenuItem>Sign In</MenuItem>
-              </MenuContent>
-            )}
-          </MenuRoot>
-        </Flex>
-      </Flex>
-    </Box>
+              {/* Auth Buttons */}
+              <div className="hidden md:flex items-center space-x-3">
+                <Link 
+                  href="/signin" 
+                  className="flex items-center space-x-1 text-white hover:text-teal-100 transition-colors"
+                >
+                  <FiLogIn className="h-4 w-4" />
+                  <span>Sign In</span>
+                </Link>
+                <Link 
+                  href="/signup" 
+                  className="bg-white text-teal-600 hover:bg-teal-50 px-4 py-2 rounded-full font-medium shadow-md hover:shadow-lg transition-all duration-300"
+                >
+                  <span>Sign Up</span>
+                </Link>
+              </div>
+
+              {/* Mobile Menu Button */}
+              <div className="md:hidden" ref={menuRef}>
+                <div
+                  className="p-2 rounded-full hover:bg-white/20 cursor-pointer transition-colors"
+                  onClick={toggleMenu}
+                >
+                  {isMenuOpen ? (
+                    <FiX className="h-6 w-6 text-white" />
+                  ) : (
+                    <FiMenu className="h-6 w-6 text-white" />
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Expandable Search Bar */}
+      <AnimatePresence>
+        {isSearchOpen && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-x-0 top-full bg-white shadow-lg z-20"
+          >
+            <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FiSearch className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  ref={searchRef}
+                  type="text"
+                  placeholder="Search for jobs, companies, or keywords..."
+                  className="block w-full pl-10 pr-10 py-3 border-0 ring-1 ring-gray-200 focus:ring-2 focus:ring-teal-500 rounded-lg text-gray-900"
+                />
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <div 
+                    className="p-1 rounded-full hover:bg-gray-100 cursor-pointer"
+                    onClick={toggleSearch}
+                  >
+                    <FiX className="h-5 w-5 text-gray-400" />
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span className="text-xs text-gray-500">Popular:</span>
+                {['Remote', 'Software Engineer', 'Marketing', 'Part-time', 'Design'].map(term => (
+                  <span 
+                    key={term} 
+                    className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs cursor-pointer hover:bg-teal-100 hover:text-teal-700 transition-colors"
+                  >
+                    {term}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile Menu Dropdown */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="md:hidden bg-white shadow-lg overflow-hidden z-20"
+          >
+            <div className="px-2 pt-2 pb-3 space-y-1">
+              {[
+                { name: 'Home', href: '/', icon: FiHome },
+                { name: 'Jobs', href: '/jobs', icon: FiBriefcase },
+                { name: 'Companies', href: '/companies', icon: FiUsers },
+                { name: 'About', href: '/about', icon: FiInfo },
+                { name: 'Blog', href: '/blog', icon: FiBookOpen },
+              ].map((item) => (
+                <Link 
+                  key={item.name} 
+                  href={item.href}
+                  className="flex items-center space-x-3 px-3 py-3 rounded-md text-gray-700 hover:bg-teal-50 hover:text-teal-600 transition-colors"
+                >
+                  <item.icon className="h-5 w-5" />
+                  <span className="font-medium">{item.name}</span>
+                </Link>
+              ))}
+            </div>
+            <div className="px-5 py-4 border-t border-gray-200 space-y-3">
+              <Link 
+                href="/signin" 
+                className="flex items-center justify-center space-x-2 w-full bg-gray-100 text-gray-800 hover:bg-gray-200 px-4 py-3 rounded-lg font-medium transition-colors"
+              >
+                <FiLogIn className="h-5 w-5" />
+                <span>Sign In</span>
+              </Link>
+              <Link 
+                href="/signup" 
+                className="flex items-center justify-center w-full bg-teal-500 text-white hover:bg-teal-600 px-4 py-3 rounded-lg font-medium shadow-md transition-colors"
+              >
+                <FiUser className="h-5 w-5 mr-2" />
+                <span>Create Account</span>
+              </Link>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </header>
   );
 }

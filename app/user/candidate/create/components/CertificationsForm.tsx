@@ -85,7 +85,7 @@ const CertificationsForm: React.FC<CertificationsFormProps> = ({
             setIsEditMode(false);
             setShowCertificationModal(true);
           }}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm flex items-center"
+          className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 text-sm flex items-center"
         >
           <FaPlus className="mr-1" /> Add Certification
         </button>
@@ -111,7 +111,7 @@ const CertificationsForm: React.FC<CertificationsFormProps> = ({
               setIsEditMode(false);
               setShowCertificationModal(true);
             }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm inline-flex items-center"
+            className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 text-sm inline-flex items-center"
           >
             <FaPlus className="mr-1" /> Add Certification
           </button>
@@ -142,7 +142,7 @@ const CertificationsForm: React.FC<CertificationsFormProps> = ({
                   <button
                     type="button"
                     onClick={() => editCertification(cert.id)}
-                    className="text-blue-600 hover:text-blue-800"
+                    className="text-teal-600 hover:text-teal-800"
                   >
                     Edit
                   </button>
@@ -180,7 +180,7 @@ const CertificationsForm: React.FC<CertificationsFormProps> = ({
                   value={currentCertification.name}
                   onChange={handleCertificationChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
                   placeholder="e.g., AWS Certified Solutions Architect"
                 />
               </div>
@@ -196,7 +196,7 @@ const CertificationsForm: React.FC<CertificationsFormProps> = ({
                   value={currentCertification.issuer}
                   onChange={handleCertificationChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
                   placeholder="e.g., Amazon Web Services"
                 />
               </div>
@@ -212,7 +212,7 @@ const CertificationsForm: React.FC<CertificationsFormProps> = ({
                   value={currentCertification.issueDate}
                   onChange={handleCertificationChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
                 />
               </div>
               
@@ -222,7 +222,7 @@ const CertificationsForm: React.FC<CertificationsFormProps> = ({
                   id="noExpiration"
                   checked={currentCertification.noExpiration}
                   onChange={handleNoExpirationChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
                 />
                 <label htmlFor="noExpiration" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
                   This certification does not expire
@@ -240,7 +240,7 @@ const CertificationsForm: React.FC<CertificationsFormProps> = ({
                     name="expirationDate"
                     value={currentCertification.expirationDate}
                     onChange={handleCertificationChange}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
                   />
                 </div>
               )}
@@ -255,7 +255,7 @@ const CertificationsForm: React.FC<CertificationsFormProps> = ({
                   name="credentialId"
                   value={currentCertification.credentialId}
                   onChange={handleCertificationChange}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
                   placeholder="e.g., ABC123XYZ"
                 />
               </div>
@@ -270,7 +270,7 @@ const CertificationsForm: React.FC<CertificationsFormProps> = ({
                   name="credentialURL"
                   value={currentCertification.credentialURL}
                   onChange={handleCertificationChange}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
                   placeholder="e.g., https://www.example.com/verify/ABC123XYZ"
                 />
               </div>
@@ -287,7 +287,7 @@ const CertificationsForm: React.FC<CertificationsFormProps> = ({
               <button
                 type="button"
                 onClick={saveCertification}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700"
               >
                 {isEditMode ? 'Update' : 'Save'}
               </button>

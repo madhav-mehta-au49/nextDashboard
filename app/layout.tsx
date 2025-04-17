@@ -1,5 +1,4 @@
 import "styles/tailwind.css"
-import { Provider } from "@/components/ui/provider"
 import Providers from "./providers"
 
 export default function RootLayout(props: { children: React.ReactNode }) {
@@ -7,7 +6,7 @@ export default function RootLayout(props: { children: React.ReactNode }) {
   return (
     <html suppressHydrationWarning>
       <body>
-        <Provider><Providers>{children}</Providers></Provider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   )

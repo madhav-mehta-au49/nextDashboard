@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { FiUpload, FiCheckCircle } from "react-icons/fi";
 import { useRouter } from "next/navigation";
-import EmployeeHeader from "../../../components/header";
-import SubHeader from "../../../components/subheader";
-import Footer from "../../../components/footer";
+import EmployeeHeader from "../../../../../components/EmployeeHeader";
+import SubHeader from "../../../../../components/subheader";
+import Footer from "../../../../../components/footer";
 
 export default function ApplyPage() {
   const methods = useForm();
@@ -18,7 +18,7 @@ export default function ApplyPage() {
     { id: 2, title: "UI/UX Designer", status: "Shortlisted" },
   ]);
 
-  const jobTitle = "Software Engineer"; 
+  const jobTitle = "Software Engineer";
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {

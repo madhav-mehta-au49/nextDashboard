@@ -18,6 +18,9 @@ import {
   FaStar,
   FaCertificate
 } from 'react-icons/fa';
+import Header from '@/app/web/components/header';
+import SubHeader from '@/components/subheader';
+import Footer from '@/components/footer';
 
 // This would typically come from an API call
 const getMockCandidateData = (id: string) => {
@@ -153,7 +156,7 @@ export default function CandidateProfile() {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="flex flex-col items-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500"></div>
           <p className="mt-4 text-gray-600">Loading profile...</p>
         </div>
       </div>
@@ -167,7 +170,7 @@ export default function CandidateProfile() {
           <h2 className="text-xl font-bold text-red-600 mb-4">Error Loading Profile</h2>
           <p>{error || 'Candidate profile not found'}</p>
           <button
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            className="mt-4 px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors"
             onClick={() => window.history.back()}
           >
             Go Back
@@ -179,6 +182,8 @@ export default function CandidateProfile() {
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900 min-h-screen">
+      <Header />
+      <SubHeader />
       {/* Cover Image */}
       <div className="relative h-[200px] md:h-[250px] overflow-hidden">
         <div
@@ -218,13 +223,13 @@ export default function CandidateProfile() {
                 </div>
 
                 <div className="flex flex-wrap gap-3 mt-4">
-                  <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                  <button className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors">
                     Connect
                   </button>
-                  <button className="px-4 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition-colors">
+                  <button className="px-4 py-2 border border-teal-600 text-teal-600 rounded-md hover:bg-teal-50 transition-colors">
                     Message
                   </button>
-                  <button className="p-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition-colors">
+                  <button className="p-2 border border-teal-600 text-teal-600 rounded-md hover:bg-teal-50 transition-colors">
                     <FaEdit />
                   </button>
                 </div>
@@ -242,8 +247,8 @@ export default function CandidateProfile() {
                 <div className="flex">
                   <button
                     className={`px-6 py-3 text-sm font-medium ${activeTab === 'profile'
-                        ? 'text-blue-600 border-b-2 border-blue-600'
-                        : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'text-teal-600 border-b-2 border-teal-600'
+                      : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
                       }`}
                     onClick={() => setActiveTab('profile')}
                   >
@@ -251,8 +256,8 @@ export default function CandidateProfile() {
                   </button>
                   <button
                     className={`px-6 py-3 text-sm font-medium ${activeTab === 'activity'
-                        ? 'text-blue-600 border-b-2 border-blue-600'
-                        : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'text-teal-600 border-b-2 border-teal-600'
+                      : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
                       }`}
                     onClick={() => setActiveTab('activity')}
                   >
@@ -271,7 +276,7 @@ export default function CandidateProfile() {
                         {candidateData.about}
                       </div>
                       <button
-                        className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
+                        className="mt-2 text-teal-600 hover:text-teal-800 text-sm font-medium flex items-center"
                         onClick={() => setIsAboutOpen(!isAboutOpen)}
                       >
                         Show {isAboutOpen ? 'Less' : 'More'}
@@ -294,7 +299,7 @@ export default function CandidateProfile() {
                               href={item.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
+                              className="text-teal-600 hover:text-teal-800 text-sm flex items-center"
                             >
                               View <FaExternalLinkAlt className="ml-1 text-xs" />
                             </a>
@@ -306,7 +311,7 @@ export default function CandidateProfile() {
                     {/* Experience Section */}
                     <div className="mb-8">
                       <div className="flex items-center mb-4">
-                        <FaBriefcase className="text-blue-600 mr-2" />
+                        <FaBriefcase className="text-teal-600 mr-2" />
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Experience</h3>
                       </div>
                       <hr className="mb-4 border-gray-200 dark:border-gray-700" />
@@ -333,7 +338,7 @@ export default function CandidateProfile() {
                     {/* Education Section */}
                     <div className="mb-8">
                       <div className="flex items-center mb-4">
-                        <FaSchool className="text-blue-600 mr-2" />
+                        <FaSchool className="text-teal-600 mr-2" />
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Education</h3>
                       </div>
                       <hr className="mb-4 border-gray-200 dark:border-gray-700" />
@@ -355,7 +360,7 @@ export default function CandidateProfile() {
                     {/* Certifications Section */}
                     <div className="mb-8">
                       <div className="flex items-center mb-4">
-                        <FaCertificate className="text-blue-600 mr-2" />
+                        <FaCertificate className="text-teal-600 mr-2" />
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Certifications</h3>
                       </div>
                       <hr className="mb-4 border-gray-200 dark:border-gray-700" />
@@ -379,7 +384,7 @@ export default function CandidateProfile() {
                                 href={cert.credentialURL}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-800 text-sm flex items-center mt-1"
+                                className="text-teal-600 hover:text-teal-800 text-sm flex items-center mt-1"
                               >
                                 Show credential <FaExternalLinkAlt className="ml-1 text-xs" />
                               </a>
@@ -402,12 +407,12 @@ export default function CandidateProfile() {
                               <p className="font-medium text-sm text-gray-900 dark:text-white">
                                 {skillItem.skill}
                               </p>
-                              <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
+                              <span className="bg-teal-100 text-teal-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-teal-900 dark:text-teal-300">
                                 {skillItem.endorsements}
                               </span>
                             </div>
                             <div className="flex items-center mt-1">
-                              <FaCheckCircle className="text-blue-500 text-xs mr-1" />
+                              <FaCheckCircle className="text-teal-500 text-xs mr-1" />
                               <p className="text-xs text-gray-600 dark:text-gray-400">
                                 {skillItem.endorsements} endorsements
                               </p>
@@ -497,7 +502,7 @@ export default function CandidateProfile() {
                     />
                     <label
                       htmlFor="toggle"
-                      className="block h-6 rounded-full bg-gray-300 cursor-pointer peer-checked:bg-blue-500 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all"
+                      className="block h-6 rounded-full bg-gray-300 cursor-pointer peer-checked:bg-teal-500 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all"
                     ></label>
                   </div>
                 </div>
@@ -510,7 +515,7 @@ export default function CandidateProfile() {
                 </p>
 
                 <div className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full mb-2">
-                  <div className="w-[85%] h-full bg-blue-500 rounded-full"></div>
+                  <div className="w-[85%] h-full bg-teal-500 rounded-full"></div>
                 </div>
 
                 <p className="text-xs text-gray-600 dark:text-gray-400 mb-4">
@@ -574,7 +579,7 @@ export default function CandidateProfile() {
                   ))}
                 </div>
 
-                <button className="w-full text-blue-600 hover:text-blue-800 text-sm font-medium mt-4">
+                <button className="w-full text-teal-600 hover:text-teal-800 text-sm font-medium mt-4">
                   View More
                 </button>
               </div>
@@ -582,15 +587,7 @@ export default function CandidateProfile() {
           </div>
         </div>
       </div>
-
-      {/* Footer */}
-      <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4 text-center">
-        <div className="max-w-7xl mx-auto px-4">
-          <p className="text-xs text-gray-600 dark:text-gray-400">
-            © {new Date().getFullYear()} Professional Network. All rights reserved.
-          </p>
-        </div>
-      </div>
+      <Footer />
     </div>
   );
 }

@@ -1,12 +1,9 @@
 "use client";
 
-import { Box, Flex, HStack, Image, Text, VStack } from "@chakra-ui/react";
-import { useState } from "react";
-import { FiBookmark, FiShare2, FiThumbsUp, FiSend } from "react-icons/fi";
-import { ButtonCustom } from "@/components/ui/button-custom";
-import { toaster } from "@/components/ui/toaster";
-import { Tooltip } from "@/components/ui/tooltip";
+import React, { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import { FiBookmark, FiShare2, FiThumbsUp, FiSend, FiMapPin } from "react-icons/fi";
 
 interface Job {
   id: string;
@@ -24,119 +21,92 @@ const JobListingCard = ({ id, title, company, location, logoUrl, jobUrl, descrip
 
   const handleLike = () => {
     setLikes(prev => prev + 1);
-    toaster.create({
-      title: "Liked!",
-      description: "You have liked this job listing.",
-      type: "success",
-      duration: 2000,
-      meta: { closable: true }
-    });
+    // Toast notification would go here
   };
 
   const handleBookmark = () => {
     setBookmarked(prev => !prev);
-    toaster.create({
-      title: bookmarked ? "Bookmark Removed" : "Bookmarked!",
-      description: bookmarked ? "Job removed from bookmarks." : "Job added to bookmarks.",
-      type: bookmarked ? "info" : "success",
-      duration: 2000,
-      meta: { closable: true }
-    });
+    // Toast notification would go here
   };
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(jobUrl);
-    toaster.create({
-      title: "Link Copied!",
-      description: "Job link copied to clipboard.",
-      type: "success",
-      duration: 2000,
-      meta: { closable: true }
-    });
+    // Toast notification would go here
   };
 
   return (
-    <Box
-      borderWidth="1px"
-      borderRadius="lg"
-      p={6}
-      width="100%"
-      height="100%"
-      minHeight="280px"
-      _hover={{
-        transform: "translateY(-4px)",
-        shadow: "2xl",
-        boxShadow: "0 25px 50px -12px #14B8A6"
-      }}
-      transition="all 0.2s"
-      position="relative"
-      bg="white"
-    >
-      <Flex alignItems="center" mb={4}>
-        <Image
-          src={logoUrl}
-          alt={`${company} logo`}
-          boxSize="50px"
-          borderRadius="full"
-          objectFit="cover"
-          mr={4}
-        />
-        <VStack align="start" gap={1}>
-          <Text fontSize="xl" fontWeight="bold" lineHeight="1.4" lineClamp={2}>{title}</Text>
-          <Text fontSize="sm" color="gray.500">{company}</Text>
-        </VStack>
-      </Flex>
+    <div className="bg-white border border-gray-200 rounded-lg p-6 w-full h-full min-h-[280px] hover:transform hover:-translate-y-1 hover:shadow-xl hover:shadow-teal-100 transition-all duration-300 relative">
+      <div className="flex items-center mb-4">
+        <div className="relative w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex-shrink-0 mr-4">
+          {logoUrl ? (
+            <Image
+              src={logoUrl}
+              alt={`${company} logo`}
+              fill
+              className="object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-teal-100 text-teal-700 font-bold">
+              {company.charAt(0)}
+            </div>
+          )}
+        </div>
+        <div className="flex flex-col">
+          <h2 className="text-xl font-bold text-gray-900 line-clamp-2">{title}</h2>
+          <p className="text-sm text-gray-500">{company}</p>
+        </div>
+      </div>
 
-      <Text fontSize="md" color="gray.600" lineHeight="1.6" lineClamp={3} mb={4}>
+      <p className="text-md text-gray-600 line-clamp-3 mb-4">
         {description}
-      </Text>
+      </p>
 
-      <HStack justify="space-between" mb={4}>
-        <Text fontSize="xs" color="gray.500">{location}</Text>
-        <Link href={`/user/jobs/apply/${id}`} passHref>
-          <ButtonCustom
-            intent="solid"
-            size="sm"
-            text="Apply Now"
-            icon={<FiSend className="size-3.5" />}
-          />
-        </Link>
-      </HStack>
+      <div className="flex items-center text-sm text-gray-500 mb-4">
+        <FiMapPin className="mr-1 text-teal-500" />
+        <span>{location}</span>
+      </div>
 
-      <HStack gap={2}>
-        <Tooltip content="Like">
-          <ButtonCustom
-            intent="outline"
-            size="sm"
-            text={likes.toString()}
-            icon={<FiThumbsUp className="size-3" />}
+      <div className="flex flex-wrap gap-2 mb-6">
+        <span className="px-2 py-1 bg-teal-50 text-teal-700 text-xs font-medium rounded-full">Full-time</span>
+        <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">Remote</span>
+        <span className="px-2 py-1 bg-teal-50 text-teal-700 text-xs font-medium rounded-full">Senior Level</span>
+      </div>
+
+      <div className="flex justify-between items-center mt-auto">
+        <div className="flex space-x-2">
+          <button 
             onClick={handleLike}
-            className="size-8 hover:scale-110 hover:bg-gray-100 hover:opacity-90 transition-all duration-200"
-          />
-        </Tooltip>
-        <Tooltip content="Bookmark">
-          <ButtonCustom
-            intent={bookmarked ? "solid" : "outline"}
-            size="sm"
-            text=""
-            icon={<FiBookmark className="size-3" />}
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Like job"
+          >
+            <FiThumbsUp className={`h-5 w-5 ${likes > 0 ? 'text-teal-500' : 'text-gray-400'}`} />
+            {likes > 0 && <span className="ml-1 text-xs text-gray-500">{likes}</span>}
+          </button>
+          <button 
             onClick={handleBookmark}
-            className="size-8 hover:scale-110 hover:bg-gray-100 hover:opacity-90 transition-all duration-200"
-          />
-        </Tooltip>
-        <Tooltip content="Copy Link">
-          <ButtonCustom
-            intent="outline"
-            size="sm"
-            text=""
-            icon={<FiShare2 className="size-3" />}
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Bookmark job"
+          >
+            <FiBookmark className={`h-5 w-5 ${bookmarked ? 'text-teal-500 fill-teal-500' : 'text-gray-400'}`} />
+          </button>
+          <button 
             onClick={handleCopyLink}
-            className="size-8 hover:scale-110 hover:bg-gray-100 hover:opacity-90 transition-all duration-200"
-          />
-        </Tooltip>
-      </HStack>
-    </Box>
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Share job"
+          >
+            <FiShare2 className="h-5 w-5 text-gray-400" />
+          </button>
+        </div>
+        <Link 
+          href={`/jobs/${id}`}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+        >
+          Apply Now
+        </Link>
+      </div>
+    </div>
   );
 };
 
 export default JobListingCard;
+

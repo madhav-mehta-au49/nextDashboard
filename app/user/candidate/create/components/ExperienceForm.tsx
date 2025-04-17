@@ -78,7 +78,7 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({
             setIsEditMode(false);
             setShowExperienceModal(true);
           }}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm flex items-center"
+          className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 text-sm flex items-center"
         >
           <FaPlus className="mr-1" /> Add Experience
         </button>
@@ -104,7 +104,7 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({
               setIsEditMode(false);
               setShowExperienceModal(true);
             }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm inline-flex items-center"
+            className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 text-sm inline-flex items-center"
           >
             <FaPlus className="mr-1" /> Add Experience
           </button>
@@ -131,7 +131,7 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({
                   <button
                     type="button"
                     onClick={() => editExperience(exp.id)}
-                    className="text-blue-600 hover:text-blue-800"
+                    className="text-teal-600 hover:text-teal-800"
                   >
                     Edit
                   </button>
@@ -172,7 +172,7 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({
                   value={currentExperience.title}
                   onChange={handleExperienceChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
                   placeholder="e.g., Software Engineer"
                 />
               </div>
@@ -188,7 +188,7 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({
                   value={currentExperience.company}
                   onChange={handleExperienceChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
                   placeholder="e.g., Tech Company Inc."
                 />
               </div>
@@ -203,7 +203,7 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({
                   name="location"
                   value={currentExperience.location}
                   onChange={handleExperienceChange}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
                   placeholder="e.g., San Francisco, CA"
                 />
               </div>
@@ -214,7 +214,7 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({
                   id="current"
                   checked={currentExperience.current}
                   onChange={handleExperienceCheckbox}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
                 />
                 <label htmlFor="current" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
                   I currently work here
@@ -233,7 +233,7 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({
                     value={currentExperience.startDate}
                     onChange={handleExperienceChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
                     />
                   </div>
                   
@@ -249,7 +249,7 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({
                         value={currentExperience.endDate}
                         onChange={handleExperienceChange}
                         required={!currentExperience.current}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
                       />
                     </div>
                   )}
@@ -265,7 +265,7 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({
                     value={currentExperience.description}
                     onChange={handleExperienceChange}
                     rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
                     placeholder="Describe your responsibilities and achievements..."
                   />
                 </div>
@@ -282,7 +282,7 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({
                 <button
                   type="button"
                   onClick={saveExperience}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700"
                 >
                   {isEditMode ? 'Update' : 'Save'}
                 </button>

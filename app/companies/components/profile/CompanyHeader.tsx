@@ -1,19 +1,14 @@
 import React from 'react';
+import Image from 'next/image';
 import { 
-  Box, 
-  Flex, 
-  Heading, 
-  Text, 
-  Button, 
-  HStack, 
-  VStack, 
-  Image, 
-  Badge,
-} from '@chakra-ui/react';
-import { FiMapPin, FiUsers, FiGlobe, FiHeart, FiShare2, FiBookmark } from 'react-icons/fi';
+  MapPin, 
+  Users, 
+  Globe, 
+  Heart, 
+  Share2, 
+  Bookmark 
+} from 'lucide-react';
 import { Company } from '../../types';
-import { useColorModeValue } from '@/components/ui/color-mode';
-import { Tooltip } from '@/components/Tooltip/Tooltip';
 
 interface CompanyHeaderProps {
   company: Company;
@@ -26,142 +21,107 @@ export const CompanyHeader: React.FC<CompanyHeaderProps> = ({
   isFollowing, 
   onToggleFollow 
 }) => {
-  const bgColor = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-  
   return (
-    <Box 
-      bg={bgColor} 
-      borderWidth="1px" 
-      borderColor={borderColor} 
-      borderRadius="lg" 
-      overflow="hidden"
-      shadow="sm"
-      mb={6}
-    >
-      <Flex 
-        direction={{ base: "column", md: "row" }} 
-        p={6} 
-        gap={6}
-      >
-        <VStack align="flex-start" gap={4} flex={1}>
-          <Heading as="h1" size="xl">
-            {company.name}
-          </Heading>
-          
-          <Text color="gray.600" fontSize="lg">
-            {company.industry}
-          </Text>
-          
-          <HStack gap={6} flexWrap="wrap">
-            <Flex align="center" gap={2}>
-              <FiMapPin color="gray.500" />
-              <Text color="gray.600">{company.headquarters}</Text>
-            </Flex>
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm overflow-hidden mb-6">
+      <div className="p-6">
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Company Info */}
+          <div className="flex-1 space-y-4">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+              {company.name}
+            </h1>
             
-            <Flex align="center" gap={2}>
-              <FiUsers color="gray.500" />
-              <Text color="gray.600">{company.employees.toLocaleString()} employees</Text>
-            </Flex>
+            <p className="text-lg text-gray-600 dark:text-gray-300">
+              {company.industry}
+            </p>
             
-            <Flex align="center" gap={2}>
-              <FiGlobe color="gray.500" />
-              <Text color="gray.600" as="a" href={company.website} target="_blank" rel="noopener noreferrer">
-                {company.website.replace(/^https?:\/\//, '')}
-              </Text>
-            </Flex>
-          </HStack>
-          
-          <HStack gap={3}>
-            <Badge colorScheme="blue" px={2} py={1} borderRadius="full">
-              {company.size}
-            </Badge>
-            <Badge colorScheme="green" px={2} py={1} borderRadius="full">
-              Founded {company.founded}
-            </Badge>
-          </HStack>
-          
-          <HStack gap={3} pt={2}>
-            <Button
-              leftIcon={<FiHeart fill={isFollowing ? "currentColor" : "none"} />}
-              colorScheme={isFollowing ? "red" : "gray"}
-              variant={isFollowing ? "solid" : "outline"}
-              onClick={onToggleFollow}
-            >
-              {isFollowing ? 'Following' : 'Follow'}
-            </Button>
+            <div className="flex flex-wrap gap-6">
+              <div className="flex items-center text-gray-600 dark:text-gray-400">
+                <MapPin className="h-4 w-4 mr-2" />
+                <span>{company.headquarters}</span>
+              </div>
+              
+              <div className="flex items-center text-gray-600 dark:text-gray-400">
+                <Users className="h-4 w-4 mr-2" />
+                <span>{company.employees.toLocaleString()} employees</span>
+              </div>
+              
+              <div className="flex items-center text-gray-600 dark:text-gray-400">
+                <Globe className="h-4 w-4 mr-2" />
+                <a 
+                  href={company.website} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  {company.website.replace(/^https?:\/\//, '')}
+                </a>
+              </div>
+            </div>
             
-            <Tooltip label="Share company profile">
-              <Button leftIcon={<FiShare2 />} variant="outline">
-                Share
-              </Button>
-            </Tooltip>
+            <div className="flex flex-wrap gap-3">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                {company.size}
+              </span>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                Founded {company.founded}
+              </span>
+            </div>
             
-            <Tooltip label="Save to your list">
-              <Button leftIcon={<FiBookmark />} variant="outline">
-                Save
-              </Button>
-            </Tooltip>
-          </HStack>
-        </VStack>
-        
-        <Box>
-          <Flex 
-            direction="column" 
-            align="center" 
-            bg={useColorModeValue('gray.50', 'gray.700')} 
-            p={4} 
-            borderRadius="md"
-            minW="180px"
-          >
-            <Text fontSize="sm" color="gray.500" mb={1}>Followers</Text>
-            <Text fontSize="2xl" fontWeight="bold" mb={3}>
-              {company.followers.toLocaleString()}
-            </Text>
-            
-            <Box 
-              position="relative" 
-              width="100%" 
-              height="60px" 
-              mb={2}
-            >
-              {/* This would be a follower growth chart in a real app */}
-              <Box 
-                position="absolute" 
-                bottom={0} 
-                left={0} 
-                right={0} 
-                height="40px" 
-                bg="blue.100" 
-                borderRadius="md"
+            <div className="flex flex-wrap gap-3 pt-2">
+              <button
+                onClick={onToggleFollow}
+                className={`inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  isFollowing 
+                    ? 'bg-red-600 text-white hover:bg-red-700' 
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600'
+                }`}
               >
-                <Box 
-                  position="absolute" 
-                  bottom={0} 
-                  left={0} 
-                  width="70%" 
-                  height="60%" 
-                  bg="blue.400" 
-                  borderRadius="md"
-                />
-                <Box 
-                  position="absolute" 
-                  bottom={0} 
-                  left="70%" 
-                  width="30%" 
-                  height="40%" 
-                  bg="blue.300" 
-                  borderRadius="md"
-                />
-              </Box>
-            </Box>
-            
-            <Text fontSize="xs" color="gray.500">
-              +12% growth this month
-            </Text>
-          </Flex>
-        </Box>
-      </Flex>
-    </Box>
+                <Heart className={`mr-2 h-4 w-4 ${isFollowing ? 'fill-current' : ''}`} />
+                {isFollowing ? 'Following' : 'Follow'}
+              </button>
+              
+              <button 
+                className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 transition-all duration-200 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
+                title="Share company profile"
+              >
+                <Share2 className="mr-2 h-4 w-4" />
+                Share
+              </button>
+              
+              <button 
+                className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 transition-all duration-200 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
+                title="Save to your list"
+              >
+                <Bookmark className="mr-2 h-4 w-4" />
+                Save
+              </button>
+            </div>
+          </div>
+          
+          {/* Followers Stats */}
+          <div className="hidden md:block">
+            <div className="flex flex-col items-center bg-gray-50 dark:bg-gray-700 p-5 rounded-lg min-w-[180px]">
+              <span className="text-sm text-gray-500 dark:text-gray-400 mb-1">Followers</span>
+              <span className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+                {company.followers.toLocaleString()}
+              </span>
+              
+              {/* Follower Growth Chart (Simplified) */}
+              <div className="relative w-full h-[60px] mb-2">
+                <div className="absolute bottom-0 left-0 right-0 h-[40px] bg-blue-100 dark:bg-blue-900 rounded-md overflow-hidden">
+                  <div className="absolute bottom-0 left-0 w-[70%] h-[60%] bg-blue-400 dark:bg-blue-600 rounded-md"></div>
+                  <div className="absolute bottom-0 left-[70%] w-[30%] h-[40%] bg-blue-300 dark:bg-blue-500 rounded-md"></div>
+                </div>
+              </div>
+              
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                +12% growth this month
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };

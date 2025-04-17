@@ -1,58 +1,36 @@
 import React from 'react';
-import { VStack, IconButton } from '@chakra-ui/react';
 import { FiStar, FiMessageSquare, FiShare2, FiBookmark } from 'react-icons/fi';
-import { useColorModeValue } from '@/components/ui/color-mode';
-import { Tooltip } from '@/components/ui/tooltip';
 
 export const CandidateActions: React.FC = () => {
-  const iconColor = useColorModeValue('gray.600', 'gray.400');
-  const hoverBg = useColorModeValue('gray.100', 'gray.700');
-
   return (
-    <VStack gap={2}>
-      <Tooltip label="Add to favorites" placement="left">
-        <IconButton
-          aria-label="Add to favorites"
-          variant="ghost"
-          color={iconColor}
-          _hover={{ bg: hoverBg, color: 'yellow.500' }}
-        >
-          <FiStar />
-        </IconButton>
-      </Tooltip>
+    <div className="flex flex-row md:flex-col gap-2">
+      <button 
+        className="group p-2 rounded-full bg-white border border-gray-200 shadow-sm hover:bg-yellow-50 hover:border-yellow-200 transition-colors"
+        title="Add to favorites"
+      >
+        <FiStar className="w-5 h-5 text-gray-600 group-hover:text-yellow-500" />
+      </button>
       
-      <Tooltip label="Message" placement="left">
-        <IconButton
-          aria-label="Message"
-          variant="ghost"
-          color={iconColor}
-          _hover={{ bg: hoverBg, color: 'blue.500' }}
-        >
-          <FiMessageSquare />
-        </IconButton>
-      </Tooltip>
+      <button 
+        className="group p-2 rounded-full bg-white border border-gray-200 shadow-sm hover:bg-blue-50 hover:border-blue-200 transition-colors"
+        title="Message"
+      >
+        <FiMessageSquare className="w-5 h-5 text-gray-600 group-hover:text-blue-500" />
+      </button>
       
-      <Tooltip label="Share profile" placement="left">
-        <IconButton
-          aria-label="Share profile"
-          variant="ghost"
-          color={iconColor}
-          _hover={{ bg: hoverBg, color: 'green.500' }}
-        >
-          <FiShare2 />
-        </IconButton>
-      </Tooltip>
+      <button 
+        className="group p-2 rounded-full bg-white border border-gray-200 shadow-sm hover:bg-green-50 hover:border-green-200 transition-colors"
+        title="Share profile"
+      >
+        <FiShare2 className="w-5 h-5 text-gray-600 group-hover:text-green-500" />
+      </button>
       
-      <Tooltip label="Save profile" placement="left">
-        <IconButton
-          aria-label="Save profile"
-          variant="ghost"
-          color={iconColor}
-          _hover={{ bg: hoverBg, color: 'purple.500' }}
-        >
-          <FiBookmark />
-        </IconButton>
-      </Tooltip>
-    </VStack>
+      <button 
+        className="group p-2 rounded-full bg-white border border-gray-200 shadow-sm hover:bg-purple-50 hover:border-purple-200 transition-colors"
+        title="Save profile"
+      >
+        <FiBookmark className="w-5 h-5 text-gray-600 group-hover:text-purple-500" />
+      </button>
+    </div>
   );
 };

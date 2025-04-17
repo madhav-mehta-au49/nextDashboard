@@ -1,11 +1,11 @@
 "use client";
 
 import { Box, Container, Flex } from "@chakra-ui/react";
-import Footer from "../components/footer";
-import Header from "../components/header";
+import Footer from "../../../components/footer";
+import Header from "../../../components/EmployeeHeader";
 import { JobGrid } from "../components/jobs/jobGrid";
-import FiltersSidebar from "../components/menu";
-import SubHeader from "../components/subheader";
+import FiltersSidebar from "../../../components/menu";
+import SubHeader from "../../../components/subheader";
 
 const filterSections = [
   {

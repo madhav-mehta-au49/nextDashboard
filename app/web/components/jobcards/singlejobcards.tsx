@@ -1,7 +1,7 @@
 import { Card, Text } from "@chakra-ui/react"
 import Link from "next/link"
 import { FiEye, FiSend } from "react-icons/fi"
-import { ButtonCustom } from "@/components/ui/button-custom"
+// import { ButtonCustom } from "@/components/ui/button-custom"
 
 export const SingleJobCards = ({ title, description, jobId }: { title: string; description: string; jobId: string }) => {
   return (

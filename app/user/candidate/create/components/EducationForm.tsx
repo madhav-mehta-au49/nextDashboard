@@ -78,7 +78,7 @@ const EducationForm: React.FC<EducationFormProps> = ({
             setIsEditMode(false);
             setShowEducationModal(true);
           }}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm flex items-center"
+          className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 text-sm flex items-center"
         >
           <FaPlus className="mr-1" /> Add Education
         </button>
@@ -104,7 +104,7 @@ const EducationForm: React.FC<EducationFormProps> = ({
               setIsEditMode(false);
               setShowEducationModal(true);
             }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm inline-flex items-center"
+            className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 text-sm inline-flex items-center"
           >
             <FaPlus className="mr-1" /> Add Education
           </button>
@@ -130,7 +130,7 @@ const EducationForm: React.FC<EducationFormProps> = ({
                   <button
                     type="button"
                     onClick={() => editEducation(edu.id)}
-                    className="text-blue-600 hover:text-blue-800"
+                    className="text-teal-600 hover:text-teal-800"
                   >
                     Edit
                   </button>
@@ -171,7 +171,7 @@ const EducationForm: React.FC<EducationFormProps> = ({
                   value={currentEducation.institution}
                   onChange={handleEducationChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
                   placeholder="e.g., Stanford University"
                 />
               </div>
@@ -187,7 +187,7 @@ const EducationForm: React.FC<EducationFormProps> = ({
                   value={currentEducation.degree}
                   onChange={handleEducationChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
                   placeholder="e.g., Bachelor of Science"
                 />
               </div>
@@ -202,7 +202,7 @@ const EducationForm: React.FC<EducationFormProps> = ({
                   name="field"
                   value={currentEducation.field}
                   onChange={handleEducationChange}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
                   placeholder="e.g., Computer Science"
                 />
               </div>
@@ -213,7 +213,7 @@ const EducationForm: React.FC<EducationFormProps> = ({
                   id="eduCurrent"
                   checked={currentEducation.current}
                   onChange={handleEducationCheckbox}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
                 />
                 <label htmlFor="eduCurrent" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
                   I am currently studying here
@@ -232,7 +232,7 @@ const EducationForm: React.FC<EducationFormProps> = ({
                     value={currentEducation.startDate}
                     onChange={handleEducationChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
                   />
                 </div>
                 
@@ -248,7 +248,7 @@ const EducationForm: React.FC<EducationFormProps> = ({
                       value={currentEducation.endDate}
                       onChange={handleEducationChange}
                       required={!currentEducation.current}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
                     />
                   </div>
                 )}
@@ -264,7 +264,7 @@ const EducationForm: React.FC<EducationFormProps> = ({
                   value={currentEducation.description}
                   onChange={handleEducationChange}
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
                   placeholder="Describe your studies, achievements, activities..."
                 />
               </div>
@@ -281,7 +281,7 @@ const EducationForm: React.FC<EducationFormProps> = ({
               <button
                 type="button"
                 onClick={saveEducation}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700"
               >
                 {isEditMode ? 'Update' : 'Save'}
               </button>

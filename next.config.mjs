@@ -6,13 +6,15 @@ import { env } from "./env.mjs"
  * @type {import('next').NextConfig}
  */
 const config = withPlugins([[withBundleAnalyzer({ enabled: env.ANALYZE })]], {
+  images: {
+    domains: ['via.placeholder.com'],
+  },
   reactStrictMode: true,
   logging: {
     fetches: {
       fullUrl: true,
     },
   },
-  experimental: { instrumentationHook: true },
   rewrites() {
     return [
       { source: "/healthz", destination: "/api/health" },

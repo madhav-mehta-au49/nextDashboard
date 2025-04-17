@@ -1,14 +1,15 @@
 "use client"
 
-import { Box, Container, Heading, HStack, Spacer, VStack } from "@chakra-ui/react"
-import Footer from '@/app/user/components/footer'
-import Header from '@/app/user/components/header'
-import SubHeader from '@/app/user/components/subheader'
+import { useState } from "react"
+import Footer from '../../../components/footer'
+import Header from '../../web/components/header'
+import SubHeader from '../../../components/subheader'
 import { CandidateCard } from "../components/candidates/list/CandidateCard"
 import { CandidateActions } from "../components/candidates/list/CandidateActions"
 import { CandidateFilterMenu } from "../components/candidates/list/CandidateFilterMenu"
 import { CandidateSort } from "../components/candidates/list/CandidateSort"
 import { RightSidebarCard } from '../components/candidates/list/SideCards'
+import EmployeeHeader from "@/components/EmployeeHeader"
 
 export default function CandidatesPage() {
     const candidates = [
@@ -75,23 +76,30 @@ export default function CandidatesPage() {
     ];
 
     return (
-        <>
+        <div className="min-h-screen bg-gray-50 flex flex-col">
             <Header />
+            <EmployeeHeader />
             <SubHeader />
-            <Container maxW="container.xl" py={8}>
-                <HStack mb={8} px={4}>
-                    <Heading size="xl" textAlign="center" color="blue.700" fontWeight="bold">Candidates</Heading>
-                    <Spacer />
-                    <HStack gap={4}>
+            
+            <main className="flex-grow container mx-auto px-4 py-8 max-w-7xl">
+                {/* Page Header */}
+                <div className="flex flex-col md:flex-row justify-between items-center mb-8">
+                    <h1 className="text-2xl md:text-3xl font-bold text-blue-700 mb-4 md:mb-0">
+                        Candidates
+                    </h1>
+                    <div className="flex gap-4">
                         <CandidateFilterMenu />
                         <CandidateSort />
-                    </HStack>
-                </HStack>
-                <HStack align="start" gap={8}>
-                    <VStack gap={6} align="stretch" width="75%">
+                    </div>
+                </div>
+                
+                {/* Main Content */}
+                <div className="flex flex-col lg:flex-row gap-8">
+                    {/* Candidates List */}
+                    <div className="w-full lg:w-3/4 space-y-6">
                         {candidates.map((candidate) => (
-                            <HStack key={candidate.candidateId} align="start" width="full">
-                                <Box flex={1}>
+                            <div key={candidate.candidateId} className="flex flex-col md:flex-row gap-4">
+                                <div className="flex-grow">
                                     <CandidateCard
                                         name={candidate.name}
                                         headline={candidate.headline}
@@ -103,24 +111,54 @@ export default function CandidatesPage() {
                                         profilePicture={candidate.profilePicture}
                                         availability={candidate.availability}
                                     />
-                                </Box>
-                                <Box>
+                                </div>
+                                <div className="self-start">
                                     <CandidateActions />
-                                </Box>
-                            </HStack>
+                                </div>
+                            </div>
                         ))}
-                    </VStack>
-                    <Box width="25%">
-                        <RightSidebarCard 
-                            featuredCandidates={featuredCandidates} 
-                            upcomingEvents={upcomingEvents} 
-                            careerResources={careerResources} 
-                            trendingSkills={trendingSkills} 
-                        />
-                    </Box>
-                </HStack>
-            </Container>
+                        
+                        {/* Pagination */}
+                        <div className="mt-8 flex justify-center">
+                            <nav className="flex items-center space-x-2">
+                                <button className="px-3 py-2 rounded-md border border-gray-300 text-gray-500 hover:bg-gray-50">
+                                    Previous
+                                </button>
+                                <button className="px-3 py-2 rounded-md bg-blue-600 text-white">
+                                    1
+                                </button>
+                                <button className="px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50">
+                                    2
+                                </button>
+                                <button className="px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50">
+                                    3
+                                </button>
+                                <span className="px-3 py-2 text-gray-500">...</span>
+                                <button className="px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50">
+                                    10
+                                </button>
+                                <button className="px-3 py-2 rounded-md border border-gray-300 text-gray-500 hover:bg-gray-50">
+                                    Next
+                                </button>
+                            </nav>
+                        </div>
+                    </div>
+                    
+                    {/* Sidebar */}
+                    <div className="w-full lg:w-1/4">
+                        <div className="sticky top-20">
+                            <RightSidebarCard
+                                featuredCandidates={featuredCandidates}
+                                upcomingEvents={upcomingEvents}
+                                careerResources={careerResources}
+                                trendingSkills={trendingSkills}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </main>
+            
             <Footer />
-        </>
+        </div>
     )
 }
