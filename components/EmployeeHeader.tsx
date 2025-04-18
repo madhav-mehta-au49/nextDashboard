@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { 
   CogIcon, 
-  QuestionMarkCircleIcon, 
+  HelpCircleIcon, 
   LogOutIcon, 
   UserIcon, 
   WalletIcon,
@@ -204,7 +204,7 @@ export const EmployeeHeader: React.FC = () => {
                   className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   onClick={() => setIsProfileMenuOpen(false)}
                 >
-                  <QuestionMarkCircleIcon className="mr-3 h-5 w-5 text-gray-400" />
+                  <HelpCircleIcon className="mr-3 h-5 w-5 text-gray-400" />
                   Help Center
                 </Link>
                 <Link 
