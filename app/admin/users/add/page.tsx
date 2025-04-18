@@ -1,54 +1,60 @@
 'use client'
 
-import { Box } from '@chakra-ui/react'
-import { Tabs } from '@chakra-ui/react'
+import { useState } from 'react'
 import { FiShield, FiUser } from 'react-icons/fi'
 import { AddUserPage, RoleAssignment } from '@/app/admin/users/components'
-import { StatHelpText, StatLabel, StatRoot } from '@/components/ui/stat'
 
 const AddUserPageWrapper = () => {
+    const [activeTab, setActiveTab] = useState('details')
+
     return (
-        <Box maxW="container.xl" mx="auto" py={8}>
+        <div className="max-w-7xl mx-auto py-8">
             <h1 className="text-2xl font-bold mb-4">Add New User</h1>
-            <Tabs.Root defaultValue="details">
-                <Tabs.List className="flex space-x-2 border-b border-gray-200 mb-6">
-                    <Tabs.Trigger value="details" className="group">
-                        <Box p={4} display="flex" alignItems="center" gap={2} _hover={{ bg: 'gray.50' }} borderRadius="md">
+            <div>
+                <div className="flex space-x-2 border-b border-gray-200 mb-6">
+                    <button
+                        onClick={() => setActiveTab('details')}
+                        className={`group ${activeTab === 'details' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600 hover:text-gray-800'}`}
+                    >
+                        <div className="p-4 flex items-center gap-2 hover:bg-gray-50 rounded-md">
                             <FiUser />
                             <span>User Details</span>
-                        </Box>
-                    </Tabs.Trigger>
-                    <Tabs.Trigger value="roles" className="group">
-                        <Box p={4} display="flex" alignItems="center" gap={2} _hover={{ bg: 'gray.50' }} borderRadius="md">
+                        </div>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('roles')}
+                        className={`group ${activeTab === 'roles' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600 hover:text-gray-800'}`}
+                    >
+                        <div className="p-4 flex items-center gap-2 hover:bg-gray-50 rounded-md">
                             <FiShield />
                             <span>Role Assignment</span>
-                        </Box>
-                    </Tabs.Trigger>
-                </Tabs.List>
+                        </div>
+                    </button>
+                </div>
 
-                <Box mt={6}>
-                    <Tabs.Content value="details">
-                        <Box bg="white" p={6} borderRadius="md" shadow="sm">
-                            <StatRoot>
-                                <StatLabel>User Information</StatLabel>
-                                <StatHelpText>Enter the new user's details</StatHelpText>
-                            </StatRoot>
+                <div className="mt-6">
+                    {activeTab === 'details' && (
+                        <div className="bg-white p-6 rounded-md shadow-sm">
+                            <div className="mb-4">
+                                <h3 className="text-lg font-medium">User Information</h3>
+                                <p className="text-sm text-gray-500">Enter the new user's details</p>
+                            </div>
                             <AddUserPage />
-                        </Box>
-                    </Tabs.Content>
+                        </div>
+                    )}
 
-                    <Tabs.Content value="roles">
-                        <Box bg="white" p={6} borderRadius="md" shadow="sm">
-                            <StatRoot>
-                                <StatLabel>Role Assignment</StatLabel>
-                                <StatHelpText>Assign roles and permissions to the new user</StatHelpText>
-                            </StatRoot>
+                    {activeTab === 'roles' && (
+                        <div className="bg-white p-6 rounded-md shadow-sm">
+                            <div className="mb-4">
+                                <h3 className="text-lg font-medium">Role Assignment</h3>
+                                <p className="text-sm text-gray-500">Assign roles and permissions to the new user</p>
+                            </div>
                             <RoleAssignment />
-                        </Box>
-                    </Tabs.Content>
-                </Box>
-            </Tabs.Root>
-        </Box>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
     )
 }
 

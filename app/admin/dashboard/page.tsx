@@ -1,6 +1,5 @@
 "use client"
 
-import { Grid } from "@chakra-ui/react"
 import { Bar, Line, Pie } from 'react-chartjs-2'
 import DashboardCard from "./components/DashboardCard"
 import AdminDashboard from "./components/DashboardGraph"
@@ -50,7 +49,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <Grid templateColumns="repeat(3, 1fr)" gap={6}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <DashboardCard
           label="Total Users"
           value={1234}
@@ -66,7 +65,7 @@ export default function DashboardPage() {
           value={789}
           helpText="Orders processed this month"
         />
-      </Grid>
+      </div>
       <AdminDashboard cardData={chartData} />
     </>
   )

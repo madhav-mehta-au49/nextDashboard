@@ -1,5 +1,4 @@
 "use client"
-import { Box, Text } from "@chakra-ui/react"
 import { useAdminContext } from "./contexts/AdminContext"
 import DashboardPage from "./dashboard/page"
 
@@ -7,12 +6,12 @@ const AdminDashboard = () => {
   const { settings } = useAdminContext()
   
   return (
-    <Box>
-      <Text fontSize="2xl" fontWeight="bold" mb={6}>
+    <div className="w-full">
+      <h1 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">
         Dashboard
-      </Text>
+      </h1>
       <DashboardPage />
-    </Box>
+    </div>
   )
 }
 

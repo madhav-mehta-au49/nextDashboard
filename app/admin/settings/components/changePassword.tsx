@@ -1,9 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Field } from '@/components/ui/field'
-import { toaster } from '@/components/ui/toaster'
 
 export function ChangePasswordForm() {
   const [passwords, setPasswords] = useState({
@@ -36,13 +33,8 @@ export function ChangePasswordForm() {
       })
 
       if (response.ok) {
-        toaster.create({
-          title: 'Success',
-          description: 'Password updated successfully',
-          type: 'success',
-          duration: 3000,
-          meta: { closable: true }
-        })
+        // Show success toast notification
+        alert('Password updated successfully')
         setPasswords({
           currentPassword: '',
           newPassword: '',
@@ -52,13 +44,8 @@ export function ChangePasswordForm() {
         throw new Error('Failed to update password')
       }
     } catch (error) {
-      toaster.create({
-        title: 'Error',
-        description: 'Failed to update password',
-        type: 'error',
-        duration: 3000,
-        meta: { closable: true }
-      })
+      // Show error toast notification
+      alert('Failed to update password')
     } finally {
       setLoading(false)
       setError('')
@@ -82,10 +69,10 @@ export function ChangePasswordForm() {
         </p>
       </div>
 
-      <Field
-        label="Current Password"
-        helperText="Enter your current password"
-      >
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">
+          Current Password
+        </label>
         <input
           type="password"
           value={passwords.currentPassword}
@@ -93,13 +80,13 @@ export function ChangePasswordForm() {
           className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         />
-      </Field>
+        <p className="text-xs text-gray-500">Enter your current password</p>
+      </div>
 
-      <Field
-        label="New Password"
-        errorText={error}
-        helperText="Enter your new password"
-      >
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">
+          New Password
+        </label>
         <input
           type="password"
           value={passwords.newPassword}
@@ -107,13 +94,14 @@ export function ChangePasswordForm() {
           className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         />
-      </Field>
+        {error && <p className="text-xs text-red-500">{error}</p>}
+        <p className="text-xs text-gray-500">Enter your new password</p>
+      </div>
 
-      <Field
-        label="Confirm Password"
-        errorText={error}
-        helperText="Re-enter your new password"
-      >
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">
+          Confirm Password
+        </label>
         <input
           type="password"
           value={passwords.confirmPassword}
@@ -121,16 +109,17 @@ export function ChangePasswordForm() {
           className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         />
-      </Field>
+        {error && <p className="text-xs text-red-500">{error}</p>}
+        <p className="text-xs text-gray-500">Re-enter your new password</p>
+      </div>
 
-      <Button
+      <button
         type="submit"
         disabled={loading || !passwords.currentPassword || !passwords.newPassword || !passwords.confirmPassword}
-        className="w-full"
-        variant="outline"
+        className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? 'Updating Password...' : 'Update Password'}
-      </Button>
+      </button>
     </form>
   )
 }

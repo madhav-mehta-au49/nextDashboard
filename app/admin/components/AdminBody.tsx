@@ -1,5 +1,4 @@
 "use client"
-import { Box } from "@chakra-ui/react";
 import { ReactNode } from "react";
 import { useSidebar } from "../contexts/SidebarContext";
 
@@ -11,17 +10,15 @@ const AdminBody = ({ children }: AdminBodyProps) => {
   const { isSidebarOpen } = useSidebar();
 
   return (
-    <Box minH="100vh" bg="gray.50" >
-      <Box
-        ml={isSidebarOpen ? "240px" : "0"}
-        transition="margin-left 0.2s"
-        pt="100px"
-        px={8}
-        py={20}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div
+        className={`transition-all duration-200 pt-[100px] px-8 py-20 ${
+          isSidebarOpen ? "ml-[240px]" : "ml-0"
+        }`}
       >
         {children}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

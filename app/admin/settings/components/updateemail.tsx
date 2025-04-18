@@ -1,9 +1,6 @@
 'use client'
 
-import { Button } from "@chakra-ui/react"
 import { useState } from 'react'
-import { Field } from '@/components/ui/field'
-import { toaster } from '@/components/ui/toaster'
 
 export const UpdateEmailForm = () => {
   const [email, setEmail] = useState('')
@@ -24,25 +21,15 @@ export const UpdateEmailForm = () => {
       })
 
       if (response.ok) {
-        toaster.create({
-          title: 'Success',
-          description: 'Email updated successfully',
-          type: 'success',
-          duration: 3000,
-          meta: { closable: true }
-        })
+        // Show success toast notification
+        alert('Email updated successfully')
         setEmail('')
       } else {
         throw new Error('Failed to update email')
       }
     } catch (error) {
-      toaster.create({
-        title: 'Error',
-        description: 'Failed to update email',
-        type: 'error',
-        duration: 3000,
-        meta: { closable: true }
-      })
+      // Show error toast notification
+      alert('Failed to update email')
     } finally {
       setLoading(false)
     }
@@ -50,11 +37,10 @@ export const UpdateEmailForm = () => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <Field
-        label="New Email Address"
-        helperText="Enter your new email address"
-        errorText={email.length > 0 && !email.includes('@') ? 'Please enter a valid email' : undefined}
-      >
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">
+          New Email Address
+        </label>
         <input
           type="email"
           value={email}
@@ -63,16 +49,19 @@ export const UpdateEmailForm = () => {
           placeholder="Enter new email"
           required
         />
-      </Field>
+        {email.length > 0 && !email.includes('@') && (
+          <p className="text-xs text-red-500">Please enter a valid email</p>
+        )}
+        <p className="text-xs text-gray-500">Enter your new email address</p>
+      </div>
 
-      <Button
+      <button
         type="submit"
         disabled={loading || !email.includes('@')}
-        className="w-full"
-        variant="outline"
+        className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? 'Updating...' : 'Update Email'}
-      </Button>
+      </button>
     </form>
   )
 }

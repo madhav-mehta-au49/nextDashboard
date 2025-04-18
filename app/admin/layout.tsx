@@ -1,13 +1,13 @@
 "use client"
 import "styles/tailwind.css"
-import { Box } from "@chakra-ui/react"
 import { createContext, useContext, useEffect, useState } from "react"
 import { z } from "zod"
-import { Provider } from "@/components/ui/provider"
 import AdminBody from "./components/AdminBody"
 import { AdminHeader } from "./components/AdminHeader"
 import AdminSidebar from "./components/AdminSidebar"
 import { SidebarProvider } from "./contexts/SidebarContext"
+
+// Remove the import: import { Provider } from "@/components/ui/provider"
 
 const AdminStateSchema = z.object({
   isAdmin: z.boolean(),
@@ -66,23 +66,40 @@ function AdminProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
+// Add a ThemeProvider for dark mode support
+function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const { theme } = useAdminContext();
+  
+  useEffect(() => {
+    // Apply dark mode class to document based on theme setting
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+  
+  return <>{children}</>;
+}
+
 export default function RootLayout(props: { children: React.ReactNode }) {
   const { children } = props
 
   return (
     <html suppressHydrationWarning>
-      <body>
-        <Provider>
-          <AdminProvider>
-            <SidebarProvider>
-              <Box minH="100vh" bg="gray.50">
+      <body className="antialiased">
+        {/* Remove the Provider wrapper */}
+        <AdminProvider>
+          <SidebarProvider>
+            <ThemeProvider>
+              <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
                 <AdminHeader />
                 <AdminSidebar />
                 <AdminBody>{children}</AdminBody>
-              </Box>
-            </SidebarProvider>
-          </AdminProvider>
-        </Provider>
+              </div>
+            </ThemeProvider>
+          </SidebarProvider>
+        </AdminProvider>
       </body>
     </html>
   )
