@@ -1,66 +1,43 @@
-import { Card, Text } from "@chakra-ui/react"
 import Link from "next/link"
 import { FiEye, FiSend } from "react-icons/fi"
-// import { ButtonCustom } from "@/components/ui/button-custom"
 
 export const SingleJobCards = ({ title, description, jobId }: { title: string; description: string; jobId: string }) => {
   return (
-    <Card.Root
-      width="100%"
-      height="100%"
-      minHeight="280px"
-      variant="elevated"
-      _hover={{
-        transform: "translateY(-4px)",
-        shadow: "2xl",
-        boxShadow: "0 25px 50px -12px #14B8A6"
-      }}
-      transition="all 0.2s"
+    <div 
+      className="w-full h-full min-h-[280px] flex flex-col justify-between bg-white rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 hover:shadow-teal-200/50 transition-all duration-200"
     >
-      <Card.Body gap="4" p={6}>
-        <Card.Title
-          fontSize="xl"
-          fontWeight="bold"
-          mb="4"
-          lineHeight="1.4"
-        >
-          <Text noOfLines={2}>
+      <div className="p-6 flex flex-col gap-4">
+        <h3 className="text-xl font-bold mb-4 leading-tight">
+          <p className="line-clamp-2">
             {title}
-          </Text>
-        </Card.Title>
-        <Card.Description
-          color="gray.600"
-          fontSize="md"
-          lineHeight="1.6"
-        >
-          <Text noOfLines={3}>
+          </p>
+        </h3>
+        <div className="text-gray-600 text-md leading-relaxed">
+          <p className="line-clamp-3">
             {description}
-          </Text>
-        </Card.Description>
-      </Card.Body>
-      <Card.Footer
-        justifyContent="space-between"
-        p={6}
-        borderTop="1px"
-        borderColor="gray.100"
+          </p>
+        </div>
+      </div>
+      <div 
+        className="flex justify-between p-6 border-t border-gray-100"
       >
         <Link href={`user/jobs/${jobId}`}>
-          <ButtonCustom
-            intent="outline"
-            size="sm"
-            text="View Details"
-            icon={<FiEye className="size-3.5" />}
-          />
+          <button
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-teal-700 bg-white border border-teal-500 rounded-md hover:bg-teal-50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-colors"
+          >
+            <FiEye className="w-3.5 h-3.5" />
+            View Details
+          </button>
         </Link>
         <Link href={`user/jobs/${jobId}/apply`}>
-          <ButtonCustom
-            intent="solid"
-            size="sm"
-            text="Apply Now"
-            icon={<FiSend className="size-3.5" />}
-          />
+          <button
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-teal-600 border border-transparent rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-colors"
+          >
+            <FiSend className="w-3.5 h-3.5" />
+            Apply Now
+          </button>
         </Link>
-      </Card.Footer>
-    </Card.Root>
+      </div>
+    </div>
   )
 }
