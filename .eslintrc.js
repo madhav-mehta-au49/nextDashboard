@@ -5,10 +5,15 @@ module.exports = {
   extends: [
     "next",
     "prettier",
-    // "react-app",
-    // "react-app/jest",
+    // Keep react-app but add a specific configuration for react-hooks
+    "react-app",
+    "react-app/jest",
     "plugin:storybook/recommended",
     "plugin:tailwindcss/recommended",
+  ],
+  plugins: [
+    // Explicitly add react-hooks plugin to control its configuration
+    "react-hooks"
   ],
   parserOptions: {
     babelOptions: {
@@ -16,6 +21,10 @@ module.exports = {
     },
   },
   rules: {
+    // Explicitly set react-hooks rules to avoid conflicts
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+    
     "tailwindcss/no-custom-classname": "off",
     "testing-library/prefer-screen-queries": "off",
     "@next/next/no-html-link-for-pages": "off",
