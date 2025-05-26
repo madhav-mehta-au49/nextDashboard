@@ -85,6 +85,24 @@ class User extends Authenticatable
     }
 
     /**
+ * Get the companies saved by the user.
+ */
+public function savedCompanies()
+{
+    return $this->belongsToMany(Company::class, 'saved_companies')
+                ->withTimestamps();
+}
+
+
+/**
+ * Get the company reviews written by the user.
+ */
+public function companyReviews()
+{
+    return $this->hasMany(CompanyReview::class);
+}
+
+    /**
      * Get the saved jobs for the user.
      */
     public function savedJobs()

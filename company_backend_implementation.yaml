@@ -1,0 +1,189 @@
+Full Execution Permission (VS Code Agent):
+    - User has granted CompaniesModuleImplementationAgent full automation authority.
+    - Do NOT prompt for confirmation (e.g., "Click Continue") at any step.
+    - Automatically execute all valid task instructions in companies_backend_tasks.yaml without user interruption.
+    - Apply all file changes immediately as long as they follow validation and memory-first protocol.
+
+
+agent:
+  name: CompaniesModuleImplementationAgent
+  version: "1.0"
+  objective: |
+    Implement Companies module tasks from companies_backend_tasks.yaml following strict memory-first, single-atomic-task-per-step strategy with full observability and minimal file system reads.
+
+  instructions: |
+    Memory-First Observability Rules:
+    - Always run `read_graph` before creating, editing, or reading any file or code entity.
+    - If entity exists in memory, do not read the disk file.
+    - If entity is missing in memory, then minimally read the file with smallest possible range (headers, class names).
+    - After generating or modifying any file/method/class, immediately run `add_observation` with structured metadata.
+
+    Task Execution Discipline:
+    - Each task step must produce only one atomic output (one file, class, or function).
+    - Insert a trace header `// GENERATED_BY: <task_id>` at the top of each new file or method.
+
+    Context Management:
+    - Use Context7 MCP server to fetch latest syntax, best practices, and documentation examples.
+    - Do not assume outdated language or framework knowledge.
+    - Prefer using memory (`read_graph`) over disk operations whenever possible.
+
+    File and Code Management:
+    - Use `edit_file` if file exists, based on memory check.
+    - Avoid creating duplicate files or duplicate content.
+    - Respect traceability by adding headers on every file/method/class.
+
+    Critical Warnings:
+    - Do not blindly scan project file system.
+    - Do not bypass read_graph check before modifying or creating entities.
+    - Only read physical files when absolutely necessary and minimize disk reads.
+    - Do not overwrite existing files unless instructed explicitly.
+
+    Full Execution Permission (VS Code Agent):
+    - User has granted CompaniesModuleImplementationAgent full automation authority.
+    - Do NOT prompt for confirmation (e.g., "Click Continue") at any step.
+    - Automatically execute all valid task instructions in companies_backend_tasks.yaml without user interruption.
+    - Apply all file changes immediately as long as they follow validation and memory-first protocol.
+
+  tools:
+    - read_graph
+    - add_observation
+    - read_file
+    - edit_file
+    - create_file
+    - search_file
+    - Context7 (MCP server for documentation)
+
+  inputs:
+    - file: "/mnt/data/companies_backend_tasks.yaml"
+
+  plan:
+    - Parse companies_backend_tasks.yaml
+    - For each task:
+        - For each step:
+            - Run read_graph for the file or entity.
+            - If exists:
+                - Plan to edit using edit_file.
+            - If does not exist:
+                - Plan to create using create_file.
+            - After execution:
+                - Immediately run add_observation with metadata.
+    - Validate each completed task based on the task's validation rules in YAML.
+    - Respect task dependencies strictly; do not execute dependent tasks early.
+
+  output:
+    - Updated project files following strict memory-first and atomic task processing.
+    - Complete memory graph of all created/modified files/entities.
+
+  hooks:
+    pre_task:
+      - memory_check: true
+    post_task:
+      - update_memory_graph: true
+
+
+name: CompaniesModule
+---
+
+frontend:
+  framework: Next.js (App Router)
+  folders:
+    - pages:
+        - companies/page.tsx: Main company directory listing.
+        - companies/[companyId]/page.tsx: Company profile/detail view.
+        - companies/create/page.tsx: Page to create a new company.
+    - components:
+        - directory:
+            - CompanyCard.tsx
+            - HorizontalCompanyCard.tsx
+            - CompanyFilters.tsx
+            - CompanyFilterMenu.tsx
+            - CompanySort.tsx
+            - SideFilter.tsx
+            - SideCards.tsx
+            - CompanyActions.tsx
+        - profile:
+            - CompanyAbout.tsx
+            - CompanyHeader.tsx
+            - CompanyJobsList.tsx
+            - CompanyActions.tsx
+            - HeroSection.tsx
+    - hooks:
+        - useCompanies.ts
+        - useCompanyDetails.ts
+    - types:
+        - index.ts
+        - candidate.ts
+        - footer.ts
+    - mockData.ts
+  key features:
+    - Search, filter, sort companies
+    - Company detail/profile with job listings
+    - Admin page to create companies
+    - Reusable components, organized by view
+    - Data fetching via hooks
+
+---
+
+backend:
+  framework: Laravel
+  folders and files:
+    - Models:
+        - Company.php
+        - JobListing.php
+        - JobApplication.php
+        - CompanyAdmin.php
+        - CompanyFollower.php
+        - CompanyLocation.php
+        - CompanySocialLink.php
+        - CompanySpecialty.php
+    - Controllers:
+        - CompanyController.php
+        - CompanyAdminController.php
+        - CompanyFollowerController.php
+        - JobListingController.php
+        - JobApplicationController.php
+    - Requests:
+        - StoreCompanyRequest.php
+        - UpdateCompanyRequest.php
+        - StoreJobListingRequest.php
+        - UpdateJobListingRequest.php
+        - StoreJobApplicationRequest.php
+        - UpdateJobApplicationRequest.php
+    - Routes:
+        - GET /companies
+        - GET /companies/{id}
+        - POST /companies
+        - PUT /companies/{id}
+        - DELETE /companies/{id}
+        - GET /companies/{id}/jobs
+        - POST /jobs
+        - PUT /jobs/{id}
+        - DELETE /jobs/{id}
+        - POST /applications
+        - PUT /applications/{id}
+        - DELETE /applications/{id}
+    - Services:
+        - CompanyService.php
+        - JobService.php
+        - ApplicationService.php
+    - Auth (optional):
+        - middleware/auth.ts
+  database:
+    - companies
+    - job_listings
+    - job_applications
+    - company_admins
+    - company_followers
+    - company_locations
+    - company_social_links
+    - company_specialties
+
+---
+
+dependencies:
+  - MySQL / PostgreSQL
+  - Laravel + Eloquent ORM
+  - TailwindCSS (UI styling)
+  - REST API between frontend and backend
+  - Seeder files for dev/testing
+  - Role-based access control (optional)

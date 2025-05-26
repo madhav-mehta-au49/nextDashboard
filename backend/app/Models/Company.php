@@ -100,4 +100,13 @@ class Company extends Model
                     ->withPivot('relationship', 'notes')
                     ->withTimestamps();
     }
+
+    /**
+     * Get the reviews for the company.
+     */
+
+    public function reviews()
+{
+    return $this->hasMany(\App\Models\CompanyReview::class, 'company_id');
+}
 }

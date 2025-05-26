@@ -1,6 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
-import { FaUpload, FaTimes } from 'react-icons/fa';
+import { FaUpload, FaTimes, FaFilePdf, FaFileWord, FaFileAlt } from 'react-icons/fa';
 import { ProfileData } from '../type';
 
 interface BasicInfoFormProps {
@@ -10,6 +10,8 @@ interface BasicInfoFormProps {
   setProfilePicture: React.Dispatch<React.SetStateAction<string | null>>;
   coverImage: string | null;
   setCoverImage: React.Dispatch<React.SetStateAction<string | null>>;
+  resumeFile: File | null;
+  setResumeFile: React.Dispatch<React.SetStateAction<File | null>>;
 }
 
 const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
@@ -18,7 +20,9 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
   profilePicture,
   setProfilePicture,
   coverImage,
-  setCoverImage
+  setCoverImage,
+  resumeFile,
+  setResumeFile
 }) => {
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -45,6 +49,24 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setResumeFile(file);
+      // Also update the resume_url in profileData for consistency
+      setProfileData(prev => ({ ...prev, resume_url: file }));
+    }
+  };
+
+  const getResumeIcon = () => {
+    if (!resumeFile) return <FaFileAlt />;
+    
+    const extension = resumeFile.name.split('.').pop()?.toLowerCase();
+    if (extension === 'pdf') return <FaFilePdf />;
+    if (extension === 'doc' || extension === 'docx') return <FaFileWord />;
+    return <FaFileAlt />;
   };
 
   return (
@@ -248,6 +270,62 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Resume Upload Section */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Resume / CV
+        </label>
+        <div className="mt-1 border border-gray-300 dark:border-gray-600 rounded-md p-4 bg-gray-50 dark:bg-gray-700">
+          {resumeFile ? (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="text-teal-600 text-xl">
+                  {getResumeIcon()}
+                </div>
+                <div className="truncate">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    {resumeFile.name}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {(resumeFile.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setResumeFile(null);
+                  setProfileData(prev => ({ ...prev, resume_url: null }));
+                }}
+                className="text-red-500 hover:text-red-700"
+              >
+                <FaTimes />
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-4">
+              <FaFileAlt className="text-gray-400 text-3xl mb-2" />
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                Upload your resume or CV (PDF, DOC, DOCX)
+              </p>
+              <label className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 cursor-pointer text-sm">
+                <FaUpload className="inline-block mr-2" />
+                Browse Files
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  className="hidden"
+                  onChange={handleResumeUpload}
+                />
+              </label>
+            </div>
+          )}
+        </div>
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          Accepted formats: PDF, DOC, DOCX. Maximum file size: 5MB.
+        </p>
       </div>
     </div>
   );

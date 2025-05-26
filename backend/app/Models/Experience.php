@@ -18,6 +18,7 @@ class Experience extends Model
         'candidate_id',
         'title',
         'company',
+        'company_name',
         'location',
         'start_date',
         'end_date',

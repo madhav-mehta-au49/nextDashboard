@@ -13,6 +13,22 @@ import {
 import { Notification } from "./notification";
 
 export const EmployeeHeader: React.FC = () => {
+  const [userPoints, setUserPoints] = useState(0);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Get user points and role from localStorage
+    const savedPoints = localStorage.getItem('userPoints');
+    const savedRole = localStorage.getItem('userRole');
+    
+    if (savedPoints) {
+      setUserPoints(parseInt(savedPoints, 10));
+    }
+    
+    if (savedRole) {
+      setUserRole(savedRole);
+    }
+  }, []);
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: "1",
@@ -93,16 +109,14 @@ export const EmployeeHeader: React.FC = () => {
               </svg>
             </div>
           </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <button
+        </div>        <div className="flex items-center gap-4">          <Link
+            href="/user/wallet"
             className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-teal-700 transition-colors"
             title="Wallet"
           >
             <WalletIcon className="h-5 w-5" />
-            <span className="text-sm font-medium">$1,234.56</span>
-          </button>
+            <span className="text-sm font-medium">{userPoints} pts</span>
+          </Link>
 
           {/* Notifications */}
           <div className="relative">
@@ -179,9 +193,7 @@ export const EmployeeHeader: React.FC = () => {
                   target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E";
                 }}
               />
-            </button>
-
-            {isProfileMenuOpen && (
+            </button>            {isProfileMenuOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
                 <Link 
                   href="/profile" 
@@ -190,6 +202,14 @@ export const EmployeeHeader: React.FC = () => {
                 >
                   <UserIcon className="mr-3 h-5 w-5 text-gray-400" />
                   My Profile
+                </Link>
+                <Link 
+                  href="/user/wallet" 
+                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  onClick={() => setIsProfileMenuOpen(false)}
+                >
+                  <WalletIcon className="mr-3 h-5 w-5 text-gray-400" />
+                  My Wallet
                 </Link>
                 <Link 
                   href="/settings" 

@@ -17,11 +17,12 @@ class Certification extends Model
     protected $fillable = [
         'candidate_id',
         'name',
-        'issuer',
+        'issuing_organization',
         'credential_id',
         'credential_url',
         'issue_date',
         'expiration_date',
+        'no_expiration',
     ];
 
     /**
@@ -32,6 +33,7 @@ class Certification extends Model
     protected $casts = [
         'issue_date' => 'date',
         'expiration_date' => 'date',
+        'no_expiration' => 'boolean',
     ];
 
     /**

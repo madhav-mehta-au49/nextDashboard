@@ -21,6 +21,10 @@ use App\Http\Controllers\AuthController;
 | will be assigned to the "api" middleware group.
 */
 
+Route::get('/test-web', function() {
+    return response()->json(['message' => 'Web route is working']);
+});
+
 // 🔓 Public Routes (Accessible without login)
 Route::get('/jobs', [JobListingController::class, 'index']);
 Route::get('/jobs/{job}', [JobListingController::class, 'show']);
@@ -37,7 +41,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
 });
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
@@ -67,7 +71,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // 🔒 Optional Admin Routes
-Route::middleware(['auth:sanctum', 'is_admin'])->group(function () {
+Route::middleware(['auth', 'is_admin'])->group(function () {
     Route::get('/admin/dashboard', function () {
         return response()->json(['message' => 'Welcome to admin dashboard']);
     });

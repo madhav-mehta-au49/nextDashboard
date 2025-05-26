@@ -11,9 +11,9 @@ export const CompanySort: React.FC<CompanySortProps> = ({ sortBy, onSortChange }
     { value: 'name_asc', label: 'Name (A-Z)' },
     { value: 'name_desc', label: 'Name (Z-A)' },
     { value: 'followers_desc', label: 'Most Followers' },
-    { value: 'jobs_desc', label: 'Most Jobs' },
     { value: 'rating_desc', label: 'Highest Rating' },
-    { value: 'newest', label: 'Newest' }
+    { value: 'created_at_desc', label: 'Newest' },
+    { value: 'created_at_asc', label: 'Oldest' }
   ];
 
   return (

@@ -10,20 +10,25 @@ use Illuminate\Http\Response;
 class CompanyFollowerController extends Controller
 {
     /**
-     * Display a listing of followed companies for the authenticated candidate.
+     * Display a listing of followed companies for the authenticated user.
      */
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
 
-        if (!$user->isCandidate()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Only candidates can view followed companies'
-            ], 403);
-        }
+        $companies = $user->followedCompanies()
+            ->with(['locations', 'specialties', 'socialLinks'])
+            ->withPivot(['relationship', 'notes', 'created_at'])
+            ->paginate($request->per_page ?? 10);
 
-        $companies = $user->candidate->followedCompanies()->with('industry')->get();
+        // Add is_saved flag
+        $savedCompanyIds = $user->savedCompanies()->pluck('companies.id')->toArray();
+        
+        $companies->getCollection()->transform(function ($company) use ($savedCompanyIds) {
+            $company->is_following = true; // Already following since this is the followed companies list
+            $company->is_saved = in_array($company->id, $savedCompanyIds);
+            return $company;
+        });
 
         return response()->json([
             'status' => 'success',
@@ -32,65 +37,29 @@ class CompanyFollowerController extends Controller
     }
 
     /**
-     * Follow a new company.
+     * Update the relationship or notes for a followed company.
      */
-    public function store(Request $request): JsonResponse
+    public function update(Request $request, Company $company): JsonResponse
     {
         $user = $request->user();
 
-        if (!$user->isCandidate()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Only candidates can follow companies'
-            ], 403);
-        }
-
         $validated = $request->validate([
-            'company_id' => 'required|exists:companies,id',
             'relationship' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:1000'
         ]);
 
-        $candidate = $user->candidate;
-
-        if ($candidate->followedCompanies()->where('company_id', $validated['company_id'])->exists()) {
+        if (!$user->followedCompanies()->where('company_id', $company->id)->exists()) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'You already follow this company'
-            ], 409);
+                'message' => 'You are not following this company'
+            ], 404);
         }
 
-        $candidate->followedCompanies()->attach($validated['company_id'], [
-            'is_candidate' => true,
-            'relationship' => $validated['relationship'] ?? null,
-            'notes' => $validated['notes'] ?? null
+        $user->followedCompanies()->updateExistingPivot($company->id, $validated);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Follow details updated successfully'
         ]);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Company followed successfully'
-        ], 201);
-    }
-
-    /**
-     * Unfollow a company.
-     */
-    public function destroy(Request $request, Company $company): JsonResponse
-    {
-        $user = $request->user();
-
-        if (!$user->isCandidate()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Only candidates can unfollow companies'
-            ], 403);
-        }
-
-        $user->candidate->followedCompanies()->detach($company->id);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Company unfollowed successfully'
-        ], Response::HTTP_NO_CONTENT);
     }
 }

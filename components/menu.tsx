@@ -11,7 +11,8 @@ import {
   SettingsIcon, 
   HelpCircleIcon,
   ChevronDownIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  WalletIcon
 } from 'lucide-react';
 
 interface MenuItem {
@@ -50,11 +51,20 @@ const menuItems: MenuItem[] = [
     label: 'Candidates',
     href: '/candidates',
     icon: <UsersIcon className="h-5 w-5" />,
-  },
-  {
+  },  {
     label: 'Messages',
     href: '/messages',
     icon: <MessageSquareIcon className="h-5 w-5" />,
+  },
+  {
+    label: 'Wallet',
+    href: '/user/wallet',
+    icon: <WalletIcon className="h-5 w-5" />,
+    children: [
+      { label: 'My Wallet', href: '/user/wallet', icon: <ChevronRightIcon className="h-4 w-4" /> },
+      { label: 'Purchase Points', href: '/user/wallet/purchase', icon: <ChevronRightIcon className="h-4 w-4" /> },
+      { label: 'Transaction History', href: '/user/wallet/history', icon: <ChevronRightIcon className="h-4 w-4" /> },
+    ],
   },
   {
     label: 'Resources',

@@ -1,6 +1,14 @@
-import React from "react";
-import Link from "next/link";
-import { FaQuoteLeft, FaCalendarAlt, FaRss, FaBookmark } from "react-icons/fa";
+import React from 'react';
+import Link from 'next/link';
+import { 
+  MessageCircleIcon, 
+  CalendarIcon, 
+  RssIcon, 
+  TrendingUpIcon,
+  ExternalLinkIcon,
+  UserIcon,
+  ArrowRightIcon
+} from 'lucide-react';
 
 interface Testimonial {
   id: string;
@@ -13,7 +21,6 @@ interface Event {
   title: string;
   date: string;
   location: string;
-  link?: string; // Make link optional
 }
 
 interface FeedItem {
@@ -21,130 +28,126 @@ interface FeedItem {
   title: string;
   content: string;
   time: string;
-  link?: string; // Make link optional
 }
 
-interface TrendingBlog {
+interface BlogPost {
   id: string;
   title: string;
-  link?: string; // Make link optional
+  href: string;
 }
 
 interface RightSidebarCardProps {
   testimonials: Testimonial[];
   events: Event[];
   feedItems: FeedItem[];
-  trendingBlogs: TrendingBlog[];
+  trendingBlogs: BlogPost[];
 }
 
 export const RightSidebarCard: React.FC<RightSidebarCardProps> = ({
   testimonials,
   events,
   feedItems,
-  trendingBlogs,
+  trendingBlogs
 }) => {
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="space-y-6">
       {/* Testimonials Section */}
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="text-lg font-bold text-teal-700 mb-4">What People Say</h3>
+      <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-800">What People Say</h3>
+          <MessageCircleIcon className="w-5 h-5 text-teal-500" />
+        </div>
+        
         <div className="space-y-4">
           {testimonials.map((testimonial) => (
-            <div key={testimonial.id} className="bg-blue-50 p-3 rounded-md relative">
-              <FaQuoteLeft className="text-blue-200 absolute top-2 left-2" size={12} />
-              <p className="text-sm text-gray-700 italic pl-5">"{testimonial.feedback}"</p>
-              <p className="text-xs text-gray-500 mt-2 text-right">- {testimonial.user}</p>
+            <div key={testimonial.id} className="pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+              <p className="text-sm text-gray-600 italic mb-2">"{testimonial.feedback}"</p>
+              <p className="text-sm font-medium text-gray-800">— {testimonial.user}</p>
             </div>
           ))}
         </div>
       </div>
-
-      {/* Upcoming Events Section */}
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="text-lg font-bold text-teal-700 mb-4">Upcoming Events</h3>
-        <div className="space-y-3">
+      
+      {/* Upcoming Events */}
+      <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-800">Upcoming Events</h3>
+          <CalendarIcon className="w-5 h-5 text-teal-500" />
+        </div>
+        
+        <div className="space-y-4">
           {events.map((event) => (
-            <div key={event.id} className="border border-gray-200 rounded-md p-3 hover:border-blue-300 transition-colors">
-              <h4 className="font-medium text-gray-900">{event.title}</h4>
-              <div className="flex items-center text-sm text-gray-600 mt-1">
-                <FaCalendarAlt className="mr-1 text-teal-500" size={12} />
-                <span>{event.date}</span>
-              </div>
-              <p className="text-sm text-gray-600 mt-1">{event.location}</p>
-              {/* Fix: Add conditional rendering for the Link component */}
-              {event.link ? (
-                <Link 
-                  href={event.link} 
-                  className="text-teal-600 hover:text-teal-700 text-sm font-medium mt-2 inline-block"
-                >
-                  View Event
-                </Link>
-              ) : (
-                <span className="text-teal-600 text-sm font-medium mt-2 inline-block">
-                  View Event
+            <div key={event.id} className="pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+              <h4 className="font-medium text-gray-800 mb-1">{event.title}</h4>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">
+                  {new Date(event.date).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
                 </span>
-              )}
+                <span className="text-teal-600">{event.location}</span>
+              </div>
             </div>
           ))}
         </div>
+        
+        <Link 
+          href="/events" 
+          className="mt-4 inline-flex items-center text-sm text-teal-600 hover:text-teal-800 font-medium"
+        >
+          View all events
+          <ArrowRightIcon className="ml-1 w-4 h-4" />
+        </Link>
       </div>
-
-      {/* Company Feed Section */}
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="text-lg font-bold text-teal-700 mb-4">Company Feed</h3>
-        <div className="space-y-3">
+      
+      {/* Company Feed */}
+      <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-800">Company Feed</h3>
+          <RssIcon className="w-5 h-5 text-teal-500" />
+        </div>
+        
+        <div className="space-y-4">
           {feedItems.map((item) => (
-            <div key={item.id} className="flex items-start">
-              <div className="mt-1 mr-3">
-                <FaRss className="text-teal-500" size={14} />
-              </div>
-              <div>
-                <h4 className="font-medium text-gray-900">{item.title}</h4>
-                <p className="text-sm text-gray-600">{item.content}</p>
-                <p className="text-xs text-gray-500 mt-1">{item.time}</p>
-                {/* Fix: Add conditional rendering for the Link component */}
-                {item.link ? (
-                  <Link 
-                    href={item.link} 
-                    className="text-teal-600 hover:text-teal-700 text-sm font-medium mt-1 inline-block"
-                  >
-                    Read More
-                  </Link>
-                ) : null}
-              </div>
+            <div key={item.id} className="pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+              <h4 className="font-medium text-gray-800 mb-1">{item.title}</h4>
+              <p className="text-sm text-gray-600 mb-1">{item.content}</p>
+              <span className="text-xs text-gray-500">{item.time}</span>
             </div>
           ))}
         </div>
       </div>
-
-      {/* Trending Blogs Section */}
-      <div className="p-4">
-        <h3 className="text-lg font-bold text-teal-700 mb-4">Trending Blogs</h3>
+      
+      {/* Trending Blogs */}
+      <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-800">Trending Articles</h3>
+          <TrendingUpIcon className="w-5 h-5 text-teal-500" />
+        </div>
+        
         <div className="space-y-3">
           {trendingBlogs.map((blog) => (
-            <div key={blog.id} className="flex items-start">
-              <div className="mt-1 mr-3">
-                <FaBookmark className="text-teal-500" size={14} />
+            <Link 
+              key={blog.id} 
+              href={blog.href}
+              className="block py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-800 hover:text-teal-600 transition-colors">{blog.title}</span>
+                <ExternalLinkIcon className="w-4 h-4 text-gray-400" />
               </div>
-              <div>
-                <h4 className="font-medium text-gray-900">{blog.title}</h4>
-                {/* Fix: Add conditional rendering for the Link component */}
-                {blog.link ? (
-                  <Link 
-                    href={blog.link} 
-                    className="text-teal-600 hover:text-teal-700 text-sm font-medium"
-                  >
-                    Read More
-                  </Link>
-                ) : (
-                  <span className="text-teal-600 text-sm font-medium">
-                    Read More
-                  </span>
-                )}
-              </div>
-            </div>
+            </Link>
           ))}
         </div>
+        
+        <Link 
+          href="/blog" 
+          className="mt-4 inline-flex items-center text-sm text-teal-600 hover:text-teal-800 font-medium"
+        >
+          Read more articles
+          <ArrowRightIcon className="ml-1 w-4 h-4" />
+        </Link>
       </div>
     </div>
   );

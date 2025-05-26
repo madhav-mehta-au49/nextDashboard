@@ -27,54 +27,263 @@ import {
   Flag,
   CheckCircle
 } from 'lucide-react';
-import { useCompanyDetails } from '../hooks/useCompanyDetails';
+import axios from 'axios';
+import { CompanyReviews } from '../components/profile/CompanyReviews';
+import { ReviewForm } from '../components/profile/ReviewForm';
+import { useCompanyReviews } from '../hooks/useCompanyReviews';
+import { toast } from 'react-hot-toast';
 
-// Sample images for now - these will be replaced with actual company data later
-const SAMPLE_IMAGES = {
-  covers: [
-    '/images/company-cover-1.jpg',
-    '/images/company-cover-2.jpg',
-    '/images/company-cover-3.jpg',
-    '/images/company-cover-4.jpg',
-    '/images/company-cover-5.jpg',
-  ],
-  logos: [
-    '/images/company-logo-1.gif',
-    '/images/company-logo-2.png',
-    '/images/company-logo-3.png',
-    '/images/company-logo-4.png',
-    '/images/company-logo-5.png',
-  ]
-};
+// Default placeholder image
+const DEFAULT_COVER_IMAGE = '/images/default-cover.jpg';
+const DEFAULT_LOGO_IMAGE = '/images/default-logo.png';
 
 export default function CompanyProfile() {
   const params = useParams();
-  const companyId = params.companyId as string;
+  const companyId = params.companyId as string; // This is actually the slug from the URL
   const [activeTab, setActiveTab] = useState('about');
   const [scrolled, setScrolled] = useState(false);
 
+  const [company, setCompany] = useState(null);
+  const [jobs, setJobs] = useState([]);
+  const [similarCompanies, setSimilarCompanies] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isActionLoading, setIsActionLoading] = useState(false);
+
+  // Company reviews hook
   const {
-    company,
-    jobs,
-    isLoading,
-    error,
-    isFollowing,
-    toggleFollow
-  } = useCompanyDetails(companyId);
+    reviews,
+    averageRating,
+    totalReviews,
+    ratingCounts,
+    isLoading: reviewsLoading,
+    error: reviewsError,
+    showReviewForm,
+    setShowReviewForm,
+    submitReview
+  } = useCompanyReviews(companyId);
 
-  // For company ID "1", this will ensure it uses the first images in the arrays
-  // Convert companyId to a number and use it as index (with fallback to 0)
-  const idNumber = parseInt(companyId, 10) - 1;
-  const coverIndex = !isNaN(idNumber) && idNumber >= 0 && idNumber < SAMPLE_IMAGES.covers.length
-    ? idNumber
-    : 0;
-  const logoIndex = !isNaN(idNumber) && idNumber >= 0 && idNumber < SAMPLE_IMAGES.logos.length
-    ? idNumber
-    : 0;
+  // Fetch company data from API
+  useEffect(() => {
+    const fetchCompanyData = async () => {
+      try {
+        setIsLoading(true);
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
-  // Sample cover and logo images
-  const sampleCoverImage = SAMPLE_IMAGES.covers[coverIndex];
-  const sampleLogoImage = SAMPLE_IMAGES.logos[logoIndex];
+        console.log(`Fetching company data for slug: ${companyId}`);
+        console.log(`API URL: ${API_URL}/companies/${companyId}`);
+
+        // Check if user is authenticated
+        const token = localStorage.getItem('token');
+        setIsAuthenticated(!!token);
+
+        try {
+          // Fetch company details using the slug
+          const response = await axios.get(`${API_URL}/companies/${companyId}`);
+          console.log("API Response:", response);
+
+          if (response.data && response.data.status === 'success') {
+            // Extract company data - handle nested structure
+            const companyData = response.data.data?.company || response.data.data;
+            setCompany(companyData);
+            console.log("Company data set:", companyData);
+
+            // Extract follow/save status
+            if (response.data.data.is_following !== undefined) {
+              setIsFollowing(response.data.data.is_following);
+            }
+
+            if (response.data.data.is_saved !== undefined) {
+              setIsSaved(response.data.data.is_saved);
+            }
+
+            // Skip token-based follow/saved status checks if we already have the info
+            if (token && response.data.data.is_following === undefined) {
+              try {
+                const headers = { Authorization: `Bearer ${token}` };
+                const followResponse = await axios.get(`${API_URL}/followed-companies`, { headers });
+
+                if (followResponse.data.status === 'success') {
+                  const isFollowed = followResponse.data.data.some(
+                    (followedCompany) => followedCompany.id === companyData.id
+                  );
+                  setIsFollowing(isFollowed);
+                }
+
+                // Check if user has saved this company
+                const savedResponse = await axios.get(`${API_URL}/saved-companies`, { headers });
+
+                if (savedResponse.data.status === 'success') {
+                  const isSavedCompany = savedResponse.data.data.some(
+                    (savedCompany) => savedCompany.id === companyData.id
+                  );
+                  setIsSaved(isSavedCompany);
+                }
+              } catch (followErr) {
+                console.error('Error checking follow/save status:', followErr);
+              }
+            }
+
+            // Fetch company jobs
+            try {
+              const jobsResponse = await axios.get(`${API_URL}/companies/${companyId}/job-listings`);
+              console.log("Jobs API Response:", jobsResponse);
+
+              if (jobsResponse.data.status === 'success') {
+                setJobs(jobsResponse.data.data);
+              }
+            } catch (jobsErr) {
+              console.error('Error fetching company jobs:', jobsErr);
+              setJobs([]);
+            }
+
+            // Fetch similar companies
+            try {
+              // Use the industry from the properly extracted company data
+              const industry = companyData.industry || '';
+              const similarResponse = await axios.get(
+                `${API_URL}/companies?industry=${encodeURIComponent(industry)}&limit=3`
+              );
+              console.log("Similar Companies API Response:", similarResponse);
+
+              if (similarResponse.data && similarResponse.data.status === 'success') {
+                // Extract the companies array from the response
+                const similarCompaniesArray = Array.isArray(similarResponse.data.data)
+                  ? similarResponse.data.data
+                  : (similarResponse.data.data?.data || []);
+
+                // Filter out the current company
+                const filteredCompanies = similarCompaniesArray.filter(
+                  (similarCompany) => similarCompany.id !== companyData.id
+                );
+                setSimilarCompanies(filteredCompanies.slice(0, 3));
+              }
+            } catch (similarErr) {
+              console.error('Error fetching similar companies:', similarErr);
+              setSimilarCompanies([]);
+            }
+          } else {
+            console.error("API returned unsuccessfully:", response);
+            setError('Failed to fetch company details: API returned unsuccessful response');
+          }
+        } catch (apiError) {
+          console.error("API call failed:", apiError);
+          setError(`Failed to fetch company details: ${apiError.message || 'Unknown error'}`);
+        }
+
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Error in fetchCompanyData:', err);
+        setError('An unexpected error occurred while fetching company data');
+        setIsLoading(false);
+      }
+    };
+
+    if (companyId) {
+      fetchCompanyData();
+    }
+  }, [companyId]);
+
+  // Handle company actions (follow, save, share, contact)
+  const handleCompanyAction = async (action) => {
+    try {
+      setIsActionLoading(true);
+
+      // Make sure company is defined
+      if (!company) {
+        throw new Error('Company information is missing');
+      }
+
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        // Redirect to login page or show login modal
+        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+        return;
+      }
+
+      const headers = { Authorization: `Bearer ${token}` };
+
+      switch (action) {
+        case 'follow':
+          if (isFollowing) {
+            // Unfollow company - using slug (companyId) instead of numeric ID
+            await axios.delete(`${API_URL}/companies/${companyId}/follow`, { headers });
+            setIsFollowing(false);
+            toast.success('Company unfollowed');
+          } else {
+            // Follow company - using slug (companyId) instead of numeric ID
+            await axios.post(`${API_URL}/companies/${companyId}/follow`, {}, { headers });
+            setIsFollowing(true);
+            toast.success('Company followed');
+          }
+
+          // Update company followers count
+          setCompany(prev => ({
+            ...prev,
+            followers: isFollowing ? (prev.followers - 1) : (prev.followers + 1)
+          }));
+          break;
+
+        case 'save':
+          if (isSaved) {
+            // Unsave company - using slug (companyId) instead of numeric ID
+            await axios.delete(`${API_URL}/companies/${companyId}/save`, { headers });
+            setIsSaved(false);
+            toast.success('Company removed from saved');
+          } else {
+            // Save company - using slug (companyId) instead of numeric ID
+            await axios.post(`${API_URL}/companies/${companyId}/save`, {}, { headers });
+            setIsSaved(true);
+            toast.success('Company saved');
+          }
+          break;
+
+        case 'share':
+          // Share company
+          if (navigator.share) {
+            await navigator.share({
+              title: company.name,
+              text: `Check out ${company.name} on our platform!`,
+              url: window.location.href,
+            });
+          } else {
+            // Fallback for browsers that don't support the Web Share API
+            navigator.clipboard.writeText(window.location.href);
+            toast.success('Link copied to clipboard');
+          }
+          break;
+
+        case 'contact':
+          // For contact, you might want to collect form data first
+          // For now, just show a toast message
+          toast.success('Contact feature coming soon');
+          break;
+
+        default:
+          console.warn(`Unknown action: ${action}`);
+      }
+    } catch (err) {
+      console.error(`Error performing company action:`, err);
+      toast.error('Failed to perform action. Please try again.');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  // Toggle follow status
+  const toggleFollow = async () => {
+    handleCompanyAction('follow');
+  };
+
+  // Toggle save status
+  const toggleSave = async () => {
+    handleCompanyAction('save');
+  };
 
   // Handle scroll effects
   useEffect(() => {
@@ -84,6 +293,13 @@ export default function CompanyProfile() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Handle review submission
+  const handleSubmitReview = async (reviewData) => {
+    await submitReview(reviewData);
+    setShowReviewForm(false);
+    toast.success('Review submitted successfully');
+  };
 
   if (isLoading) {
     return (
@@ -136,13 +352,14 @@ export default function CompanyProfile() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
-              <div className="flex-shrink-0 h-10 w-10 rounded-md overflow-hidden">
-                <Image
-                  src={sampleLogoImage}
+              <div className="flex-shrink-0 h-10 w-10 rounded-md overflow-hidden border border-gray-100">
+                <img
+                  src={company.logo_url || DEFAULT_LOGO_IMAGE}
                   alt={company.name}
                   width={40}
                   height={40}
                   className="h-full w-full object-cover"
+                  style={{ objectFit: 'cover' }}
                 />
               </div>
               <div>
@@ -153,6 +370,7 @@ export default function CompanyProfile() {
             <div className="flex items-center space-x-3">
               <button
                 onClick={toggleFollow}
+                disabled={isActionLoading}
                 className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${isFollowing
                   ? 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200'
                   : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
@@ -176,74 +394,76 @@ export default function CompanyProfile() {
       </div>
 
       {/* Hero Section - With proper spacing to prevent overlap */}
-<div className="relative bg-white dark:bg-gray-800">
-  {/* Cover Background - Clean with no modifications */}
-  <div className="relative h-[360px] w-full">
-    <Image
-      src={sampleCoverImage}
-      alt="Cover"
-      fill
-      style={{
-        objectFit: 'cover',
-        objectPosition: 'center'
-      }}
-      priority
-    />
-  </div>
-  
-  {/* Space to ensure content is below cover image */}
-  <div className="h-24"></div>
-  
-  {/* Company Info Section - Positioned below cover image */}
-  <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-6 md:px-16 -mt-36 relative z-10">
-    <div className="flex items-start gap-4">
-      {/* Company Logo - Top portion overlaps with cover */}
-      <div className=" mt-5 w-40 h-40 bg-white dark:bg-gray-800 rounded-xl p-2 shadow-md">
-        <Image
-          src={sampleLogoImage}
-          alt={company.name}
-          width={160}
-          height={160}
-          className="rounded-xl"
-        />
-      </div>
-      
-      {/* Company Name & Details - Positioned to be below cover image */}
-      <div className="mt-16">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{company.name}</h2>
-        <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">{company.industry}</p>
-        
-        {/* These three items in the same line */}
-        <div className="flex items-center gap-3 mt-2">
-          <span className="text-gray-600 dark:text-gray-400 text-sm">{company.size}</span>
-          <span className="text-gray-600 dark:text-gray-400 text-sm">Founded {company.founded}</span>
-          <span className="text-gray-600 dark:text-gray-400 text-sm">{company.headquarters}</span>
+      <div className="relative bg-white dark:bg-gray-800">
+        {/* Cover Background */}
+        <div className="relative h-[360px] w-full">
+          <img
+            src={company.cover_image_url || DEFAULT_COVER_IMAGE}
+            alt="Cover"
+            className="w-full h-full object-cover object-center"
+            style={{ minHeight: 360 }}
+          />
         </div>
-        
-        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mt-2">
-          <CheckCircle className="text-teal-500 dark:text-teal-400 mr-1 w-4 h-4" />
-          Verified employer
-        </div>
-      </div>
-    </div>
-    
-    {/* Follow Section */}
-    <div className="flex items-center mt-6 md:mt-24 gap-4">
-      <p className="text-gray-500 dark:text-gray-400 text-sm">{company.followers.toLocaleString()} followers</p>
-      <button 
-        onClick={toggleFollow}
-        className={`${
-          isFollowing 
-            ? 'bg-white dark:bg-gray-700 text-teal-600 dark:text-teal-400 border border-teal-500 dark:border-teal-600' 
-            : 'bg-teal-600 dark:bg-teal-500 text-white'
-        } px-5 py-2 rounded-full text-sm font-medium shadow hover:bg-teal-700 dark:hover:bg-teal-600 transition`}
-      >
-        {isFollowing ? '✓ Following' : '+ Follow'}
-      </button>
-    </div>
-  </div>
-</div>
 
+        {/* Space to ensure content is below cover image */}
+        <div className="h-24"></div>
+
+        {/* Company Info Section - Positioned below cover image */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-6 md:px-16 -mt-36 relative z-10">
+          <div className="flex items-start gap-4">
+            {/* Company Logo - Top portion overlaps with cover */}
+            <div className="mt-5 w-40 h-40 bg-white dark:bg-gray-800 rounded-xl p-2 shadow-md">
+              <img
+                src={company.logo_url || DEFAULT_LOGO_IMAGE}
+                alt={company.name}
+                width={160}
+                height={160}
+                className="rounded-xl w-full h-full object-cover"
+                style={{ objectFit: 'cover' }}
+              />
+            </div>
+
+            {/* Company Name & Details - Positioned to be below cover image */}
+            <div className="mt-16">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{company.name}</h2>
+              <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">{company.industry}</p>
+
+              {/* These three items in the same line */}
+              <div className="flex items-center gap-3 mt-2">
+                <span className="text-gray-600 dark:text-gray-400 text-sm">{company.size || 'Unknown size'}</span>
+                {company.founded && (
+                  <span className="text-gray-600 dark:text-gray-400 text-sm">Founded {company.founded}</span>
+                )}
+                <span className="text-gray-600 dark:text-gray-400 text-sm">{company.headquarters || 'Location not specified'}</span>
+              </div>
+
+              {company.verified && (
+                <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mt-2">
+                  <CheckCircle className="text-teal-500 dark:text-teal-400 mr-1 w-4 h-4" />
+                  Verified employer
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Follow Section */}
+          <div className="flex items-center mt-6 md:mt-24 gap-4">
+            <p className="text-gray-500 dark:text-gray-400 text-sm">
+              {(company.followers || 0).toLocaleString()} followers
+            </p>
+            <button
+              onClick={toggleFollow}
+              disabled={isActionLoading}
+              className={`${isFollowing
+                ? 'bg-white dark:bg-gray-700 text-teal-600 dark:text-teal-400 border border-teal-500 dark:border-teal-600'
+                : 'bg-teal-600 dark:bg-teal-500 text-white'
+                } px-5 py-2 rounded-full text-sm font-medium shadow hover:bg-teal-700 dark:hover:bg-teal-600 transition`}
+            >
+              {isFollowing ? '✓ Following' : '+ Follow'}
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Main Content */}
       <div className="bg-gray-50 dark:bg-gray-900">
@@ -273,6 +493,16 @@ export default function CompanyProfile() {
                       <Briefcase className="mr-2 h-4 w-4" />
                       Jobs ({jobs.length})
                     </button>
+                    <button
+                      onClick={() => setActiveTab('reviews')}
+                      className={`px-6 py-4 text-sm font-medium border-b-2 whitespace-nowrap flex items-center ${activeTab === 'reviews'
+                        ? 'border-teal-500 text-teal-600 dark:text-teal-400'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                        }`}
+                    >
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                      Reviews ({totalReviews})
+                    </button>
                   </nav>
                 </div>
 
@@ -297,153 +527,138 @@ export default function CompanyProfile() {
                           Company Details
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                          <div>
-                            <div className="flex items-center text-gray-700 dark:text-gray-300 mb-1">
-                              <Globe className="h-4 w-4 text-teal-500 mr-2" />
-                              <span className="font-medium">Website</span>
-                            </div>
-                            <a
-                              href={company.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-teal-600 dark:text-teal-400 hover:underline"
-                            >
-                              {company.website.replace(/^https?:\/\//, '')}
-                            </a>
-                          </div>
-
-                          <div>
-                            <div className="flex items-center text-gray-700 dark:text-gray-300 mb-1">
-                              <MapPin className="h-4 w-4 text-teal-500 mr-2" />
-                              <span className="font-medium">Headquarters</span>
-                            </div>
-                            <p className="text-gray-700 dark:text-gray-300">{company.headquarters}</p>
-                          </div>
-
-                          <div>
-                            <div className="flex items-center text-gray-700 dark:text-gray-300 mb-1">
-                              <Calendar className="h-4 w-4 text-teal-500 mr-2" />
-                              <span className="font-medium">Founded</span>
-                            </div>
-                            <p className="text-gray-700 dark:text-gray-300">{company.founded}</p>
-                          </div>
-
-                          <div>
-                            <div className="flex items-center text-gray-700 dark:text-gray-300 mb-1">
-                              <Users className="h-4 w-4 text-teal-500 mr-2" />
-                              <span className="font-medium">Company Size</span>
-                            </div>
-                            <p className="text-gray-700 dark:text-gray-300">{company.employees.toLocaleString()} employees</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <hr className="border-gray-200 dark:border-gray-700" />
-
-                      {/* Specialties */}
-                      <div>
-                        <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-4 flex items-center">
-                          <Award className="mr-2 h-5 w-5 text-teal-500" />
-                          Specialties
-                        </h3>
-                        <div className="flex flex-wrap gap-2">
-                          {company.specialties.map((specialty, index) => (
-                            <span
-                              key={index}
-                              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200"
-                            >
-                              {specialty}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      <hr className="border-gray-200 dark:border-gray-700" />
-
-                      {/* Locations */}
-                      <div>
-                        <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-4 flex items-center">
-                          <MapPin className="mr-2 h-5 w-5 text-teal-500" />
-                          Locations
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {company.locations.map(location => (
-                            <div
-                              key={location.id}
-                              className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800"
-                            >
-                              <div className="flex items-center mb-2">
-                                <MapPin className={`h-4 w-4 mr-2 ${location.isPrimary ? 'text-green-500' : 'text-gray-500 dark:text-gray-400'}`} />
-                                <span className="font-medium text-gray-900 dark:text-white">
-                                  {location.city}
-                                  {location.isPrimary && (
-                                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                      HQ
-                                    </span>
-                                  )}
-                                </span>
-                              </div>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">{location.country}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Social Media */}
-                      {(company.socialLinks.linkedin || company.socialLinks.twitter ||
-                        company.socialLinks.facebook || company.socialLinks.instagram) && (
-                          <>
-                            <hr className="border-gray-200 dark:border-gray-700" />
+                          {company.website && (
                             <div>
-                              <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-4 flex items-center">
-                                <Globe className="mr-2 h-5 w-5 text-teal-500" />
-                                Connect with {company.name}
-                              </h3>
-                              <div className="flex space-x-4">
-                                {company.socialLinks.linkedin && (
-                                  <a
-                                    href={company.socialLinks.linkedin}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="p-2 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-teal-100 dark:hover:bg-teal-900 transition-colors"
-                                  >
-                                    <Globe className="h-5 w-5 text-teal-600 dark:text-teal-400" />
-                                  </a>
-                                )}
-                                {company.socialLinks.twitter && (
-                                  <a
-                                    href={company.socialLinks.twitter}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="p-2 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-teal-100 dark:hover:bg-teal-900 transition-colors"
-                                  >
-                                    <Globe className="h-5 w-5 text-teal-600 dark:text-teal-400" />
-                                  </a>
-                                )}
-                                {company.socialLinks.facebook && (
-                                  <a
-                                    href={company.socialLinks.facebook}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="p-2 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-teal-100 dark:hover:bg-teal-900 transition-colors"
-                                  >
-                                    <Globe className="h-5 w-5 text-teal-600 dark:text-teal-400" />
-                                  </a>
-                                )}
-                                {company.socialLinks.instagram && (
-                                  <a
-                                    href={company.socialLinks.instagram}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="p-2 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-teal-100 dark:hover:bg-teal-900 transition-colors"
-                                  >
-                                    <Globe className="h-5 w-5 text-teal-600 dark:text-teal-400" />
-                                  </a>
-                                )}
+                              <div className="flex items-center text-gray-700 dark:text-gray-300 mb-1">
+                                <Globe className="h-4 w-4 text-teal-500 mr-2" />
+                                <span className="font-medium">Website</span>
                               </div>
+                              <a
+                                href={company.website}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-teal-600 dark:text-teal-400 hover:underline"
+                              >
+                                {company.website ? company.website.replace(/^https?:\/\//, '') : 'No website provided'}
+                              </a>
                             </div>
-                          </>
-                        )}
+                          )}
+
+                          {company.headquarters && (
+                            <div>
+                              <div className="flex items-center text-gray-700 dark:text-gray-300 mb-1">
+                                <MapPin className="h-4 w-4 text-teal-500 mr-2" />
+                                <span className="font-medium">Headquarters</span>
+                              </div>
+                              <p className="text-gray-700 dark:text-gray-300">{company.headquarters}</p>
+                            </div>
+                          )}
+
+                          {company.founded && (
+                            <div>
+                              <div className="flex items-center text-gray-700 dark:text-gray-300 mb-1">
+                                <Calendar className="h-4 w-4 text-teal-500 mr-2" />
+                                <span className="font-medium">Founded</span>
+                              </div>
+                              <p className="text-gray-700 dark:text-gray-300">{company.founded}</p>
+                            </div>
+                          )}
+
+                          {company.employees !== undefined && (
+                            <div>
+                              <div className="flex items-center text-gray-700 dark:text-gray-300 mb-1">
+                                <Users className="h-4 w-4 text-teal-500 mr-2" />
+                                <span className="font-medium">Company Size</span>
+                              </div>
+                              <p className="text-gray-700 dark:text-gray-300">{company.employees.toLocaleString()} employees</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Specialties - Only show if there are specialties */}
+                      {company.specialties && company.specialties.length > 0 && (
+                        <>
+                          <hr className="border-gray-200 dark:border-gray-700" />
+                          <div>
+                            <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-4 flex items-center">
+                              <Award className="mr-2 h-5 w-5 text-teal-500" />
+                              Specialties
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                              {company.specialties.map((specialty, index) => (
+                                <span
+                                  key={index}
+                                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200"
+                                >
+                                  {specialty.specialty || specialty}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Locations - Only show if there are locations */}
+                      {company.locations && company.locations.length > 0 && (
+                        <>
+                          <hr className="border-gray-200 dark:border-gray-700" />
+                          <div>
+                            <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-4 flex items-center">
+                              <MapPin className="mr-2 h-5 w-5 text-teal-500" />
+                              Locations
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                              {company.locations.map((location, index) => (
+                                <div
+                                  key={index}
+                                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800"
+                                >
+                                  <div className="flex items-center mb-2">
+                                    <MapPin className={`h-4 w-4 mr-2 ${location.is_primary ? 'text-green-500' : 'text-gray-500 dark:text-gray-400'}`} />
+                                    <span className="font-medium text-gray-900 dark:text-white">
+                                      {location.city}
+                                      {location.is_primary && (
+                                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                          HQ
+                                        </span>
+                                      )}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400">{location.country}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Social Media - Only show if there are social links */}
+                      {company.social_links && company.social_links.length > 0 && (
+                        <>
+                          <hr className="border-gray-200 dark:border-gray-700" />
+                          <div>
+                            <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-4 flex items-center">
+                              <Globe className="mr-2 h-5 w-5 text-teal-500" />
+                              Connect with {company.name}
+                            </h3>
+                            <div className="flex space-x-4">
+                              {company.social_links.map((link, index) => (
+                                <a
+                                  key={index}
+                                  href={link.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-2 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-teal-100 dark:hover:bg-teal-900/20 transition-colors"
+                                  title={link.platform}
+                                >
+                                  <Globe className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
 
@@ -500,23 +715,27 @@ export default function CompanyProfile() {
                                 <div className="flex flex-wrap gap-4 mb-4">
                                   <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                                     <MapPin className="h-4 w-4 mr-1 text-gray-400 dark:text-gray-500" />
-                                    {job.isRemote ? 'Remote' : job.location}
+                                    {job.is_remote ? 'Remote' : job.location}
                                   </div>
 
                                   <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                                     <Clock className="h-4 w-4 mr-1 text-gray-400 dark:text-gray-500" />
-                                    Posted {formatDate(job.postedDate)}
+                                    Posted {formatDate(job.posted_date)}
                                   </div>
 
                                   <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                                     <Users className="h-4 w-4 mr-1 text-gray-400 dark:text-gray-500" />
-                                    {job.applicantsCount} applicants
+                                    {job.applicants_count} applicants
                                   </div>
 
-                                  {job.salary && (
+                                  {job.salary_min && job.salary_max && (
                                     <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                                       <DollarSign className="h-4 w-4 mr-1 text-gray-400 dark:text-gray-500" />
-                                      {formatSalary(job.salary)}
+                                      {formatSalary({
+                                        min: job.salary_min,
+                                        max: job.salary_max,
+                                        currency: job.salary_currency || 'USD'
+                                      })}
                                     </div>
                                   )}
                                 </div>
@@ -524,19 +743,19 @@ export default function CompanyProfile() {
 
                                 <div className="flex justify-between items-center">
                                   <div className="flex space-x-2">
-                                    {job.isRemote && (
+                                    {job.is_remote && (
                                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200">
                                         Remote
                                       </span>
                                     )}
-                                    {job.applicationDeadline && (
-                                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isDeadlineSoon(job.applicationDeadline)
+                                    {job.application_deadline && (
+                                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isDeadlineSoon(job.application_deadline)
                                         ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                                         : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
                                         }`}>
-                                        {isDeadlineSoon(job.applicationDeadline)
+                                        {isDeadlineSoon(job.application_deadline)
                                           ? "Closing soon"
-                                          : `Closes ${formatDate(job.applicationDeadline)}`}
+                                          : `Closes ${formatDate(job.application_deadline)}`}
                                       </span>
                                     )}
                                   </div>
@@ -556,6 +775,28 @@ export default function CompanyProfile() {
                       )}
                     </div>
                   )}
+
+                  {activeTab === 'reviews' && (
+                    <div className="space-y-6">
+                      {showReviewForm && (
+                        <ReviewForm
+                          companyId={company.id}
+                          companyName={company.name}
+                          onSubmit={handleSubmitReview}
+                          onCancel={() => setShowReviewForm(false)}
+                        />
+                      )}
+
+                      <CompanyReviews
+                        reviews={reviews}
+                        averageRating={averageRating}
+                        totalReviews={totalReviews}
+                        ratingCounts={ratingCounts}
+                        isAuthenticated={isAuthenticated}
+                        onAddReview={() => setShowReviewForm(true)}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -568,31 +809,42 @@ export default function CompanyProfile() {
                     Company Actions
                   </h3>
                   <div className="space-y-2">
-                    <button className="w-full flex items-center p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:text-yellow-700 dark:hover:text-yellow-300 transition-colors">
-                      <Star className="h-5 w-5 mr-3" />
-                      Add to favorites
+                    <button
+                      onClick={() => handleCompanyAction('save')}
+                      disabled={isActionLoading}
+                      className="w-full flex items-center p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:text-yellow-700 dark:hover:text-yellow-300 transition-colors"
+                    >
+                      <Star className={`h-5 w-5 mr-3 ${isSaved ? 'fill-yellow-400' : ''}`} />
+                      {isSaved ? 'Saved to favorites' : 'Add to favorites'}
                     </button>
-                    <button className="w-full flex items-center p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
+                    <button
+                      onClick={() => handleCompanyAction('contact')}
+                      disabled={isActionLoading}
+                      className="w-full flex items-center p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                    >
                       <MessageSquare className="h-5 w-5 mr-3" />
                       Message company
                     </button>
-                    <button className="w-full flex items-center p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-700 dark:hover:text-green-300 transition-colors">
+                    <button
+                      onClick={() => handleCompanyAction('share')}
+                      disabled={isActionLoading}
+                      className="w-full flex items-center p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-700 dark:hover:text-green-300 transition-colors"
+                    >
                       <Share2 className="h-5 w-5 mr-3" />
                       Share profile
-                    </button>
-                    <button className="w-full flex items-center p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-700 dark:hover:text-purple-300 transition-colors">
-                      <Bookmark className="h-5 w-5 mr-3" />
-                      Save profile
                     </button>
                   </div>
 
                   <hr className="my-4 border-gray-200 dark:border-gray-700" />
 
                   <div className="space-y-2">
-                    <button className="w-full flex items-center p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-cyan-50 dark:hover:bg-cyan-900/20 hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors">
+                    <Link
+                      href={`/companies/${companyId}/jobs`}
+                      className="w-full flex items-center p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-cyan-50 dark:hover:bg-cyan-900/20 hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors"
+                    >
                       <Briefcase className="h-5 w-5 mr-3" />
                       View all jobs
-                    </button>
+                    </Link>
                     <button className="w-full flex items-center p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:text-orange-700 dark:hover:text-orange-300 transition-colors">
                       <Bell className="h-5 w-5 mr-3" />
                       Get job alerts
@@ -608,51 +860,52 @@ export default function CompanyProfile() {
 
                   <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-center">
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      ID: {companyId}
+                      ID: {company.id}
                     </p>
                   </div>
                 </div>
 
-                {/* Similar Companies Card */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
-                    <Users className="mr-2 h-5 w-5 text-teal-500" />
-                    Similar Companies
-                  </h3>
-                  <div className="space-y-4">
-                    {[1, 2, 3].map((i) => {
-                      // Use a different logo for each similar company
-                      const similarLogoIndex = (logoIndex + i) % SAMPLE_IMAGES.logos.length;
-
-                      return (
-                        <div key={i} className="flex items-center space-x-4 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                {/* Similar Companies Card - Only show if there are similar companies */}
+                {similarCompanies && similarCompanies.length > 0 && (
+                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
+                      <Users className="mr-2 h-5 w-5 text-teal-500" />
+                      Similar Companies
+                    </h3>
+                    <div className="space-y-4">
+                      {similarCompanies.map((similarCompany) => (
+                        <div key={similarCompany.id} className="flex items-center space-x-4 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                           <div className="flex-shrink-0 h-12 w-12 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
-                            <Image
-                              src={SAMPLE_IMAGES.logos[similarLogoIndex]}
-                              alt={`Similar Company ${i}`}
+                            <img
+                              src={similarCompany.logo_url || DEFAULT_LOGO_IMAGE}
+                              alt={similarCompany.name}
                               width={48}
                               height={48}
                               className="h-full w-full object-cover"
+                              style={{ objectFit: 'cover' }}
                             />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                              Similar Company {i}
+                              {similarCompany.name}
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                              {company.industry} • {Math.floor(Math.random() * 5000) + 100} employees
+                              {similarCompany.industry} • {similarCompany.employees ? `${similarCompany.employees.toLocaleString()} employees` : 'Unknown size'}
                             </p>
                           </div>
                           <div className="flex-shrink-0">
-                            <button className="inline-flex items-center px-2.5 py-1.5 border border-teal-300 dark:border-teal-700 shadow-sm text-xs font-medium rounded-lg text-teal-700 dark:text-teal-300 bg-white dark:bg-gray-700 hover:bg-teal-50 dark:hover:bg-teal-900/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-colors">
+                            <Link
+                              href={`/companies/${similarCompany.slug}`}
+                              className="inline-flex items-center px-2.5 py-1.5 border border-teal-300 dark:border-teal-700 shadow-sm text-xs font-medium rounded-lg text-teal-700 dark:text-teal-300 bg-white dark:bg-gray-700 hover:bg-teal-50 dark:hover:bg-teal-900/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-colors"
+                            >
                               View
-                            </button>
+                            </Link>
                           </div>
                         </div>
-                      );
-                    })}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Company Insights Card */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
@@ -662,26 +915,25 @@ export default function CompanyProfile() {
                   </h3>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">Industry Rank</span>
-                      <span className="text-sm font-semibold text-gray-900 dark:text-white">#12</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">Growth Rate</span>
-                      <span className="text-sm font-semibold text-green-600 dark:text-green-400">+24%</span>
-                    </div>
-                    <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-500 dark:text-gray-400">Job Openings</span>
                       <span className="text-sm font-semibold text-gray-900 dark:text-white">{jobs.length}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">Response Rate</span>
-                      <span className="text-sm font-semibold text-gray-900 dark:text-white">87%</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Followers</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">{(company.followers || 0).toLocaleString()}</span>
                     </div>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <button className="w-full px-4 py-2 bg-teal-50 dark:bg-teal-900/30 hover:bg-teal-100 dark:hover:bg-teal-900/50 text-teal-800 dark:text-teal-200 text-sm font-medium rounded-lg transition-colors">
-                      View Full Report
-                    </button>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Employees</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">{(company.employees || 0).toLocaleString()}</span>
+                    </div>
+                    {company.founded && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-500 dark:text-gray-400">Years in Business</span>
+                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {new Date().getFullYear() - company.founded}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -695,6 +947,8 @@ export default function CompanyProfile() {
 
 // Helper functions
 function formatDate(dateString: string): string {
+  if (!dateString) return 'N/A';
+
   const date = new Date(dateString);
   const now = new Date();
   const diffTime = Math.abs(now.getTime() - date.getTime());
@@ -705,7 +959,8 @@ function formatDate(dateString: string): string {
   } else if (diffDays === 1) {
     return 'Yesterday';
   } else if (diffDays < 7) {
-    return `${diffDays} days ago`;
+    const weeks = Math.floor(diffDays / 7);
+    return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
   } else if (diffDays < 30) {
     const weeks = Math.floor(diffDays / 7);
     return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
@@ -715,6 +970,8 @@ function formatDate(dateString: string): string {
 }
 
 function formatSalary(salary: { min: number; max: number; currency: string }): string {
+  if (!salary || !salary.min || !salary.max) return 'Salary not specified';
+
   const formatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: salary.currency,
@@ -725,6 +982,8 @@ function formatSalary(salary: { min: number; max: number; currency: string }): s
 }
 
 function isDeadlineSoon(dateString: string): boolean {
+  if (!dateString) return false;
+
   const deadline = new Date(dateString);
   const now = new Date();
   const diffTime = deadline.getTime() - now.getTime();

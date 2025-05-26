@@ -6,6 +6,7 @@ export type ProfileData = {
     email: string;
     phone: string;
     website: string;
+    resume_url?: File | string | null;
   };
   
   export type Experience = {
@@ -45,4 +46,3 @@ export type ProfileData = {
     credentialId: string;
     credentialURL: string;
   };
-  

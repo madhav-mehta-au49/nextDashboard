@@ -1,32 +1,39 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { 
-  Building, 
-  Upload, 
-  Plus, 
-  X, 
-  Globe, 
-  MapPin, 
-  Calendar, 
+import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
+import {
+  Building,
+  Upload,
+  X,
+  Plus,
+  MapPin,
+  Globe,
+  Briefcase,
   Users,
-  Info,
-  Check,
-  ArrowLeft
+  Calendar,
+  Link as LinkIcon,
+  Trash2
 } from 'lucide-react';
+import Image from 'next/image';
 
-export default function CreateCompanyProfile() {
+export default function CreateCompanyPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+
+  // Store actual files for upload
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+
   const [specialties, setSpecialties] = useState<string[]>([]);
   const [newSpecialty, setNewSpecialty] = useState('');
-  const [locations, setLocations] = useState<{id: string, city: string, country: string, isPrimary: boolean}[]>([]);
+  const [locations, setLocations] = useState<{ id: string, city: string, country: string, isPrimary: boolean }[]>([]);
   const [socialLinks, setSocialLinks] = useState({
     linkedin: '',
     twitter: '',
@@ -41,22 +48,34 @@ export default function CreateCompanyProfile() {
     website: '',
     headquarters: '',
     founded: '',
-    employees: '',
+    employees: '', // integer as string
+    size: '', // dropdown value (e.g., '1-10')
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSocialLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setSocialLinks(prev => ({ ...prev, [name]: value }));
+    if (name === 'size') {
+      let employeesInt = '';
+      if (value) {
+        const match = value.match(/(\d+)(?:-(\d+)|\+)?/);
+        if (match) {
+          employeesInt = match[2] ? match[2] : match[1];
+        }
+      }
+      setFormData(prev => ({
+        ...prev,
+        size: value,
+        employees: employeesInt
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setLogoFile(file); // Store the actual file
       const reader = new FileReader();
       reader.onload = (e) => {
         setLogoPreview(e.target?.result as string);
@@ -68,6 +87,7 @@ export default function CreateCompanyProfile() {
   const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setCoverFile(file); // Store the actual file
       const reader = new FileReader();
       reader.onload = (e) => {
         setCoverPreview(e.target?.result as string);
@@ -76,47 +96,55 @@ export default function CreateCompanyProfile() {
     }
   };
 
-  const addSpecialty = () => {
+  const handleAddSpecialty = () => {
     if (newSpecialty.trim() && !specialties.includes(newSpecialty.trim())) {
-      setSpecialties([...specialties, newSpecialty.trim()]);
+      setSpecialties(prev => [...prev, newSpecialty.trim()]);
       setNewSpecialty('');
     }
   };
 
-  const removeSpecialty = (index: number) => {
-    setSpecialties(specialties.filter((_, i) => i !== index));
+  const handleRemoveSpecialty = (specialty: string) => {
+    setSpecialties(prev => prev.filter(s => s !== specialty));
   };
 
-  const addLocation = () => {
-    const newLocation = {
-      id: Date.now().toString(),
-      city: '',
-      country: '',
-      isPrimary: locations.length === 0 // First location is primary by default
-    };
-    setLocations([...locations, newLocation]);
+  const handleAddLocation = () => {
+    setLocations(prev => [
+      ...prev,
+      {
+        id: uuidv4(),
+        city: '',
+        country: '',
+        isPrimary: prev.length === 0 // First location is primary by default
+      }
+    ]);
   };
 
-  const updateLocation = (id: string, field: string, value: string | boolean) => {
-    setLocations(locations.map(loc => 
-      loc.id === id ? { ...loc, [field]: value } : loc
-    ));
+  const handleLocationChange = (id: string, field: string, value: string | boolean) => {
+    setLocations(prev =>
+      prev.map(location =>
+        location.id === id ? { ...location, [field]: value } : location
+      )
+    );
   };
 
-  const removeLocation = (id: string) => {
-    const updatedLocations = locations.filter(loc => loc.id !== id);
-    // If we removed the primary location and there are still locations left, make the first one primary
-    if (locations.find(loc => loc.id === id)?.isPrimary && updatedLocations.length > 0) {
-      updatedLocations[0].isPrimary = true;
-    }
-    setLocations(updatedLocations);
+  const handleRemoveLocation = (id: string) => {
+    setLocations(prev => {
+      const filtered = prev.filter(location => location.id !== id);
+
+      // If we removed the primary location and there are still locations left,
+      // make the first one primary
+      if (prev.find(loc => loc.id === id)?.isPrimary && filtered.length > 0) {
+        return filtered.map((loc, index) =>
+          index === 0 ? { ...loc, isPrimary: true } : loc
+        );
+      }
+
+      return filtered;
+    });
   };
 
-  const setPrimaryLocation = (id: string) => {
-    setLocations(locations.map(loc => ({
-      ...loc,
-      isPrimary: loc.id === id
-    })));
+  const handleSocialLinkChange = (platform: string, value: string) => {
+    setSocialLinks(prev => ({ ...prev, [platform]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -126,34 +154,69 @@ export default function CreateCompanyProfile() {
     setSuccessMessage('');
 
     try {
-      // In a real app, you would send this data to your API
-      // const response = await fetch('/api/companies', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     ...formData,
-      //     specialties,
-      //     locations,
-      //     socialLinks,
-      //     logoUrl: logoPreview,
-      //     coverImageUrl: coverPreview
-      //   })
-      // });
-      
-      // if (!response.ok) throw new Error('Failed to create company profile');
-      // const data = await response.json();
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setSuccessMessage('Company profile created successfully!');
-      
-      // Redirect to the new company profile page after a delay
-      setTimeout(() => {
-        // In a real app, you would redirect to the actual company ID
-        // router.push(`/companies/${data.id}`);
-        router.push('/companies/1');
-      }, 2000);
+      // const token = localStorage.getItem('token');
+      // if (!token) {
+      //   setErrorMessage('You must be logged in to create a company profile');
+      //   setIsSubmitting(false);
+      //   return;
+      // }
+
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+
+      // Create FormData for file uploads
+      const formDataToSend = new FormData();
+
+      // Add basic company data
+      (Object.entries(formData) as [keyof typeof formData, string][]).forEach(([key, value]) => {
+        if (value !== '') {
+          formDataToSend.append(key, value);
+        }
+      });
+
+      // Add specialties
+      specialties.forEach((specialty, index) => {
+        formDataToSend.append(`specialties[${index}]`, specialty);
+      });
+
+      // Add locations
+      locations.forEach((location, index) => {
+        formDataToSend.append(`locations[${index}][city]`, location.city);
+        formDataToSend.append(`locations[${index}][country]`, location.country);
+        formDataToSend.append(`locations[${index}][is_primary]`, location.isPrimary ? '1' : '0');
+      });
+
+      // Add social links
+      (Object.entries(socialLinks) as [keyof typeof socialLinks, string][]).forEach(([platform, value]) => {
+        if (value) {
+          formDataToSend.append(`social_links[${platform}]`, value);
+        }
+      });
+
+      // Add files if they exist
+      if (logoFile) {
+        formDataToSend.append('logo_file', logoFile);
+      }
+
+      if (coverFile) {
+        formDataToSend.append('cover_file', coverFile);
+      }
+
+      const response = await axios.post(`${API_URL}/companies`, formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+
+      if (response.data.status === 'success') {
+        setSuccessMessage('Company profile created successfully!');
+        // Redirect to the new company profile page after a delay
+        setTimeout(() => {
+          router.push(`/companies/${response.data.data.slug}`);
+        }, 2000);
+      } else {
+        throw new Error(response.data.message || 'Failed to create company profile');
+      }
     } catch (error) {
       console.error('Error creating company profile:', error);
       setErrorMessage('Failed to create company profile. Please try again.');
@@ -163,109 +226,79 @@ export default function CreateCompanyProfile() {
   };
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-900 min-h-screen py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        {/* Header with back button */}
-        <div className="mb-6 flex items-center">
-          <button 
-            onClick={() => router.back()} 
-            className="mr-4 p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span className="ml-2">Back</span>
-          </button>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create Company Profile</h1>
-        </div>
-        
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
-          {/* Progress indicator */}
-          <div className="w-full bg-gray-100 dark:bg-gray-700 h-1">
-            <div className="bg-teal-500 h-1 w-0 transition-all duration-300" style={{ width: isSubmitting ? '100%' : '0%' }}></div>
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="bg-white shadow-md rounded-lg p-6 mb-8">
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">Create Company Profile</h1>
+
+        {successMessage && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md text-green-700">
+            {successMessage}
           </div>
-          
-          <div className="p-6 sm:p-8">
-            {successMessage && (
-              <div className="p-4 mb-6 rounded-md bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700">
-                <div className="flex">
-                  <Check className="h-5 w-5 text-green-400 dark:text-green-300" />
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-green-800 dark:text-green-200">Success</h3>
-                    <div className="mt-1 text-sm text-green-700 dark:text-green-300">
-                      {successMessage}
-                    </div>
-                  </div>
+        )}
+
+        {errorMessage && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700">
+            {errorMessage}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-8">
+            {/* Basic Information */}
+            <div>
+              <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                <Building className="mr-2 h-5 w-5 text-teal-500" />
+                Basic Information
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Company Name*
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                  />
                 </div>
-              </div>
-            )}
-            
-            {errorMessage && (
-              <div className="p-4 mb-6 rounded-md bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700">
-                <div className="flex">
-                  <Info className="h-5 w-5 text-red-400 dark:text-red-300" />
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Error</h3>
-                    <div className="mt-1 text-sm text-red-700 dark:text-red-300">
-                      {errorMessage}
-                    </div>
-                  </div>
+
+                <div>
+                  <label htmlFor="industry" className="block text-sm font-medium text-gray-700 mb-1">
+                    Industry*
+                  </label>
+                  <select
+                    id="industry"
+                    name="industry"
+                    value={formData.industry}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                  >
+                    <option value="">Select Industry</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="Finance">Finance</option>
+                    <option value="Education">Education</option>
+                    <option value="Retail">Retail</option>
+                    <option value="Manufacturing">Manufacturing</option>
+                    <option value="Media">Media</option>
+                    <option value="Consulting">Consulting</option>
+                    <option value="Real Estate">Real Estate</option>
+                    <option value="Transportation">Transportation</option>
+                    <option value="Energy">Energy</option>
+                    <option value="Agriculture">Agriculture</option>
+                    <option value="Hospitality">Hospitality</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </div>
-              </div>
-            )}
-            
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {/* Basic Information */}
-              <div>
-                <div className="flex items-center mb-4">
-                  <Building className="text-teal-500 mr-2 h-5 w-5" />
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Basic Information</h2>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Company Name*
-                    </label>
-                    <input
-                      type="text"
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      required
-                      placeholder="Enter company name"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="industry" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Industry*
-                    </label>
-                    <select
-                      id="industry"
-                      name="industry"
-                      value={formData.industry}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white bg-white dark:bg-gray-700"
-                    >
-                      <option value="">Select industry</option>
-                      <option value="Technology">Technology</option>
-                      <option value="Healthcare">Healthcare</option>
-                      <option value="Finance">Finance</option>
-                      <option value="Education">Education</option>
-                      <option value="Retail">Retail</option>
-                      <option value="Manufacturing">Manufacturing</option>
-                      <option value="Media">Media & Entertainment</option>
-                      <option value="Hospitality">Hospitality & Tourism</option>
-                      <option value="Construction">Construction</option>
-                      <option value="Transportation">Transportation & Logistics</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                </div>
-                
-                <div className="mt-4">
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+
+                <div className="md:col-span-2">
+                  <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
                     Company Description*
                   </label>
                   <textarea
@@ -275,430 +308,485 @@ export default function CreateCompanyProfile() {
                     onChange={handleInputChange}
                     required
                     rows={5}
-                    placeholder="Describe your company, mission, values, and what sets you apart..."
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
-                  ></textarea>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Minimum 100 characters. Include your company's mission, values, and what makes you unique.
-                  </p>
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                    placeholder="Describe your company, mission, values, and what makes it unique..."
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">
+                    Website*
+                  </label>
+                  <input
+                    type="url"
+                    id="website"
+                    name="website"
+                    value={formData.website}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                    placeholder="https://example.com"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="headquarters" className="block text-sm font-medium text-gray-700 mb-1">
+                    Headquarters*
+                  </label>
+                  <input
+                    type="text"
+                    id="headquarters"
+                    name="headquarters"
+                    value={formData.headquarters}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                    placeholder="City, Country"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="founded" className="block text-sm font-medium text-gray-700 mb-1">
+                    Founded Year*
+                  </label>
+                  <input
+                    type="number"
+                    id="founded"
+                    name="founded"
+                    value={formData.founded}
+                    onChange={handleInputChange}
+                    required
+                    min="1800"
+                    max={new Date().getFullYear()}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="size" className="block text-sm font-medium text-gray-700 mb-1">
+                    Company Size*
+                  </label>
+                  <select
+                    id="size"
+                    name="size"
+                    value={formData.size}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                  >
+                    <option value="">Select Company Size</option>
+                    <option value="1-10">1-10 employees</option>
+                    <option value="11-50">11-50 employees</option>
+                    <option value="51-200">51-200 employees</option>
+                    <option value="201-500">201-500 employees</option>
+                    <option value="501-1000">501-1000 employees</option>
+                    <option value="1001-5000">1001-5000 employees</option>
+                    <option value="5001-10000">5001-10000 employees</option>
+                    <option value="10001+">10001+ employees</option>
+                  </select>
                 </div>
               </div>
-              
-              {/* Company Details */}
-              <div>
-                <div className="flex items-center mb-4">
-                  <Info className="text-teal-500 mr-2 h-5 w-5" />
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Company Details</h2>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label htmlFor="website" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      <Globe className="inline mr-1 h-4 w-4" /> Website*
-                    </label>
-                    <input
-                      type="url"
-                      id="website"
-                      name="website"
-                      value={formData.website}
-                      onChange={handleInputChange}
-                      required
-                      placeholder="https://example.com"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="headquarters" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      <MapPin className="inline mr-1 h-4 w-4" /> Headquarters*
-                    </label>
-                    <input
-                      type="text"
-                      id="headquarters"
-                      name="headquarters"
-                      value={formData.headquarters}
-                      onChange={handleInputChange}
-                      required
-                      placeholder="City, Country"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="founded" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      <Calendar className="inline mr-1 h-4 w-4" /> Founded Year*
-                    </label>
-                    <input
-                      type="number"
-                      id="founded"
-                      name="                      founded"
-                      value={formData.founded}
-                      onChange={handleInputChange}
-                      required
-                      min="1800"
-                      max={new Date().getFullYear()}
-                      placeholder="e.g. 2010"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="employees" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      <Users className="inline mr-1 h-4 w-4" /> Number of Employees*
-                    </label>
-                    <select
-                      id="employees"
-                      name="employees"
-                      value={formData.employees}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white bg-white dark:bg-gray-700"
-                    >
-                      <option value="">Select company size</option>
-                      <option value="1-10">1-10 employees</option>
-                      <option value="11-50">11-50 employees</option>
-                      <option value="51-200">51-200 employees</option>
-                      <option value="201-500">201-500 employees</option>
-                      <option value="501-1000">501-1000 employees</option>
-                      <option value="1001-5000">1001-5000 employees</option>
-                      <option value="5001-10000">5001-10000 employees</option>
-                      <option value="10001+">10001+ employees</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Company Logo & Cover Image */}
-              <div>
-                <div className="flex items-center mb-4">
-                  <Upload className="text-teal-500 mr-2 h-5 w-5" />
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Company Branding</h2>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Company Logo
-                    </label>
-                    <div className="flex items-center space-x-4">
-                      <div className="w-24 h-24 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center overflow-hidden relative">
-                        {logoPreview ? (
-                          <Image 
-                            src={logoPreview} 
-                            alt="Company logo preview" 
-                            fill
-                            className="object-cover"
+            </div>
+
+            {/* Company Images */}
+            <div>
+              <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                <Upload className="mr-2 h-5 w-5 text-teal-500" />
+                Company Images
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Company Logo
+                  </label>
+                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                    <div className="space-y-1 text-center">
+                      {logoPreview ? (
+                        <div className="relative">
+                          <Image
+                            src={logoPreview}
+                            alt="Logo preview"
+                            width={100}
+                            height={100}
+                            className="mx-auto object-cover"
                           />
-                        ) : (
-                          <Building className="h-8 w-8 text-gray-400" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <label className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
-                          <Upload className="h-4 w-4 mr-2" />
-                          Upload Logo
-                          <input 
-                            type="file" 
-                            className="sr-only" 
-                            accept="image/*"
-                            onChange={handleLogoUpload}
-                          />
-                        </label>
-                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                          Recommended: Square image, at least 400x400px
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Cover Image
-                    </label>
-                    <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-2 relative">
-                      {coverPreview ? (
-                        <div className="h-32 relative">
-                          <Image 
-                            src={coverPreview} 
-                            alt="Cover image preview" 
-                            fill
-                            className="object-cover rounded-md"
-                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setLogoPreview(null);
+                              setLogoFile(null);
+                            }}
+                            className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
                         </div>
                       ) : (
-                        <div className="h-32 bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center">
-                          <Globe className="h-8 w-8 text-gray-400" />
-                        </div>
+                        <>
+                          <svg
+                            className="mx-auto h-12 w-12 text-gray-400"
+                            stroke="currentColor"
+                            fill="none"
+                            viewBox="0 0 48 48"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                              strokeWidth={2}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                          <div className="flex text-sm text-gray-600">
+                            <label
+                              htmlFor="logo-upload"
+                              className="relative cursor-pointer bg-white rounded-md font-medium text-teal-600 hover:text-teal-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-teal-500"
+                            >
+                              <span>Upload a logo</span>
+                              <input
+                                id="logo-upload"
+                                name="logo-upload"
+                                type="file"
+                                className="sr-only"
+                                accept="image/*"
+                                onChange={handleLogoUpload}
+                              />
+                            </label>
+                            <p className="pl-1">or drag and drop</p>
+                          </div>
+                          <p className="text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
+                        </>
                       )}
-                      <div className="mt-2">
-                        <label className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
-                          <Upload className="h-4 w-4 mr-2" />
-                          Upload Cover Image
-                          <input 
-                            type="file" 
-                            className="sr-only" 
-                            accept="image/*"
-                            onChange={handleCoverUpload}
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Cover Image
+                  </label>
+                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                    <div className="space-y-1 text-center">
+                      {coverPreview ? (
+                        <div className="relative">
+                          <Image
+                            src={coverPreview}
+                            alt="Cover preview"
+                            width={200}
+                            height={100}
+                            className="mx-auto object-cover"
                           />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCoverPreview(null);
+                              setCoverFile(null);
+                            }}
+                            className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <svg
+                            className="mx-auto h-12 w-12 text-gray-400"
+                            stroke="currentColor"
+                            fill="none"
+                            viewBox="0 0 48 48"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                              strokeWidth={2}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                          <div className="flex text-sm text-gray-600">
+                            <label
+                              htmlFor="cover-upload"
+                              className="relative cursor-pointer bg-white rounded-md font-medium text-teal-600 hover:text-teal-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-teal-500"
+                            >
+                              <span>Upload a cover</span>
+                              <input
+                                id="cover-upload"
+                                name="cover-upload"
+                                type="file"
+                                className="sr-only"
+                                accept="image/*"
+                                onChange={handleCoverUpload}
+                              />
+                            </label>
+                            <p className="pl-1">or drag and drop</p>
+                          </div>
+                          <p className="text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Specialties */}
+            <div>
+              <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                <Briefcase className="mr-2 h-5 w-5 text-teal-500" />
+                Company Specialties
+              </h2>
+
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newSpecialty}
+                    onChange={(e) => setNewSpecialty(e.target.value)}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                    placeholder="Add a specialty (e.g., Machine Learning, Cloud Computing)"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddSpecialty}
+                    className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+                  >
+                    <Plus className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {specialties.map((specialty, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-1 px-3 py-1 bg-teal-50 text-teal-700 rounded-full"
+                    >
+                      <span>{specialty}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSpecialty(specialty)}
+                        className="text-teal-500 hover:text-teal-700"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                  {specialties.length === 0 && (
+                    <p className="text-sm text-gray-500 italic">No specialties added yet</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Locations */}
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-medium text-gray-900 flex items-center">
+                  <MapPin className="mr-2 h-5 w-5 text-teal-500" />
+                  Company Locations
+                </h2>
+                <button
+                  type="button"
+                  onClick={handleAddLocation}
+                  className="px-3 py-1 bg-teal-600 text-white rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 flex items-center gap-1 text-sm"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Location
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {locations.map((location) => (
+                  <div
+                    key={location.id}
+                    className="p-4 border border-gray-200 rounded-md bg-gray-50"
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center">
+                        <input
+                          type="radio"
+                          id={`primary-${location.id}`}
+                          name="primary-location"
+                          checked={location.isPrimary}
+                          onChange={() => {
+                            // Update all locations to set only this one as primary
+                            setLocations(prev =>
+                              prev.map(loc => ({
+                                ...loc,
+                                isPrimary: loc.id === location.id
+                              }))
+                            );
+                          }}
+                          className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300"
+                        />
+                        <label
+                          htmlFor={`primary-${location.id}`}
+                          className="ml-2 block text-sm text-gray-700"
+                        >
+                          Primary Location / Headquarters
                         </label>
-                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                          Recommended: 1200x300px, 4:1 ratio
-                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveLocation(location.id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          City*
+                        </label>
+                        <input
+                          type="text"
+                          value={location.city}
+                          onChange={(e) => handleLocationChange(location.id, 'city', e.target.value)}
+                          required
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Country*
+                        </label>
+                        <input
+                          type="text"
+                          value={location.country}
+                          onChange={(e) => handleLocationChange(location.id, 'country', e.target.value)}
+                          required
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                        />
                       </div>
                     </div>
                   </div>
-                </div>
+                ))}
+
+                {locations.length === 0 && (
+                  <p className="text-sm text-gray-500 italic">No locations added yet</p>
+                )}
               </div>
-              
-              {/* Specialties */}
-              <div>
-                <div className="flex items-center mb-4">
-                  <Info className="text-teal-500 mr-2 h-5 w-5" />
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Company Specialties</h2>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={newSpecialty}
-                      onChange={(e) => setNewSpecialty(e.target.value)}
-                      placeholder="Add a specialty (e.g., Machine Learning, Digital Marketing)"
-                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
-                    />
-                    <button 
-                      type="button" 
-                      onClick={addSpecialty}
-                      disabled={!newSpecialty.trim()}
-                      className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add
-                    </button>
-                  </div>
-                  
-                  {specialties.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {specialties.map((specialty, index) => (
-                        <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-teal-100 text-teal-800 dark:bg-teal-800 dark:text-teal-100">
-                          {specialty}
-                          <button 
-                            type="button" 
-                            onClick={() => removeSpecialty(index)}
-                            className="ml-1.5 text-teal-600 hover:text-teal-800 dark:text-teal-300 dark:hover:text-teal-100 focus:outline-none"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {specialties.length === 0 && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 italic">
-                      No specialties added yet. Add at least 3 specialties to help others understand your company's expertise.
-                    </p>
-                  )}
-                </div>
-              </div>
-              
-              {/* Locations */}
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <MapPin className="text-teal-500 mr-2 h-5 w-5" />
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Company Locations</h2>
-                  </div>
-                  <button 
-                    type="button" 
-                    onClick={addLocation}
-                    className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 flex items-center"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Location
-                  </button>
-                </div>
-                
-                {locations.length === 0 ? (
-                  <div className="text-center py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-                    <MapPin className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      No locations added yet. Add your company's locations to help candidates find you.
-                    </p>
-                    <button 
-                      type="button" 
-                      onClick={addLocation}
-                      className="mt-3 px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 inline-flex items-center"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add First Location
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {locations.map((location) => (
-                      <div 
-                        key={location.id} 
-                        className={`border ${location.isPrimary ? 'border-teal-500 dark:border-teal-400' : 'border-gray-200 dark:border-gray-700'} rounded-lg p-4 relative`}
-                      >
-                        {location.isPrimary && (
-                          <span className="absolute top-0 right-0 -mt-2 -mr-2 px-2 py-0.5 bg-teal-100 text-teal-800 dark:bg-teal-800 dark:text-teal-100 text-xs font-medium rounded-full">
-                            Headquarters
-                          </span>
-                        )}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                              City*
-                            </label>
-                            <input
-                              type="text"
-                              value={location.city}
-                              onChange={(e) => updateLocation(location.id, 'city', e.target.value)}
-                              placeholder="e.g., San Francisco"
-                              required
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                              Country*
-                            </label>
-                            <input
-                              type="text"
-                              value={location.country}
-                              onChange={(e) => updateLocation(location.id, 'country', e.target.value)}
-                              placeholder="e.g., United States"
-                              required
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="flex justify-between mt-4">
-                          {!location.isPrimary ? (
-                            <button 
-                              type="button" 
-                              onClick={() => setPrimaryLocation(location.id)}
-                              className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
-                            >
-                              Set as Headquarters
-                            </button>
-                          ) : (
-                            <div></div> // Empty div to maintain layout
-                          )}
-                          
-                          <button 
-                            type="button" 
-                            onClick={() => removeLocation(location.id)}
-                            className="px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 focus:outline-none flex items-center"
-                            >
-                              <X className="h-4 w-4 mr-2" />
-                              Remove
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                
-                {/* Social Links */}
+            </div>
+
+            {/* Social Links */}
+            <div>
+              <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                <Globe className="mr-2 h-5 w-5 text-teal-500" />
+                Social Media Links
+              </h2>
+
+              <div className="space-y-4">
                 <div>
-                  <div className="flex items-center mb-4">
-                    <Globe className="text-teal-500 mr-2 h-5 w-5" />
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Social Media Links</h2>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label htmlFor="linkedin" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        LinkedIn
-                      </label>
-                      <input
-                        type="url"
-                        id="linkedin"
-                        name="linkedin"
-                        value={socialLinks.linkedin}
-                        onChange={handleSocialLinkChange}
-                        placeholder="https://linkedin.com/company/..."
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="twitter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Twitter / X
-                      </label>
-                      <input
-                        type="url"
-                        id="twitter"
-                        name="twitter"
-                        value={socialLinks.twitter}
-                        onChange={handleSocialLinkChange}
-                        placeholder="https://twitter.com/..."
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="facebook" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Facebook
-                      </label>
-                      <input
-                        type="url"
-                        id="facebook"
-                        name="facebook"
-                        value={socialLinks.facebook}
-                        onChange={handleSocialLinkChange}
-                        placeholder="https://facebook.com/..."
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="instagram" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Instagram
-                      </label>
-                      <input
-                        type="url"
-                        id="instagram"
-                        name="instagram"
-                        value={socialLinks.instagram}
-                        onChange={handleSocialLinkChange}
-                        placeholder="https://instagram.com/..."
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    LinkedIn
+                  </label>
+                  <div className="flex">
+                    <span className="inline-flex items-center px-3 py-2 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
+                      <LinkIcon className="h-5 w-5" />
+                    </span>
+                    <input
+                      type="url"
+                      value={socialLinks.linkedin}
+                      onChange={(e) => handleSocialLinkChange('linkedin', e.target.value)}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-r-md focus:ring-teal-500 focus:border-teal-500"
+                      placeholder="https://linkedin.com/company/yourcompany"
+                    />
                   </div>
                 </div>
-                
-                {/* Submit Section */}
-                <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-                  <div className="flex justify-between items-center">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      * Required fields
-                    </p>
-                    <div className="flex gap-3">
-                      <button 
-                        type="button" 
-                        onClick={() => router.back()}
-                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
-                      >
-                        Cancel
-                      </button>
-                      <button 
-                        type="submit" 
-                        disabled={isSubmitting}
-                        className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-md shadow transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isSubmitting ? 'Creating Profile...' : 'Create Company Profile'}
-                      </button>
-                    </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Twitter
+                  </label>
+                  <div className="flex">
+                    <span className="inline-flex items-center px-3 py-2 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
+                      <LinkIcon className="h-5 w-5" />
+                    </span>
+                    <input
+                      type="url"
+                      value={socialLinks.twitter}
+                      onChange={(e) => handleSocialLinkChange('twitter', e.target.value)}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-r-md focus:ring-teal-500 focus:border-teal-500"
+                      placeholder="https://twitter.com/yourcompany"
+                    />
                   </div>
                 </div>
-              </form>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Facebook
+                  </label>
+                  <div className="flex">
+                    <span className="inline-flex items-center px-3 py-2 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
+                      <LinkIcon className="h-5 w-5" />
+                    </span>
+                    <input
+                      type="url"
+                      value={socialLinks.facebook}
+                      onChange={(e) => handleSocialLinkChange('facebook', e.target.value)}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-r-md focus:ring-teal-500 focus:border-teal-500"
+                      placeholder="https://facebook.com/yourcompany"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Instagram
+                  </label>
+                  <div className="flex">
+                    <span className="inline-flex items-center px-3 py-2 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
+                      <LinkIcon className="h-5 w-5" />
+                    </span>
+                    <input
+                      type="url"
+                      value={socialLinks.instagram}
+                      onChange={(e) => handleSocialLinkChange('instagram', e.target.value)}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-r-md focus:ring-teal-500 focus:border-teal-500"
+                      placeholder="https://instagram.com/yourcompany"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <div className="pt-4 border-t border-gray-200">
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => router.push('/companies')}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 mr-4"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`px-6 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 flex items-center ${isSubmitting ? 'opacity-75 cursor-not-allowed' : ''
+                    }`}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Company Profile'
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </form>
       </div>
-    );
-  }
-  
+    </div>
+  );
+}
+
 
