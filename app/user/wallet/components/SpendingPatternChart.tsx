@@ -2,11 +2,11 @@
 
 import React from 'react';
 import { PointsTransaction } from '@/app/user/types/points';
-import { 
-  FaArrowUp, 
-  FaArrowDown, 
-  FaRegCalendarAlt, 
-  FaChartLine, 
+import {
+  FaArrowUp,
+  FaArrowDown,
+  FaRegCalendarAlt,
+  FaChartLine,
   FaRegClock,
   FaTag
 } from 'react-icons/fa';
@@ -16,15 +16,15 @@ interface SpendingPatternChartProps {
   period?: 'week' | 'month' | 'year';
 }
 
-const SpendingPatternChart: React.FC<SpendingPatternChartProps> = ({ 
+const SpendingPatternChart: React.FC<SpendingPatternChartProps> = ({
   transactions,
   period = 'month'
 }) => {
   // Format date for display
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', { 
-      month: 'short', 
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
       day: 'numeric',
       year: period === 'year' ? 'numeric' : undefined
     }).format(date);
@@ -33,7 +33,7 @@ const SpendingPatternChart: React.FC<SpendingPatternChartProps> = ({
   // Format time for display
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', { 
+    return date.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit'
     });
@@ -69,17 +69,17 @@ const SpendingPatternChart: React.FC<SpendingPatternChartProps> = ({
     // Group transactions by day/week/month
     const spent = transactions.filter(t => t.type === 'spent');
     const earned = transactions.filter(t => t.type === 'earned' || t.type === 'purchased');
-    
+
     // Get total points spent/earned
     const totalSpent = spent.reduce((sum, t) => sum + t.points, 0);
     const totalEarned = earned.reduce((sum, t) => sum + t.points, 0);
-    
+
     // Get most expensive transaction
     const mostExpensive = [...spent].sort((a, b) => b.points - a.points)[0];
-    
+
     // Calculate average spend
     const averageSpend = spent.length > 0 ? totalSpent / spent.length : 0;
-    
+
     return {
       totalSpent,
       totalEarned,
@@ -102,7 +102,7 @@ const SpendingPatternChart: React.FC<SpendingPatternChartProps> = ({
           </div>
         </div>
       </div>
-      
+
       <div className="p-6">
         {/* Key Metrics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
@@ -115,14 +115,14 @@ const SpendingPatternChart: React.FC<SpendingPatternChartProps> = ({
                 </p>
               </div>
               <div className={`p-2 rounded-full ${trends.netChange >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
-                {trends.netChange >= 0 ? 
-                  <FaArrowUp className="h-5 w-5 text-green-600" /> : 
+                {trends.netChange >= 0 ?
+                  <FaArrowUp className="h-5 w-5 text-green-600" /> :
                   <FaArrowDown className="h-5 w-5 text-red-600" />
                 }
               </div>
             </div>
           </div>
-          
+
           <div className="bg-green-50 rounded-lg p-4">
             <div className="flex justify-between items-start">
               <div>
@@ -134,7 +134,7 @@ const SpendingPatternChart: React.FC<SpendingPatternChartProps> = ({
               </div>
             </div>
           </div>
-          
+
           <div className="bg-red-50 rounded-lg p-4">
             <div className="flex justify-between items-start">
               <div>
@@ -147,11 +147,11 @@ const SpendingPatternChart: React.FC<SpendingPatternChartProps> = ({
             </div>
           </div>
         </div>
-        
+
         {/* Spending Insights */}
         <div className="mb-6 bg-gray-50 rounded-lg p-4">
           <h4 className="font-medium text-gray-700 mb-3">Spending Insights</h4>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex items-start space-x-3">
               <div className="p-2 rounded-full bg-blue-100">
@@ -164,7 +164,7 @@ const SpendingPatternChart: React.FC<SpendingPatternChartProps> = ({
                 </p>
               </div>
             </div>
-            
+
             {trends.mostExpensive && (
               <div className="flex items-start space-x-3">
                 <div className="p-2 rounded-full bg-yellow-100">
@@ -181,24 +181,23 @@ const SpendingPatternChart: React.FC<SpendingPatternChartProps> = ({
             )}
           </div>
         </div>
-        
+
         {/* Recent Transactions Timeline */}
         <div>
           <h4 className="font-medium text-gray-700 mb-4">Recent Activity</h4>
-          
+
           <div className="space-y-4">
             {transactions.slice(0, 5).map((transaction, index) => (
               <div key={transaction.id || index} className="flex items-start space-x-3">
-                <div className={`flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-full ${
-                  transaction.type === 'earned' || transaction.type === 'purchased' 
-                    ? 'bg-green-100' 
+                <div className={`flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-full ${transaction.type === 'earned' || transaction.type === 'purchased'
+                    ? 'bg-green-100'
                     : transaction.type === 'refunded'
-                    ? 'bg-yellow-100'
-                    : 'bg-red-100'
-                }`}>
+                      ? 'bg-yellow-100'
+                      : 'bg-red-100'
+                  }`}>
                   <span className="text-lg">{getCategoryEmoji(transaction.category)}</span>
                 </div>
-                
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between">
                     <div>
@@ -215,13 +214,12 @@ const SpendingPatternChart: React.FC<SpendingPatternChartProps> = ({
                         </span>
                       </div>
                     </div>
-                    <div className={`font-semibold ${
-                      transaction.type === 'earned' || transaction.type === 'purchased' 
-                        ? 'text-green-600' 
+                    <div className={`font-semibold ${transaction.type === 'earned' || transaction.type === 'purchased'
+                        ? 'text-green-600'
                         : transaction.type === 'refunded'
-                        ? 'text-yellow-600'
-                        : 'text-red-600'
-                    }`}>
+                          ? 'text-yellow-600'
+                          : 'text-red-600'
+                      }`}>
                       {transaction.type === 'earned' || transaction.type === 'purchased' || transaction.type === 'refunded'
                         ? `+${transaction.points}`
                         : `-${transaction.points}`}
@@ -230,7 +228,7 @@ const SpendingPatternChart: React.FC<SpendingPatternChartProps> = ({
                 </div>
               </div>
             ))}
-            
+
             {transactions.length === 0 && (
               <div className="text-center py-8 text-gray-500">
                 No transactions found for this period

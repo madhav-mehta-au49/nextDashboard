@@ -134,6 +134,9 @@ class CompanyController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        // Check authorization using the policy
+        $this->authorize('create', Company::class);
+        
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255|unique:companies',
@@ -230,7 +233,7 @@ class CompanyController extends Controller
     {
         try {
             $company->load(['locations', 'specialties', 'socialLinks', 'jobListings' => function ($query) {
-                $query->where('status', 'published')
+                $query->whereIn('status', ['active', 'published']) // Show both active and published jobs
                     ->where(function ($q) {
                         $q->whereNull('application_deadline')
                             ->orWhere('application_deadline', '>=', now());
@@ -269,6 +272,9 @@ class CompanyController extends Controller
      */
     public function update(Request $request, Company $company): JsonResponse
     {
+        // Check authorization using the policy
+        $this->authorize('update', $company);
+        
         try {
             $validated = $request->validate([
                 'name' => 'string|max:255|unique:companies,name,' . $company->id,
@@ -338,6 +344,9 @@ class CompanyController extends Controller
      */
     public function destroy(Company $company): JsonResponse
     {
+        // Check authorization using the policy
+        $this->authorize('delete', $company);
+        
         try {
             $company->delete();
 

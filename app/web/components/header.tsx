@@ -3,17 +3,39 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  FiMenu, FiX, FiSearch, FiUser, FiLogIn, 
-  FiHome, FiBriefcase, FiUsers, FiInfo, FiBookOpen, FiUserPlus 
+import {
+  FiMenu, FiX, FiSearch, FiUser, FiLogIn,
+  FiHome, FiBriefcase, FiUsers, FiInfo, FiBookOpen, FiUserPlus, FiEye
 } from "react-icons/fi";
+import { useUser } from "@/app/user/contexts/UserContext";
+import { getCurrentUserCandidateProfile } from "@/app/services/candidate/candidateApi";
+import { redirectToProfile } from "@/app/utils/auth";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false); const [candidateProfile, setCandidateProfile] = useState<any>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const { userRole, isAuthenticated } = useUser();
   const menuRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
-  
+
+  // Load candidate profile if user is logged in and is a candidate
+  useEffect(() => {
+    if (isAuthenticated && userRole === 'candidate') {
+      setIsLoadingProfile(true); getCurrentUserCandidateProfile()
+        .then((response: any) => {
+          setCandidateProfile(response.candidate);
+        })
+        .catch((error: any) => {
+          console.error('Error fetching candidate profile:', error);
+          setCandidateProfile(null);
+        })
+        .finally(() => {
+          setIsLoadingProfile(false);
+        });
+    }
+  }, [isAuthenticated, userRole]);
+
   // Close menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -21,7 +43,7 @@ export default function Header() {
         setIsMenuOpen(false);
       }
     }
-    
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -36,7 +58,13 @@ export default function Header() {
   }, [isSearchOpen]);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-  const toggleSearch = () => setIsSearchOpen(!isSearchOpen);
+  const toggleSearch = () => setIsSearchOpen(!isSearchOpen);  // Don't show profile buttons in main header for candidates
+  const renderProfileButton = () => {
+    return null; // Profile actions are handled in EmployeeHeader for authenticated users
+  };  // Don't show mobile profile buttons in main header for candidates
+  const renderMobileProfileButton = () => {
+    return null; // Profile actions are handled in EmployeeHeader for authenticated users
+  };
 
   return (
     <header className="relative z-50">
@@ -63,8 +91,8 @@ export default function Header() {
                 { name: 'About', href: '/about', icon: FiInfo },
                 { name: 'Blog', href: '/blog', icon: FiBookOpen },
               ].map((item) => (
-                <Link 
-                  key={item.name} 
+                <Link
+                  key={item.name}
                   href={item.href}
                   className="relative px-4 py-2 text-white group"
                 >
@@ -80,39 +108,48 @@ export default function Header() {
             {/* Right Section: Search & Auth */}
             <div className="flex items-center space-x-4">
               {/* Search Button */}
-              <div 
+              <div
                 className="p-2 rounded-full hover:bg-white/20 cursor-pointer transition-colors"
                 onClick={toggleSearch}
               >
                 <FiSearch className="h-5 w-5 text-white" />
-              </div>
-
-              {/* Create Profile Button - NEW ADDITION for Desktop */}
-              <Link 
-                href="/user/candidate/create" 
-                className="hidden md:flex items-center px-4 py-1.5 bg-white/10 border border-white/30 rounded-full text-white hover:bg-white hover:text-teal-600 transition-all duration-300 group"
-              >
-                <FiUserPlus className="h-4 w-4 mr-2 group-hover:animate-pulse" />
-                <span className="text-sm font-medium">Create Profile</span>
-                <span className="ml-1 w-1.5 h-1.5 bg-teal-300 rounded-full animate-ping absolute"></span>
-                <span className="ml-1 w-1.5 h-1.5 bg-teal-300 rounded-full relative"></span>
-              </Link>
-
-              {/* Auth Buttons */}
+              </div>              {/* Profile Button (conditional) */}
+              {renderProfileButton()}              {/* Auth Buttons */}
               <div className="hidden md:flex items-center space-x-3">
-                <Link 
-                  href="/signin" 
-                  className="flex items-center space-x-1 text-white hover:text-teal-100 transition-colors"
-                >
-                  <FiLogIn className="h-4 w-4" />
-                  <span>Sign In</span>
-                </Link>
-                <Link 
-                  href="/signup" 
-                  className="bg-white text-teal-600 hover:bg-teal-50 px-4 py-2 rounded-full font-medium shadow-md hover:shadow-lg transition-all duration-300"
-                >
-                  <span>Sign Up</span>
-                </Link>
+                {!isAuthenticated ? (
+                  <>
+                    <Link
+                      href="/login"
+                      className="flex items-center space-x-1 text-white hover:text-teal-100 transition-colors"
+                    >
+                      <FiLogIn className="h-4 w-4" />
+                      <span>Sign In</span>
+                    </Link>
+                    <Link
+                      href="/signup"
+                      className="bg-white text-teal-600 hover:bg-teal-50 px-4 py-2 rounded-full font-medium shadow-md hover:shadow-lg transition-all duration-300"
+                    >
+                      <span>Sign Up</span>
+                    </Link>
+                  </>                ) : (
+                  <>                    {/* Only show Dashboard for non-candidates */}
+                    {userRole !== 'candidate' && (
+                      <Link
+                        href="/companies/dashboard"
+                        className="flex items-center space-x-1 text-white hover:text-teal-100 transition-colors"
+                      >
+                        <FiUser className="h-4 w-4" />
+                        <span>Dashboard</span>
+                      </Link>
+                    )}
+                    <Link
+                      href="/signout"
+                      className="bg-white text-teal-600 hover:bg-teal-50 px-4 py-2 rounded-full font-medium shadow-md hover:shadow-lg transition-all duration-300"
+                    >
+                      <span>Sign Out</span>
+                    </Link>
+                  </>
+                )}
               </div>
 
               {/* Mobile Menu Button */}
@@ -136,7 +173,7 @@ export default function Header() {
       {/* Expandable Search Bar */}
       <AnimatePresence>
         {isSearchOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -155,7 +192,7 @@ export default function Header() {
                   className="block w-full pl-10 pr-10 py-3 border-0 ring-1 ring-gray-200 focus:ring-2 focus:ring-teal-500 rounded-lg text-gray-900"
                 />
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                  <div 
+                  <div
                     className="p-1 rounded-full hover:bg-gray-100 cursor-pointer"
                     onClick={toggleSearch}
                   >
@@ -166,8 +203,8 @@ export default function Header() {
               <div className="mt-3 flex flex-wrap gap-2">
                 <span className="text-xs text-gray-500">Popular:</span>
                 {['Remote', 'Software Engineer', 'Marketing', 'Part-time', 'Design'].map(term => (
-                  <span 
-                    key={term} 
+                  <span
+                    key={term}
                     className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs cursor-pointer hover:bg-teal-100 hover:text-teal-700 transition-colors"
                   >
                     {term}
@@ -182,7 +219,7 @@ export default function Header() {
       {/* Mobile Menu Dropdown */}
       <AnimatePresence>
         {isMenuOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
@@ -197,8 +234,8 @@ export default function Header() {
                 { name: 'About', href: '/about', icon: FiInfo },
                 { name: 'Blog', href: '/blog', icon: FiBookOpen },
               ].map((item) => (
-                <Link 
-                  key={item.name} 
+                <Link
+                  key={item.name}
                   href={item.href}
                   className="flex items-center space-x-3 px-3 py-3 rounded-md text-gray-700 hover:bg-teal-50 hover:text-teal-600 transition-colors"
                 >
@@ -206,32 +243,45 @@ export default function Header() {
                   <span className="font-medium">{item.name}</span>
                 </Link>
               ))}
-              
-              {/* Create Profile Button - NEW ADDITION for Mobile */}
-              <Link 
-                href="/user/candidate/create" 
-                className="flex items-center space-x-3 px-3 py-3 rounded-md text-white bg-gradient-to-r from-teal-500 to-teal-400 hover:from-teal-600 hover:to-teal-500 transition-colors shadow-md"
-              >
-                <FiUserPlus className="h-5 w-5" />
-                <span className="font-medium">Create Profile</span>
-                <span className="ml-1 w-2 h-2 bg-white rounded-full animate-pulse"></span>
-              </Link>
-            </div>
-            <div className="px-5 py-4 border-t border-gray-200 space-y-3">
-              <Link 
-                href="/signin" 
-                className="flex items-center justify-center space-x-2 w-full bg-gray-100 text-gray-800 hover:bg-gray-200 px-4 py-3 rounded-lg font-medium transition-colors"
-              >
-                <FiLogIn className="h-5 w-5" />
-                <span>Sign In</span>
-              </Link>
-              <Link 
-                href="/signup" 
-                className="flex items-center justify-center w-full bg-teal-500 text-white hover:bg-teal-600 px-4 py-3 rounded-lg font-medium shadow-md transition-colors"
-              >
-                <FiUser className="h-5 w-5 mr-2" />
-                <span>Create Account</span>
-              </Link>
+              {/* Profile Button for Mobile (conditional) */}
+              {renderMobileProfileButton()}
+            </div>            <div className="px-5 py-4 border-t border-gray-200 space-y-3">
+              {!isAuthenticated ? (
+                <>
+                  <Link
+                    href="/login"
+                    className="flex items-center justify-center space-x-2 w-full bg-gray-100 text-gray-800 hover:bg-gray-200 px-4 py-3 rounded-lg font-medium transition-colors"
+                  >
+                    <FiLogIn className="h-5 w-5" />
+                    <span>Sign In</span>
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className="flex items-center justify-center w-full bg-teal-500 text-white hover:bg-teal-600 px-4 py-3 rounded-lg font-medium shadow-md transition-colors"
+                  >
+                    <FiUser className="h-5 w-5 mr-2" />
+                    <span>Create Account</span>
+                  </Link>
+                </>              ) : (
+                <>                  {/* Only show Dashboard for non-candidates */}
+                  {userRole !== 'candidate' && (
+                    <Link
+                      href="/companies/dashboard"
+                      className="flex items-center justify-center space-x-2 w-full bg-gray-100 text-gray-800 hover:bg-gray-200 px-4 py-3 rounded-lg font-medium transition-colors"
+                    >
+                      <FiUser className="h-5 w-5" />
+                      <span>My Dashboard</span>
+                    </Link>
+                  )}
+                  <Link
+                    href="/signout"
+                    className="flex items-center justify-center w-full bg-teal-500 text-white hover:bg-teal-600 px-4 py-3 rounded-lg font-medium shadow-md transition-colors"
+                  >
+                    <FiLogIn className="h-5 w-5 mr-2" />
+                    <span>Sign Out</span>
+                  </Link>
+                </>
+              )}
             </div>
           </motion.div>
         )}

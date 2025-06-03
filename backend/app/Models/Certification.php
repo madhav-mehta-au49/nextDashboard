@@ -23,6 +23,7 @@ class Certification extends Model
         'issue_date',
         'expiration_date',
         'no_expiration',
+        'file_path',
     ];
 
     /**

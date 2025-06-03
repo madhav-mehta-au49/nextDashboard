@@ -94,17 +94,16 @@ export default function ApplicationStatusCard({ candidateId }) {
                 <div className="font-medium text-gray-900 dark:text-white">{job.title}</div>
                 <div className="text-xs text-gray-500">{job.company} • {job.applied_at}</div>
               </div>
-              <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
-                job.status === 'applied' ? 'bg-green-100 text-green-700' : 
-                job.status === 'reviewing' ? 'bg-blue-100 text-blue-700' : 
-                job.status === 'shortlisted' ? 'bg-purple-100 text-purple-700' :
-                job.status === 'interview' ? 'bg-yellow-100 text-yellow-700' :
-                job.status === 'offered' ? 'bg-indigo-100 text-indigo-700' :
-                job.status === 'hired' ? 'bg-teal-100 text-teal-700' :
-                job.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                'bg-gray-100 text-gray-600'
-              }`}>
-                {job.status === 'applied' ? <FiCheck size={14} /> : <FiClock size={14} />} 
+              <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${job.status === 'applied' ? 'bg-green-100 text-green-700' :
+                  job.status === 'reviewing' ? 'bg-blue-100 text-blue-700' :
+                    job.status === 'shortlisted' ? 'bg-purple-100 text-purple-700' :
+                      job.status === 'interview' ? 'bg-yellow-100 text-yellow-700' :
+                        job.status === 'offered' ? 'bg-indigo-100 text-indigo-700' :
+                          job.status === 'hired' ? 'bg-teal-100 text-teal-700' :
+                            job.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                              'bg-gray-100 text-gray-600'
+                }`}>
+                {job.status === 'applied' ? <FiCheck size={14} /> : <FiClock size={14} />}
                 {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
               </span>
             </li>

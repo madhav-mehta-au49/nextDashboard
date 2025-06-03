@@ -15,6 +15,29 @@ class StoreCandidateRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation()
+    {
+        // Handle JSON strings for arrays when FormData is used (BEFORE validation)
+        $jsonFields = ['experiences', 'educations', 'skills', 'certifications'];
+        $mergeData = [];
+        
+        foreach ($jsonFields as $field) {
+            if ($this->has($field) && is_string($this->$field)) {
+                $decoded = json_decode($this->$field, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $mergeData[$field] = $decoded;
+                }
+            }
+        }
+        
+        if (!empty($mergeData)) {
+            $this->merge($mergeData);
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
@@ -33,8 +56,8 @@ class StoreCandidateRequest extends FormRequest
             'user_id' => 'nullable|exists:users,id',
             'availability' => 'nullable|string|in:Actively looking,Open to opportunities,Not actively looking',
             'resume_url' => 'nullable', // Accept both file uploads and string URLs
-            'profile_picture' => 'nullable|string|max:255',
-            'cover_image' => 'nullable|string|max:255',
+            'profile_picture' => 'nullable|string|max:10485760', // 10MB in base64 characters
+            'cover_image' => 'nullable|string|max:10485760', // 10MB in base64 characters
             'connections' => 'nullable|integer',
             'desired_job_title' => 'nullable|string|max:255',
             'desired_salary' => 'nullable|numeric',
@@ -75,11 +98,12 @@ class StoreCandidateRequest extends FormRequest
             // Certification validation
             'certifications' => 'nullable|array',
             'certifications.*.name' => 'required_with:certifications|string|max:255',
-            'certifications.*.issuer' => 'required_with:certifications|string|max:255',
+            'certifications.*.issuing_organization' => 'required_with:certifications|string|max:255',
             'certifications.*.issue_date' => 'required_with:certifications|date',
             'certifications.*.expiration_date' => 'nullable|date|after_or_equal:certifications.*.issue_date',
             'certifications.*.credential_id' => 'nullable|string|max:255',
             'certifications.*.credential_url' => 'nullable|string|max:255|url',
+            'certifications.*.file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB max
         ];
     }
     
@@ -113,5 +137,28 @@ class StoreCandidateRequest extends FormRequest
             'desired_salary.numeric' => 'The desired salary must be a number',
             'portfolio_url.url' => 'The portfolio URL must be a valid URL',
         ];
+    }
+
+    /**
+     * Prepare the data for validation by parsing JSON strings from FormData
+     */
+    protected function prepareForValidation()
+    {
+        // Parse JSON strings from FormData into arrays for validation
+        if ($this->has('experiences') && is_string($this->experiences)) {
+            $this->merge(['experiences' => json_decode($this->experiences, true)]);
+        }
+        
+        if ($this->has('educations') && is_string($this->educations)) {
+            $this->merge(['educations' => json_decode($this->educations, true)]);
+        }
+        
+        if ($this->has('skills') && is_string($this->skills)) {
+            $this->merge(['skills' => json_decode($this->skills, true)]);
+        }
+        
+        if ($this->has('certifications') && is_string($this->certifications)) {
+            $this->merge(['certifications' => json_decode($this->certifications, true)]);
+        }
     }
 }

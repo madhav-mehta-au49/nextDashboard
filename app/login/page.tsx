@@ -1,25 +1,105 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { FiEye, FiEyeOff, FiGithub, FiLinkedin } from "react-icons/fi";
-import { FcGoogle } from "react-icons/fc";
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { FiEye, FiEyeOff, FiLinkedin } from 'react-icons/fi';
+import { FcGoogle } from 'react-icons/fc';
+import Link from 'next/link';
+import { storeUserAuth, redirectBasedOnRole } from '@/app/utils/auth';
+
+// Declare redirectTimeout on window
+declare global {
+  interface Window {
+    redirectTimeout?: NodeJS.Timeout;
+  }
+}
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    rememberMe: false,
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrors({});
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const response = await fetch('http://localhost:8000/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Login success:', data);
+        
+        if (data.data) {
+          console.log('Storing user data:', data.data.role, data.data.name);
+            // Use the auth utility to store user data consistently
+          storeUserAuth({
+            id: data.data.id,
+            name: data.data.name,
+            role: data.data.role
+          });
+          
+          // Redirect to home page instead of dashboard
+          const redirectUrl = '/';
+          
+          console.log('Will redirect to home page');
+          
+          // Clear any previous redirect attempts
+          if (window.redirectTimeout) {
+            clearTimeout(window.redirectTimeout);
+          }
+          
+          // Use a longer timeout to ensure state is fully updated
+          window.redirectTimeout = setTimeout(() => {
+            console.log('Redirecting now to home page');
+            
+            // First try using router for better Next.js integration
+            router.push(redirectUrl);
+              // As a fallback, use direct location change after another delay
+            setTimeout(() => {
+              if (window.location.pathname !== redirectUrl) {
+                console.log('Router redirect failed, using window.location');
+                window.location.href = redirectUrl;
+              }
+            }, 500);
+          }, 1500);
+        } else {
+          console.error('Unexpected response format:', data);
+          setErrors({ email: 'Unexpected response format from server' });
+        }
+      } else {
+        const errorData = await response.json();
+        setErrors({ email: errorData.message || 'Invalid credentials' });
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setErrors({ email: 'Login failed. Please check your network connection and try again.' });
+    } finally {
       setIsLoading(false);
-      router.push("/dashboard");
-    }, 1500);
+    }
+  };
+
+  const handleSocialAuth = (provider: 'google' | 'linkedin') => {
+    // For login, we don't need to specify role as it's already determined
+    window.location.href = `http://localhost:8000/auth/${provider}`;
   };
 
   return (
@@ -35,16 +115,21 @@ export default function LoginPage() {
         <div className="w-full md:w-1/2 p-8">
           <h2 className="text-2xl font-bold text-teal-600 mb-6">Log In</h2>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">            
             {/* Email Field */}
             <div>
               <label className="block font-medium">Email</label>
               <input
                 type="email"
                 placeholder="your.email@example.com"
-                className="w-full mt-1 p-2 border rounded-lg focus:ring-teal-500 focus:border-teal-500"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className={`w-full mt-1 p-2 border rounded-lg focus:ring-teal-500 focus:border-teal-500 ${
+                  errors.email ? 'border-red-500' : ''
+                }`}
                 required
               />
+              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
             </div>
 
             {/* Password Field */}
@@ -54,6 +139,8 @@ export default function LoginPage() {
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   className="w-full mt-1 p-2 border rounded-lg focus:ring-teal-500 focus:border-teal-500"
                   required
                 />
@@ -70,8 +157,13 @@ export default function LoginPage() {
             {/* Remember Me + Forgot Password */}
             <div className="flex justify-between items-center text-sm">
               <div className="flex items-center">
-                <input type="checkbox" className="mr-2" />
-                <span>Remember me</span>
+                <input 
+                  type="checkbox" 
+                  className="mr-2" 
+                  checked={formData.rememberMe}
+                  onChange={(e) => setFormData({ ...formData, rememberMe: e.target.checked })}
+                />
+                <span>Remember me (24 hours)</span>
               </div>
               <Link href="/auth/forgot-password" className="text-teal-600 underline">
                 Forgot password?
@@ -93,15 +185,20 @@ export default function LoginPage() {
             <hr className="flex-1 border-gray-300" />
             <span className="mx-4 text-gray-500">or log in with</span>
             <hr className="flex-1 border-gray-300" />
-          </div>
-
+          </div>          
           {/* Social Login Buttons */}
           <div className="flex gap-4">
-            <button className="flex-1 flex items-center justify-center border p-3 rounded-lg hover:bg-gray-50 transition">
+            <button 
+              onClick={() => handleSocialAuth('google')}
+              className="flex-1 flex items-center justify-center border p-3 rounded-lg hover:bg-gray-50 transition"
+            >
               <FcGoogle className="mr-2" />
               Google
             </button>
-            <button className="flex-1 flex items-center justify-center border p-3 rounded-lg hover:bg-gray-50 transition">
+            <button 
+              onClick={() => handleSocialAuth('linkedin')}
+              className="flex-1 flex items-center justify-center border p-3 rounded-lg hover:bg-gray-50 transition"
+            >
               <FiLinkedin className="mr-2 text-blue-700" />
               LinkedIn
             </button>
@@ -110,7 +207,7 @@ export default function LoginPage() {
           {/* Sign Up Link */}
           <p className="mt-4 text-center text-gray-700">
             Don't have an account?{" "}
-            <Link href="/auth/signup" className="text-teal-600 font-bold">
+            <Link href="/signup" className="text-teal-600 font-bold">
               Sign up
             </Link>
           </p>

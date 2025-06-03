@@ -6,6 +6,8 @@ import { FiSearch, FiBriefcase, FiMapPin, FiTrendingUp, FiUser, FiFilter, FiArro
 import Header from "./web/components/header"
 import SubHeader from "../components/subheader"
 import Footer from "@/components/footer"
+import { EmployeeHeader } from "@/components/EmployeeHeader"
+import { useUser } from "@/app/user/contexts/UserContext"
 
 
 
@@ -43,10 +45,18 @@ const dummyJobs = [
 
 export default function Web() {
   const [searchType, setSearchType] = React.useState("jobs")
+  const { isAuthenticated, userRole } = useUser()
 
+  // Debug logging to help identify the issue
+  React.useEffect(() => {
+    console.log('Home page - isAuthenticated:', isAuthenticated, 'userRole:', userRole);
+    console.log('localStorage isAuthenticated:', localStorage.getItem('isAuthenticated'));
+    console.log('localStorage userRole:', localStorage.getItem('userRole'));
+  }, [isAuthenticated, userRole]);
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
+      {isAuthenticated && <EmployeeHeader />}
       <SubHeader />
       {/* Hero Section with Gradient - Updated Color Scheme */}
       <div className="bg-gradient-to-r from-teal-700 to-blue-600 text-white">

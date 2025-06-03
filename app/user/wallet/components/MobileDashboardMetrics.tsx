@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import { PointsStats, PointsTransaction } from '@/app/user/types/points';
-import { 
-  FaChartBar, 
-  FaFire, 
-  FaLightbulb, 
+import {
+  FaChartBar,
+  FaFire,
+  FaLightbulb,
   FaMobileAlt,
   FaDesktop,
   FaTabletAlt,
@@ -23,10 +23,10 @@ interface MobileDashboardMetricsProps {
   userRole: 'candidate' | 'hr' | 'company';
 }
 
-const MobileDashboardMetrics: React.FC<MobileDashboardMetricsProps> = ({ 
-  stats, 
-  transactions, 
-  userRole 
+const MobileDashboardMetrics: React.FC<MobileDashboardMetricsProps> = ({
+  stats,
+  transactions,
+  userRole
 }) => {
   const [activeMetric, setActiveMetric] = useState<'overview' | 'activity' | 'insights'>('overview');
 
@@ -43,7 +43,7 @@ const MobileDashboardMetrics: React.FC<MobileDashboardMetricsProps> = ({
       .filter(t => t.type === 'spent')
       .reduce((sum, t) => sum + t.points, 0);
 
-    const efficiency = stats.current_month.spent > 0 
+    const efficiency = stats.current_month.spent > 0
       ? Math.round((stats.current_month.earned / stats.current_month.spent) * 100)
       : 100;
 
@@ -113,11 +113,10 @@ const MobileDashboardMetrics: React.FC<MobileDashboardMetricsProps> = ({
           <button
             key={tab.key}
             onClick={() => setActiveMetric(tab.key as any)}
-            className={`flex-1 px-3 py-3 text-sm font-medium transition-colors ${
-              activeMetric === tab.key
+            className={`flex-1 px-3 py-3 text-sm font-medium transition-colors ${activeMetric === tab.key
                 ? 'text-blue-600 border-b-2 border-blue-600 bg-white'
                 : 'text-gray-600 hover:text-gray-900'
-            }`}
+              }`}
           >
             <div className="flex items-center justify-center gap-1">
               <tab.icon className="h-4 w-4" />
@@ -212,7 +211,7 @@ const MobileDashboardMetrics: React.FC<MobileDashboardMetricsProps> = ({
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex-1 bg-gray-200 rounded-full h-2">
-                  <div 
+                  <div
                     className="bg-blue-500 h-2 rounded-full transition-all duration-300"
                     style={{ width: `${Math.min((mobileMetrics.todayActivity / 5) * 100, 100)}%` }}
                   ></div>
@@ -230,19 +229,17 @@ const MobileDashboardMetrics: React.FC<MobileDashboardMetricsProps> = ({
                 {transactions.slice(0, 3).map((transaction, index) => (
                   <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <div className={`w-2 h-2 rounded-full ${
-                        transaction.type === 'spent' ? 'bg-red-400' : 'bg-green-400'
-                      }`}></div>
+                      <div className={`w-2 h-2 rounded-full ${transaction.type === 'spent' ? 'bg-red-400' : 'bg-green-400'
+                        }`}></div>
                       <span className="text-sm text-gray-700 truncate">
-                        {transaction.description.length > 25 
+                        {transaction.description.length > 25
                           ? transaction.description.substring(0, 25) + '...'
                           : transaction.description
                         }
                       </span>
                     </div>
-                    <span className={`text-sm font-medium ${
-                      transaction.type === 'spent' ? 'text-red-600' : 'text-green-600'
-                    }`}>
+                    <span className={`text-sm font-medium ${transaction.type === 'spent' ? 'text-red-600' : 'text-green-600'
+                      }`}>
                       {transaction.type === 'spent' ? '-' : '+'}{transaction.points}
                     </span>
                   </div>
@@ -270,29 +267,26 @@ const MobileDashboardMetrics: React.FC<MobileDashboardMetricsProps> = ({
         {activeMetric === 'insights' && (
           <div className="space-y-4">
             {/* Momentum Indicator */}
-            <div className={`rounded-lg p-3 ${
-              mobileMetrics.momentum === 'high' ? 'bg-green-50' :
-              mobileMetrics.momentum === 'medium' ? 'bg-yellow-50' : 'bg-red-50'
-            }`}>
+            <div className={`rounded-lg p-3 ${mobileMetrics.momentum === 'high' ? 'bg-green-50' :
+                mobileMetrics.momentum === 'medium' ? 'bg-yellow-50' : 'bg-red-50'
+              }`}>
               <div className="flex items-center gap-2 mb-2">
-                <FaBolt className={`h-4 w-4 ${
-                  mobileMetrics.momentum === 'high' ? 'text-green-600' :
-                  mobileMetrics.momentum === 'medium' ? 'text-yellow-600' : 'text-red-600'
-                }`} />
+                <FaBolt className={`h-4 w-4 ${mobileMetrics.momentum === 'high' ? 'text-green-600' :
+                    mobileMetrics.momentum === 'medium' ? 'text-yellow-600' : 'text-red-600'
+                  }`} />
                 <h4 className="text-sm font-medium text-gray-700">Current Momentum</h4>
               </div>
-              <p className={`text-sm font-medium capitalize ${
-                mobileMetrics.momentum === 'high' ? 'text-green-700' :
-                mobileMetrics.momentum === 'medium' ? 'text-yellow-700' : 'text-red-700'
-              }`}>
+              <p className={`text-sm font-medium capitalize ${mobileMetrics.momentum === 'high' ? 'text-green-700' :
+                  mobileMetrics.momentum === 'medium' ? 'text-yellow-700' : 'text-red-700'
+                }`}>
                 {mobileMetrics.momentum} Activity Level
               </p>
               <p className="text-xs text-gray-600 mt-1">
-                {mobileMetrics.momentum === 'high' 
+                {mobileMetrics.momentum === 'high'
                   ? 'Great job! You\'re using points efficiently.'
                   : mobileMetrics.momentum === 'medium'
-                  ? 'Good pace. Consider optimizing your strategy.'
-                  : 'Low activity. Time to boost your engagement!'
+                    ? 'Good pace. Consider optimizing your strategy.'
+                    : 'Low activity. Time to boost your engagement!'
                 }
               </p>
             </div>
@@ -306,7 +300,7 @@ const MobileDashboardMetrics: React.FC<MobileDashboardMetricsProps> = ({
                   <div>
                     <p className="text-sm font-medium text-blue-900">Optimize Timing</p>
                     <p className="text-xs text-blue-700">
-                      {userRole === 'candidate' 
+                      {userRole === 'candidate'
                         ? 'Apply to jobs during peak hours (9-11 AM) for better visibility.'
                         : 'Post jobs early in the week for maximum candidate engagement.'
                       }

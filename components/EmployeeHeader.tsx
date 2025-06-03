@@ -2,32 +2,82 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { 
-  CogIcon, 
-  HelpCircleIcon, 
-  LogOutIcon, 
-  UserIcon, 
+import {
+  CogIcon,
+  HelpCircleIcon,
+  LogOutIcon,
+  UserIcon,
   WalletIcon,
   BellIcon
 } from "lucide-react";
 import { Notification } from "./notification";
+import { getCurrentUserCandidateProfile } from "../app/services/candidate/candidateApi";
+import { redirectToProfile } from "../app/utils/auth";
 
 export const EmployeeHeader: React.FC = () => {
   const [userPoints, setUserPoints] = useState(0);
   const [userRole, setUserRole] = useState<string | null>(null);
-
+  const [userName, setUserName] = useState<string>('User');
+  const [candidateProfile, setCandidateProfile] = useState<any>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   useEffect(() => {
     // Get user points and role from localStorage
     const savedPoints = localStorage.getItem('userPoints');
     const savedRole = localStorage.getItem('userRole');
-    
+    const savedName = localStorage.getItem('userName');
+    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+
+    console.log('EmployeeHeader loading user data from localStorage:', { savedRole, savedName, isAuthenticated });
+
     if (savedPoints) {
       setUserPoints(parseInt(savedPoints, 10));
     }
-    
+
     if (savedRole) {
       setUserRole(savedRole);
     }
+    
+    if (savedName) {
+      setUserName(savedName);
+    }
+
+    // Load candidate profile if user is a candidate
+    if (savedRole === 'candidate') {
+      setIsLoadingProfile(true);
+      getCurrentUserCandidateProfile()
+        .then((response: any) => {
+          setCandidateProfile(response.candidate);
+        })
+        .catch((error: any) => {
+          console.error('Error fetching candidate profile:', error);
+          setCandidateProfile(null);
+        })
+        .finally(() => {
+          setIsLoadingProfile(false);
+        });
+    }
+    
+    // Fetch current user data
+    fetch('/api/auth/user', {
+      credentials: 'include',
+      headers: {
+        'Accept': 'application/json',
+      }
+    })      .then(response => {
+        if (response.ok) {
+          return response.json();
+        }
+        throw new Error('Failed to fetch user data');
+      })
+      .then((data: any) => {
+        if (data.user?.name) {
+          setUserName(data.user.name);
+          localStorage.setItem('userName', data.user.name);
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching user data:', error);
+      });
   }, []);
   const [notifications, setNotifications] = useState<Notification[]>([
     {
@@ -94,7 +144,9 @@ export const EmployeeHeader: React.FC = () => {
     <header className="bg-gray-900 text-white px-6 py-4 shadow-md">
       <div className="flex items-center justify-between gap-4">
         <Link href="/employee/dashboard" className="hover:text-gray-200 transition-colors">
-          <span className="font-bold text-xl">Employee Portal</span>
+          <span className="font-bold text-xl">
+            {userRole === 'candidate' ? 'Candidate Portal' : userRole === 'employer' ? 'Employer Portal' : 'HR Portal'}
+          </span>
         </Link>
 
         <div className="max-w-2xl w-full">
@@ -110,13 +162,13 @@ export const EmployeeHeader: React.FC = () => {
             </div>
           </div>
         </div>        <div className="flex items-center gap-4">          <Link
-            href="/user/wallet"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-teal-700 transition-colors"
-            title="Wallet"
-          >
-            <WalletIcon className="h-5 w-5" />
-            <span className="text-sm font-medium">{userPoints} pts</span>
-          </Link>
+          href="/user/wallet"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-teal-700 transition-colors"
+          title="Wallet"
+        >
+          <WalletIcon className="h-5 w-5" />
+          <span className="text-sm font-medium">{userPoints} pts</span>
+        </Link>
 
           {/* Notifications */}
           <div className="relative">
@@ -150,8 +202,7 @@ export const EmployeeHeader: React.FC = () => {
                   {notifications.length === 0 ? (
                     <div className="p-4 text-center text-gray-500">
                       No notifications
-                    </div>
-                  ) : (
+                    </div>                  ) : (
                     notifications.map((notification) => (
                       <div
                         key={notification.id}
@@ -173,62 +224,146 @@ export const EmployeeHeader: React.FC = () => {
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Profile Menu */}
+          </div>          {/* Profile Menu */}
           <div className="relative">
             <button
               onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-              className="flex items-center justify-center h-8 w-8 rounded-full bg-gray-900 hover:bg-teal-800 transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-teal-700 transition-colors"
             >
               <span className="sr-only">Open user menu</span>
-              <Image
-                src=""
-                alt="User avatar"
-                width={32}
-                height={32}
-                className="h-8 w-8 rounded-full object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E";
-                }}
-              />
-            </button>            {isProfileMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                <Link 
-                  href="/profile" 
-                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  onClick={() => setIsProfileMenuOpen(false)}
-                >
-                  <UserIcon className="mr-3 h-5 w-5 text-gray-400" />
-                  My Profile
-                </Link>
-                <Link 
-                  href="/user/wallet" 
+              <div className="flex items-center h-8 w-8 rounded-full bg-teal-600 text-white justify-center overflow-hidden">
+                {candidateProfile?.profile_picture ? (
+                  <Image
+                    src={candidateProfile.profile_picture}
+                    alt={userName}
+                    width={32}
+                    height={32}
+                    className="h-8 w-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="font-semibold text-sm">{userName.charAt(0).toUpperCase()}</span>
+                )}
+              </div>
+              <span className="text-sm font-medium hidden md:block">{userName}</span>
+            </button>
+
+            {isProfileMenuOpen && (
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg py-1 z-50">
+                <div className="px-4 py-3 border-b border-gray-200">
+                  <div className="font-medium text-gray-800">{userName}</div>
+                  <div className="text-sm text-gray-500">Role: {userRole === 'candidate' ? 'Job Seeker' : userRole === 'employer' ? 'Employer' : 'HR Manager'}</div>
+                </div>
+
+                {/* Profile options based on role */}
+                {userRole === 'candidate' && (
+                  <>
+                    {isLoadingProfile ? (
+                      <div className="flex items-center px-4 py-2 text-sm text-gray-500">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400 mr-3"></div>
+                        Loading profile...
+                      </div>
+                    ) : candidateProfile ? (                      <Link
+                        href={`/user/candidate/${candidateProfile.slug || candidateProfile.id}`}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => {
+                          setIsProfileMenuOpen(false);
+                          redirectToProfile('candidate', candidateProfile.slug || candidateProfile.id);
+                        }}
+                      >
+                        <UserIcon className="mr-3 h-5 w-5 text-green-500" />
+                        <div className="flex flex-col">
+                          <span>View Profile</span>
+                          <span className="text-xs text-green-600 font-medium">
+                            {candidateProfile.completion_percentage || 0}% Complete
+                          </span>
+                        </div>
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/user/candidate/create"
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setIsProfileMenuOpen(false)}
+                      >
+                        <UserIcon className="mr-3 h-5 w-5 text-teal-500" />
+                        <div className="flex flex-col">
+                          <span>Create Profile</span>
+                          <span className="text-xs text-teal-600">Get started!</span>
+                        </div>
+                      </Link>
+                    )}
+                    <hr className="my-1 border-gray-200" />
+                  </>
+                )}
+
+                {/* Company options for employer/HR roles */}
+                {(userRole === 'employer' || userRole === 'hr') && (
+                  <>
+                    <Link
+                      href="/companies/dashboard"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsProfileMenuOpen(false)}
+                    >
+                      <UserIcon className="mr-3 h-5 w-5 text-blue-500" />
+                      <div className="flex flex-col">
+                        <span>Company Dashboard</span>
+                        <span className="text-xs text-blue-600">Manage your listings</span>
+                      </div>
+                    </Link>
+                    <hr className="my-1 border-gray-200" />
+                  </>
+                )}                {/* Common menu items */}
+                
+                {/* Only show Dashboard for non-candidates */}
+                {userRole !== 'candidate' && (
+                  <Link
+                    href={userRole === 'candidate' ? '/user/dashboard' : 
+                         userRole === 'employer' ? '/companies/dashboard' : '/user/dashboard'}
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => setIsProfileMenuOpen(false)}
+                  >
+                    <UserIcon className="mr-3 h-5 w-5 text-gray-400" />
+                    My Dashboard
+                  </Link>
+                )}                  {/* Profile links based on role - only for non-candidates */}
+                {userRole === 'employer' ? (
+                  <button
+                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      setIsProfileMenuOpen(false);
+                      await redirectToProfile('employer');
+                    }}
+                  >
+                    <UserIcon className="mr-3 h-5 w-5 text-blue-400" />
+                    Company Profile
+                  </button>
+                ) : null}
+                <Link
+                  href="/user/wallet"
                   className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   onClick={() => setIsProfileMenuOpen(false)}
                 >
                   <WalletIcon className="mr-3 h-5 w-5 text-gray-400" />
                   My Wallet
                 </Link>
-                <Link 
-                  href="/settings" 
+                <Link
+                  href="/settings"
                   className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   onClick={() => setIsProfileMenuOpen(false)}
                 >
                   <CogIcon className="mr-3 h-5 w-5 text-gray-400" />
                   Settings
                 </Link>
-                <Link 
-                  href="/help" 
+                <Link
+                  href="/help"
                   className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   onClick={() => setIsProfileMenuOpen(false)}
                 >
                   <HelpCircleIcon className="mr-3 h-5 w-5 text-gray-400" />
                   Help Center
                 </Link>
-                <Link 
-                  href="/signout" 
+                <Link
+                  href="/signout"
                   className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   onClick={() => setIsProfileMenuOpen(false)}
                 >

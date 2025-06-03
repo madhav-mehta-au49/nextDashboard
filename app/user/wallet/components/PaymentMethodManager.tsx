@@ -2,23 +2,23 @@
 
 import React, { useState } from 'react';
 import { PaymentMethod } from '@/app/user/types/wallet';
-import { 
-  addPaymentMethod, 
-  updatePaymentMethod, 
-  deletePaymentMethod, 
-  setDefaultPaymentMethod 
+import {
+  addPaymentMethod,
+  updatePaymentMethod,
+  deletePaymentMethod,
+  setDefaultPaymentMethod
 } from '@/services/wallet/walletApi';
-import { 
-  FaUniversity, 
-  FaPaypal, 
-  FaBitcoin, 
-  FaCreditCard, 
+import {
+  FaUniversity,
+  FaPaypal,
+  FaBitcoin,
+  FaCreditCard,
   FaPlus,
-  FaEdit, 
-  FaTrash, 
-  FaStar, 
+  FaEdit,
+  FaTrash,
+  FaStar,
   FaTimes,
-  FaCheck 
+  FaCheck
 } from 'react-icons/fa';
 
 interface PaymentMethodManagerProps {
@@ -89,7 +89,7 @@ const PaymentMethodManager: React.FC<PaymentMethodManagerProps> = ({
           details: formData.details
         });
       }
-      
+
       resetForm();
       onUpdate();
     } catch (err: any) {
@@ -399,7 +399,7 @@ const PaymentMethodManager: React.FC<PaymentMethodManagerProps> = ({
           {/* Payment Methods List */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium text-gray-900">Your Payment Methods</h3>
-            
+
             {paymentMethods.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 No payment methods added yet. Add one to start receiving withdrawals.

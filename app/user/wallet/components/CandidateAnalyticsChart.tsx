@@ -2,11 +2,11 @@
 
 import React from 'react';
 import { PointsStats, PointsTransaction } from '@/app/user/types/points';
-import { 
-  FaUserTie, 
-  FaFileAlt, 
-  FaEye, 
-  FaRocket, 
+import {
+  FaUserTie,
+  FaFileAlt,
+  FaEye,
+  FaRocket,
   FaTrophy,
   FaChartLine,
   FaCalendarAlt,
@@ -31,51 +31,51 @@ interface CandidateMetrics {
   topSpendingCategory: string;
 }
 
-const CandidateAnalyticsChart: React.FC<CandidateAnalyticsChartProps> = ({ 
-  stats, 
-  transactions 
+const CandidateAnalyticsChart: React.FC<CandidateAnalyticsChartProps> = ({
+  stats,
+  transactions
 }) => {
   // Calculate candidate-specific metrics
   const calculateMetrics = (): CandidateMetrics => {
     const spentTransactions = transactions.filter(t => t.type === 'spent');
-    
+
     // Categorize spending
-    const resumeViews = spentTransactions.filter(t => 
-      t.description.toLowerCase().includes('resume') || 
+    const resumeViews = spentTransactions.filter(t =>
+      t.description.toLowerCase().includes('resume') ||
       t.description.toLowerCase().includes('profile')
     ).length;
-    
-    const applications = spentTransactions.filter(t => 
+
+    const applications = spentTransactions.filter(t =>
       t.description.toLowerCase().includes('application') ||
       t.description.toLowerCase().includes('apply')
     ).length;
-    
-    const boosts = spentTransactions.filter(t => 
+
+    const boosts = spentTransactions.filter(t =>
       t.description.toLowerCase().includes('boost') ||
       t.description.toLowerCase().includes('priority')
     ).length;
-    
-    const premium = spentTransactions.filter(t => 
+
+    const premium = spentTransactions.filter(t =>
       t.description.toLowerCase().includes('premium') ||
       t.description.toLowerCase().includes('analytics')
     ).length;
-    
+
     // Calculate success metrics
     const totalSpent = stats.current_month.spent;
     const avgPointsPerApp = applications > 0 ? totalSpent / applications : 0;
-    
+
     // Determine trend
     const currentSpent = stats.current_month.spent;
     const lastSpent = stats.last_month.spent;
     let monthlyTrend: 'up' | 'down' | 'stable' = 'stable';
-    
+
     if (currentSpent > lastSpent * 1.1) monthlyTrend = 'up';
     else if (currentSpent < lastSpent * 0.9) monthlyTrend = 'down';
-    
+
     // Find top spending category
     const categories = stats.top_categories;
     const topCategory = categories.length > 0 ? categories[0].category : 'job_applications';
-    
+
     return {
       resumesViewed: resumeViews,
       applicationsSubmitted: applications,
@@ -93,7 +93,7 @@ const CandidateAnalyticsChart: React.FC<CandidateAnalyticsChartProps> = ({
   // Get recommendation based on spending patterns
   const getRecommendations = () => {
     const recommendations = [];
-    
+
     if (metrics.avgPointsPerApplication > 15) {
       recommendations.push({
         type: 'cost-optimization',
@@ -103,7 +103,7 @@ const CandidateAnalyticsChart: React.FC<CandidateAnalyticsChartProps> = ({
         color: 'text-yellow-600'
       });
     }
-    
+
     if (metrics.profileBoosts === 0 && stats.current_month.spent > 20) {
       recommendations.push({
         type: 'visibility',
@@ -113,7 +113,7 @@ const CandidateAnalyticsChart: React.FC<CandidateAnalyticsChartProps> = ({
         color: 'text-blue-600'
       });
     }
-    
+
     if (metrics.premiumFeatures === 0) {
       recommendations.push({
         type: 'insights',
@@ -123,7 +123,7 @@ const CandidateAnalyticsChart: React.FC<CandidateAnalyticsChartProps> = ({
         color: 'text-purple-600'
       });
     }
-    
+
     return recommendations.slice(0, 2); // Show max 2 recommendations
   };
 
@@ -139,7 +139,7 @@ const CandidateAnalyticsChart: React.FC<CandidateAnalyticsChartProps> = ({
             Candidate Performance Analytics
           </h3>
         </div>
-        
+
         <div className="p-6">
           {/* Key Performance Indicators */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -153,7 +153,7 @@ const CandidateAnalyticsChart: React.FC<CandidateAnalyticsChartProps> = ({
                 <FaFileAlt className="h-8 w-8 text-blue-500" />
               </div>
             </div>
-            
+
             <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -164,7 +164,7 @@ const CandidateAnalyticsChart: React.FC<CandidateAnalyticsChartProps> = ({
                 <FaEye className="h-8 w-8 text-green-500" />
               </div>
             </div>
-            
+
             <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -175,7 +175,7 @@ const CandidateAnalyticsChart: React.FC<CandidateAnalyticsChartProps> = ({
                 <FaRocket className="h-8 w-8 text-purple-500" />
               </div>
             </div>
-            
+
             <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -187,7 +187,7 @@ const CandidateAnalyticsChart: React.FC<CandidateAnalyticsChartProps> = ({
               </div>
             </div>
           </div>
-          
+
           {/* Spending Efficiency */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <div className="bg-gray-50 rounded-lg p-4">
@@ -206,12 +206,11 @@ const CandidateAnalyticsChart: React.FC<CandidateAnalyticsChartProps> = ({
                     {metrics.monthlyTrend === 'down' && (
                       <FaArrowDown className="text-green-500 mr-1 h-3 w-3" />
                     )}
-                    <span className={`text-sm font-medium ${
-                      metrics.monthlyTrend === 'up' ? 'text-red-600' :
-                      metrics.monthlyTrend === 'down' ? 'text-green-600' : 'text-gray-600'
-                    }`}>
+                    <span className={`text-sm font-medium ${metrics.monthlyTrend === 'up' ? 'text-red-600' :
+                        metrics.monthlyTrend === 'down' ? 'text-green-600' : 'text-gray-600'
+                      }`}>
                       {metrics.monthlyTrend === 'up' ? 'Increasing' :
-                       metrics.monthlyTrend === 'down' ? 'Decreasing' : 'Stable'}
+                        metrics.monthlyTrend === 'down' ? 'Decreasing' : 'Stable'}
                     </span>
                   </div>
                 </div>
@@ -223,7 +222,7 @@ const CandidateAnalyticsChart: React.FC<CandidateAnalyticsChartProps> = ({
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-gray-50 rounded-lg p-4">
               <h4 className="font-medium text-gray-700 mb-4">Monthly Comparison</h4>
               <div className="space-y-4">
@@ -233,10 +232,10 @@ const CandidateAnalyticsChart: React.FC<CandidateAnalyticsChartProps> = ({
                     <span className="text-sm font-medium">{stats.current_month.spent} pts</span>
                   </div>
                   <div className="h-2 bg-gray-200 rounded-full">
-                    <div 
+                    <div
                       className="h-2 bg-blue-500 rounded-full"
-                      style={{ 
-                        width: `${Math.min((stats.current_month.spent / Math.max(stats.current_month.spent, stats.last_month.spent)) * 100, 100)}%` 
+                      style={{
+                        width: `${Math.min((stats.current_month.spent / Math.max(stats.current_month.spent, stats.last_month.spent)) * 100, 100)}%`
                       }}
                     ></div>
                   </div>
@@ -247,10 +246,10 @@ const CandidateAnalyticsChart: React.FC<CandidateAnalyticsChartProps> = ({
                     <span className="text-sm font-medium">{stats.last_month.spent} pts</span>
                   </div>
                   <div className="h-2 bg-gray-200 rounded-full">
-                    <div 
+                    <div
                       className="h-2 bg-gray-400 rounded-full"
-                      style={{ 
-                        width: `${Math.min((stats.last_month.spent / Math.max(stats.current_month.spent, stats.last_month.spent)) * 100, 100)}%` 
+                      style={{
+                        width: `${Math.min((stats.last_month.spent / Math.max(stats.current_month.spent, stats.last_month.spent)) * 100, 100)}%`
                       }}
                     ></div>
                   </div>
@@ -260,14 +259,14 @@ const CandidateAnalyticsChart: React.FC<CandidateAnalyticsChartProps> = ({
           </div>
         </div>
       </div>
-      
+
       {/* Smart Recommendations */}
       {recommendations.length > 0 && (
         <div className="bg-white rounded-lg shadow-md">
           <div className="px-6 py-5 border-b border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900">Smart Recommendations</h3>
           </div>
-          
+
           <div className="p-6">
             <div className="space-y-4">
               {recommendations.map((rec, index) => (
@@ -285,7 +284,7 @@ const CandidateAnalyticsChart: React.FC<CandidateAnalyticsChartProps> = ({
           </div>
         </div>
       )}
-      
+
       {/* Application Timeline Visualization */}
       <div className="bg-white rounded-lg shadow-md">
         <div className="px-6 py-5 border-b border-gray-200">
@@ -294,33 +293,32 @@ const CandidateAnalyticsChart: React.FC<CandidateAnalyticsChartProps> = ({
             Application Timeline
           </h3>
         </div>
-        
+
         <div className="p-6">
           <div className="space-y-4">
             {transactions
               .filter(t => t.type === 'spent')
               .slice(0, 5)
               .map((transaction, index) => {
-                const isJobApp = transaction.description.toLowerCase().includes('application') || 
-                                transaction.description.toLowerCase().includes('apply');
+                const isJobApp = transaction.description.toLowerCase().includes('application') ||
+                  transaction.description.toLowerCase().includes('apply');
                 const isBoost = transaction.description.toLowerCase().includes('boost');
                 const isPremium = transaction.description.toLowerCase().includes('premium');
-                
+
                 return (
                   <div key={transaction.id || index} className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
-                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                        isJobApp ? 'bg-blue-100' :
-                        isBoost ? 'bg-purple-100' :
-                        isPremium ? 'bg-yellow-100' : 'bg-gray-100'
-                      }`}>
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${isJobApp ? 'bg-blue-100' :
+                          isBoost ? 'bg-purple-100' :
+                            isPremium ? 'bg-yellow-100' : 'bg-gray-100'
+                        }`}>
                         {isJobApp ? <FaFileAlt className="h-5 w-5 text-blue-600" /> :
-                         isBoost ? <FaRocket className="h-5 w-5 text-purple-600" /> :
-                         isPremium ? <FaChartLine className="h-5 w-5 text-yellow-600" /> :
-                         <FaEye className="h-5 w-5 text-gray-600" />}
+                          isBoost ? <FaRocket className="h-5 w-5 text-purple-600" /> :
+                            isPremium ? <FaChartLine className="h-5 w-5 text-yellow-600" /> :
+                              <FaEye className="h-5 w-5 text-gray-600" />}
                       </div>
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start">
                         <div>

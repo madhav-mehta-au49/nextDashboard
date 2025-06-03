@@ -1,0 +1,43 @@
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+export function middleware(request: NextRequest) {
+  // Get user role and authentication status from cookies
+  const userRole = request.cookies.get('userRole')?.value;
+  const isAuthenticated = request.cookies.get('isAuthenticated')?.value === 'true';
+  
+  console.log('Middleware checking auth:', { userRole, isAuthenticated });
+  
+  // Define protected paths
+  const companyPaths = ['/companies/dashboard', '/companies/create', '/companies/jobs'];
+  const candidatePaths = ['/user/candidate'];
+  
+  // Check if the current path is a company dashboard path
+  const isCompanyPath = companyPaths.some(path => request.nextUrl.pathname.startsWith(path));
+  
+  // Check if the current path is a candidate path
+  const isCandidatePath = candidatePaths.some(path => request.nextUrl.pathname.startsWith(path));
+  
+  // If trying to access company paths as a candidate, redirect to candidate dashboard
+  if (isCompanyPath && userRole === 'candidate') {
+    console.log('Redirecting candidate from company path to user dashboard');
+    return NextResponse.redirect(new URL('/user/dashboard', request.url));
+  }
+  
+  // If not authenticated (no isAuthenticated cookie or role), redirect to login
+  if ((!isAuthenticated || !userRole) && (isCompanyPath || isCandidatePath)) {
+    console.log('Redirecting unauthenticated user to login');
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+  
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: [
+    '/companies/dashboard/:path*',
+    '/companies/create/:path*', 
+    '/companies/jobs/:path*',
+    '/user/candidate/:path*'
+  ],
+};

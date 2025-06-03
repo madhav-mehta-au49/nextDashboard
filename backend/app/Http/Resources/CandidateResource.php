@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class CandidateResource extends JsonResource
 {
@@ -19,12 +20,11 @@ class CandidateResource extends JsonResource
             'email' => $this->email,
             'phone' => $this->phone,
             'website' => $this->website,
-            'location' => $this->location,
-            'profile_picture' => $this->profile_picture,
-            'cover_image' => $this->cover_image,
+            'location' => $this->location,            'profile_picture' => $this->getFileUrl($this->profile_picture),
+            'cover_image' => $this->getFileUrl($this->cover_image),
             'headline' => $this->headline,
             'about' => $this->about,
-            'resume_url' => $this->resume_url,
+            'resume_url' => $this->getFileUrl($this->resume_url),
             'portfolio_url' => $this->portfolio_url,
             'availability' => $this->availability,
             'connections' => $this->connections,
@@ -44,5 +44,23 @@ class CandidateResource extends JsonResource
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
+    }
+
+    /**
+     * Get full URL for file path
+     */
+    private function getFileUrl(?string $path): ?string
+    {
+        if (!$path) {
+            return null;
+        }
+        
+        // If it's already a full URL, return as is
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+        
+        // Generate storage URL
+        return Storage::disk('public')->url($path);
     }
 }

@@ -328,8 +328,7 @@ class InterviewController extends Controller
                 'jobApplication.jobListing',
                 'jobApplication.jobListing.company'
             ])
-            ->get()
-            ->map(function ($interview) {
+            ->get()            ->map(function ($interview) {
                 return [
                     'id' => $interview->id,
                     'title' => $interview->jobApplication->jobListing->title . ' - ' . 
@@ -343,7 +342,7 @@ class InterviewController extends Controller
                     'company' => $interview->jobApplication->jobListing->company->name,
                     'candidate' => $interview->jobApplication->candidate->user->name,
                     'job_title' => $interview->jobApplication->jobListing->title,
-                };
+                ];
             });
             
         return response()->json([

@@ -103,7 +103,7 @@ const EarningsChart: React.FC<EarningsChartProps> = ({ userId, stats }) => {
     return (
       <div className="text-center py-8">
         <div className="text-red-600 text-xl mb-4">{error}</div>
-        <button 
+        <button
           onClick={fetchEarningsData}
           className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
         >
@@ -123,11 +123,10 @@ const EarningsChart: React.FC<EarningsChartProps> = ({ userId, stats }) => {
             <button
               key={period}
               onClick={() => setSelectedPeriod(period)}
-              className={`px-4 py-2 rounded-md text-sm font-medium ${
-                selectedPeriod === period
+              className={`px-4 py-2 rounded-md text-sm font-medium ${selectedPeriod === period
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+                }`}
             >
               {period.charAt(0).toUpperCase() + period.slice(1)}
             </button>
@@ -222,11 +221,11 @@ const EarningsChart: React.FC<EarningsChartProps> = ({ userId, stats }) => {
       {earningsSummary?.earnings_by_source && (
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-6">Earnings by Source</h3>
-          
+
           <div className="space-y-4">
             {Object.entries(earningsSummary.earnings_by_source).map(([source, amount]) => {
               const percentage = calculatePercentage(amount, earningsSummary.total_earnings);
-              
+
               return (
                 <div key={source} className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -256,7 +255,7 @@ const EarningsChart: React.FC<EarningsChartProps> = ({ userId, stats }) => {
           <div className="mt-6 space-y-3">
             {Object.entries(earningsSummary.earnings_by_source).map(([source, amount]) => {
               const percentage = parseFloat(calculatePercentage(amount, earningsSummary.total_earnings));
-              
+
               return (
                 <div key={source}>
                   <div className="flex justify-between text-sm">
@@ -282,7 +281,7 @@ const EarningsChart: React.FC<EarningsChartProps> = ({ userId, stats }) => {
       {earningsSummary?.earnings_timeline && earningsSummary.earnings_timeline.length > 0 && (
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-6">Earnings Timeline</h3>
-          
+
           <div className="space-y-3">
             {earningsSummary.earnings_timeline.slice(0, 10).map((entry, index) => (
               <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
@@ -316,7 +315,7 @@ const EarningsChart: React.FC<EarningsChartProps> = ({ userId, stats }) => {
               <span>Share Referral Code</span>
             </button>
           </div>
-          
+
           <div className="space-y-3">
             {referralEarnings.recent_referrals.slice(0, 5).map((referral, index) => (
               <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">

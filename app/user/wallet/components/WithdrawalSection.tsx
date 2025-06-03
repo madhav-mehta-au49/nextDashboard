@@ -2,23 +2,23 @@
 
 import React, { useState, useEffect } from 'react';
 import { Wallet, WithdrawalRequest, PaymentMethod } from '@/app/user/types/wallet';
-import { 
-  getPaymentMethods, 
-  createWithdrawalRequest, 
+import {
+  getPaymentMethods,
+  createWithdrawalRequest,
   cancelWithdrawalRequest,
-  getWithdrawalFees 
+  getWithdrawalFees
 } from '@/services/wallet/walletApi';
 import PaymentMethodManager from './PaymentMethodManager';
-import { 
-  FaPlus, 
-  FaCreditCard, 
-  FaUniversity, 
+import {
+  FaPlus,
+  FaCreditCard,
+  FaUniversity,
   FaPaypal,
   FaBitcoin,
   FaClock,
   FaCheckCircle,
   FaTimesCircle,
-  FaExclamationTriangle 
+  FaExclamationTriangle
 } from 'react-icons/fa';
 
 interface WithdrawalSectionProps {
@@ -358,7 +358,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
               <tbody className="bg-white divide-y divide-gray-200">
                 {withdrawalRequests.map((request) => {
                   const paymentMethod = paymentMethods.find(method => method.id === request.payment_method_id);
-                  
+
                   return (
                     <tr key={request.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">

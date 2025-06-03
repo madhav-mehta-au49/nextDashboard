@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-  FaArrowLeft, 
-  FaCoins, 
-  FaCreditCard, 
-  FaShoppingCart, 
+import {
+  FaArrowLeft,
+  FaCoins,
+  FaCreditCard,
+  FaShoppingCart,
   FaCheckCircle,
   FaStar,
   FaShieldAlt,
@@ -44,17 +44,17 @@ const CardContent = ({ children, className = "" }: { children: React.ReactNode; 
   </div>
 );
 
-const Button = ({ 
-  children, 
-  variant = "default", 
-  className = "", 
-  onClick, 
-  disabled = false 
-}: { 
-  children: React.ReactNode; 
+const Button = ({
+  children,
+  variant = "default",
+  className = "",
+  onClick,
+  disabled = false
+}: {
+  children: React.ReactNode;
   variant?: "default" | "outline" | "ghost";
-  className?: string; 
-  onClick?: () => void; 
+  className?: string;
+  onClick?: () => void;
   disabled?: boolean;
 }) => {
   const baseClasses = "px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center";
@@ -63,9 +63,9 @@ const Button = ({
     outline: "border border-gray-300 hover:bg-gray-50 text-gray-700",
     ghost: "hover:bg-gray-100 text-gray-600"
   };
-  
+
   return (
-    <button 
+    <button
       className={`${baseClasses} ${variants[variant]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
       onClick={onClick}
       disabled={disabled}
@@ -75,23 +75,23 @@ const Button = ({
   );
 };
 
-const Badge = ({ 
-  children, 
-  variant = "default", 
-  className = "" 
-}: { 
-  children: React.ReactNode; 
+const Badge = ({
+  children,
+  variant = "default",
+  className = ""
+}: {
+  children: React.ReactNode;
   variant?: "default" | "secondary" | "success" | "warning" | "destructive";
   className?: string;
 }) => {
   const variants = {
     default: "bg-blue-100 text-blue-800",
-    secondary: "bg-gray-100 text-gray-800", 
+    secondary: "bg-gray-100 text-gray-800",
     success: "bg-green-100 text-green-800",
     warning: "bg-yellow-100 text-yellow-800",
     destructive: "bg-red-100 text-red-800"
   };
-  
+
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variants[variant]} ${className}`}>
       {children}
@@ -115,11 +115,11 @@ const PurchasePointsPage = () => {
 
   useEffect(() => {
     // Filter packages based on user role
-    const filteredPackages = mockPointsPackages.filter(pkg => 
+    const filteredPackages = mockPointsPackages.filter(pkg =>
       !pkg.target_roles || pkg.target_roles.includes(userRole as any)
     );
     setPackages(filteredPackages);
-    
+
     // Set recommended packages based on user role
     const recommended = filteredPackages.filter(pkg => pkg.is_popular);
     if (recommended.length > 0) {
@@ -136,19 +136,19 @@ const PurchasePointsPage = () => {
 
   const handlePurchase = () => {
     if (!selectedPackage) return;
-    
+
     setLoading(true);
-    
+
     // Simulate API call
     setTimeout(() => {
       // Calculate final points to add with any promo discount
       const finalPoints = selectedPackage.points;
-      
+
       // Update user points
       setUserPoints(userPoints + finalPoints);
       setLoading(false);
       setPurchaseComplete(true);
-      
+
       // Reset after a delay
       setTimeout(() => {
         setPurchaseComplete(false);
@@ -191,7 +191,7 @@ const PurchasePointsPage = () => {
     setPromoApplied(false);
     setPromoDiscount(0);
     setPromoError('');
-    
+
     // Simulate promo code validation
     if (promoCode.toLowerCase() === 'welcome10') {
       setPromoDiscount(10);
@@ -219,14 +219,14 @@ const PurchasePointsPage = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <button 
+          <button
             onClick={handleBack}
             className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
           >
             <FaArrowLeft className="mr-2" />
             <span>Back</span>
           </button>
-          
+
           <div className="flex items-center mb-4">
             <FaCoins className="h-8 w-8 text-blue-600 mr-3" />
             <h1 className="text-3xl font-bold text-gray-900">Purchase Points</h1>
@@ -239,7 +239,7 @@ const PurchasePointsPage = () => {
           <div className="lg:col-span-1">
             <WalletNavigation />
           </div>
-          
+
           {/* Main Content */}
           <div className="lg:col-span-3">
             {purchaseComplete ? (
@@ -284,22 +284,22 @@ const PurchasePointsPage = () => {
                             )}
                           </div>
                         </div>
-                        
+
                         {/* Promo Code Section */}
                         <div className="mb-4">
                           <div className="flex gap-2">
                             <div className="flex-1">
-                              <input 
-                                type="text" 
+                              <input
+                                type="text"
                                 value={promoCode}
                                 onChange={(e) => setPromoCode(e.target.value)}
-                                placeholder="Enter promo code" 
+                                placeholder="Enter promo code"
                                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                               />
                               {promoError && <p className="text-red-500 text-xs mt-1">{promoError}</p>}
                             </div>
-                            <Button 
-                              variant="outline" 
+                            <Button
+                              variant="outline"
                               onClick={handleApplyPromo}
                               disabled={!promoCode.trim()}
                             >
@@ -308,14 +308,14 @@ const PurchasePointsPage = () => {
                           </div>
                           {promoApplied && (
                             <div className="mt-2 p-2 bg-green-50 rounded border border-green-200 text-green-700 text-sm">
-                              <FaCheckCircle className="inline-block mr-1 h-3 w-3" /> 
+                              <FaCheckCircle className="inline-block mr-1 h-3 w-3" />
                               {promoDiscount}% discount applied!
                             </div>
                           )}
                         </div>
-                        
+
                         <hr className="my-4 border-gray-200" />
-                        
+
                         <div className="flex justify-between items-center font-bold">
                           <span>Total</span>
                           <span>
@@ -334,17 +334,17 @@ const PurchasePointsPage = () => {
                           </span>
                         </div>
                       </div>
-                      
+
                       <div className="mb-6">
                         <h3 className="font-semibold text-gray-900 mb-4">Payment Method</h3>
                         <div className="border border-gray-200 rounded-lg p-4 mb-4">
                           <div className="flex items-center">
-                            <input 
-                              type="radio" 
-                              id="card" 
-                              name="payment" 
-                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" 
-                              defaultChecked 
+                            <input
+                              type="radio"
+                              id="card"
+                              name="payment"
+                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              defaultChecked
                             />
                             <label htmlFor="card" className="ml-3 block text-gray-700">
                               <div className="flex items-center">
@@ -354,45 +354,45 @@ const PurchasePointsPage = () => {
                             </label>
                           </div>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Card Number</label>
-                            <input 
-                              type="text" 
-                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" 
-                              placeholder="1234 5678 9012 3456" 
+                            <input
+                              type="text"
+                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="1234 5678 9012 3456"
                             />
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Name on Card</label>
-                            <input 
-                              type="text" 
-                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" 
-                              placeholder="John Doe" 
+                            <input
+                              type="text"
+                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="John Doe"
                             />
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Expiration Date</label>
-                            <input 
-                              type="text" 
-                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" 
-                              placeholder="MM/YY" 
+                            <input
+                              type="text"
+                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="MM/YY"
                             />
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">CVV</label>
-                            <input 
-                              type="text" 
-                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" 
-                              placeholder="123" 
+                            <input
+                              type="text"
+                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="123"
                             />
                           </div>
                         </div>
                       </div>
-                      
-                      <Button 
-                        className="w-full justify-center" 
+
+                      <Button
+                        className="w-full justify-center"
                         onClick={handlePurchase}
                         disabled={loading}
                       >
@@ -413,7 +413,7 @@ const PurchasePointsPage = () => {
                     </CardContent>
                   </Card>
                 </div>
-                
+
                 <div>
                   <Card>
                     <CardHeader>
@@ -445,21 +445,21 @@ const PurchasePointsPage = () => {
                             <p className="font-medium text-green-600">{promoDiscount}% off</p>
                           </div>
                         )}
-                        
+
                         <hr className="border-gray-200" />
-                        
+
                         <div className="flex justify-between">
                           <p className="font-semibold">Total</p>
                           <p className="font-bold">
-                            {promoApplied 
-                              ? `$${calculateFinalPrice(selectedPackage.price_usd).toFixed(2)}` 
+                            {promoApplied
+                              ? `$${calculateFinalPrice(selectedPackage.price_usd).toFixed(2)}`
                               : `$${selectedPackage.price_usd.toFixed(2)}`}
                           </p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
-                  
+
                   <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <p className="text-sm text-blue-800">
                       <FaShieldAlt className="inline-block mr-2" />
@@ -476,8 +476,8 @@ const PurchasePointsPage = () => {
                     <h2 className="text-xl font-bold text-gray-900 mb-4">Recommended for {userRole === 'candidate' ? 'Candidates' : userRole === 'hr' ? 'HR Professionals' : 'Enterprises'}</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {recommendedPackages.map((pkg) => (
-                        <Card 
-                          key={pkg.id} 
+                        <Card
+                          key={pkg.id}
                           className="border-2 border-yellow-300 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 bg-gradient-to-br from-yellow-50 to-white"
                           onClick={() => handleSelectPackage(pkg)}
                         >
@@ -495,7 +495,7 @@ const PurchasePointsPage = () => {
                                 <span className="text-gray-600 ml-1">points</span>
                               </div>
                             </div>
-                            
+
                             <div className="mb-6">
                               <div className="flex items-center justify-center mb-4">
                                 <span className="text-3xl font-bold">${pkg.price_usd.toFixed(2)}</span>
@@ -511,8 +511,8 @@ const PurchasePointsPage = () => {
                                 </p>
                               )}
                             </div>
-                            
-                            <Button 
+
+                            <Button
                               className="w-full justify-center bg-yellow-500 hover:bg-yellow-600 text-white"
                               onClick={() => handleSelectPackage(pkg)}
                             >
@@ -525,14 +525,14 @@ const PurchasePointsPage = () => {
                     </div>
                   </div>
                 )}
-              
+
                 {/* All Packages Grid */}
                 <div className="mb-8">
                   <h2 className="text-xl font-bold text-gray-900 mb-4">All Available Packages</h2>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {packages.map((pkg) => (
-                      <Card 
-                        key={pkg.id} 
+                      <Card
+                        key={pkg.id}
                         className={`border-2 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 ${getPackageColor(pkg)} ${pkg.discount_percentage ? 'relative' : ''}`}
                         onClick={() => handleSelectPackage(pkg)}
                       >
@@ -552,7 +552,7 @@ const PurchasePointsPage = () => {
                               <span className="text-gray-600 ml-1">points</span>
                             </div>
                           </div>
-                          
+
                           <div className="mb-6">
                             <div className="flex items-center justify-center mb-4">
                               <span className="text-3xl font-bold">${pkg.price_usd.toFixed(2)}</span>
@@ -568,8 +568,8 @@ const PurchasePointsPage = () => {
                               </p>
                             )}
                           </div>
-                          
-                          <Button 
+
+                          <Button
                             className="w-full justify-center bg-white border-2 hover:bg-opacity-10 hover:bg-black text-gray-800"
                             onClick={() => handleSelectPackage(pkg)}
                           >
@@ -581,7 +581,7 @@ const PurchasePointsPage = () => {
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Features Section */}
                 <Card className="mt-12">
                   <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">

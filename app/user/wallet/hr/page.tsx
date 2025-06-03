@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  FaCoins, 
-  FaArrowUp, 
-  FaArrowDown, 
-  FaShoppingCart, 
+import {
+  FaCoins,
+  FaArrowUp,
+  FaArrowDown,
+  FaShoppingCart,
   FaChartLine,
   FaStar,
   FaUsers,
@@ -47,17 +47,17 @@ const CardContent = ({ children, className = "" }: { children: React.ReactNode; 
   </div>
 );
 
-const Button = ({ 
-  children, 
-  variant = "default", 
-  className = "", 
-  onClick, 
-  disabled = false 
-}: { 
-  children: React.ReactNode; 
+const Button = ({
+  children,
+  variant = "default",
+  className = "",
+  onClick,
+  disabled = false
+}: {
+  children: React.ReactNode;
   variant?: "default" | "outline" | "ghost";
-  className?: string; 
-  onClick?: () => void; 
+  className?: string;
+  onClick?: () => void;
   disabled?: boolean;
 }) => {
   const baseClasses = "px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center";
@@ -66,9 +66,9 @@ const Button = ({
     outline: "border border-gray-300 hover:bg-gray-50 text-gray-700",
     ghost: "hover:bg-gray-100 text-gray-600"
   };
-  
+
   return (
-    <button 
+    <button
       className={`${baseClasses} ${variants[variant]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
       onClick={onClick}
       disabled={disabled}
@@ -78,23 +78,23 @@ const Button = ({
   );
 };
 
-const Badge = ({ 
-  children, 
-  variant = "default", 
-  className = "" 
-}: { 
-  children: React.ReactNode; 
+const Badge = ({
+  children,
+  variant = "default",
+  className = ""
+}: {
+  children: React.ReactNode;
   variant?: "default" | "secondary" | "success" | "warning" | "destructive";
   className?: string;
 }) => {
   const variants = {
     default: "bg-blue-100 text-blue-800",
-    secondary: "bg-gray-100 text-gray-800", 
+    secondary: "bg-gray-100 text-gray-800",
     success: "bg-green-100 text-green-800",
     warning: "bg-yellow-100 text-yellow-800",
     destructive: "bg-red-100 text-red-800"
   };
-  
+
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variants[variant]} ${className}`}>
       {children}
@@ -104,16 +104,16 @@ const Badge = ({
 
 const Tabs = ({ children, defaultValue, className = "", onValueChange }: { children: React.ReactNode; defaultValue?: string; className?: string; onValueChange?: (value: string) => void }) => {
   const [activeTab, setActiveTab] = useState(defaultValue || '');
-  
+
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     onValueChange?.(value);
   };
-  
+
   return (
     <div className={`w-full ${className}`}>
-      {React.Children.map(children, child => 
-        React.isValidElement(child) 
+      {React.Children.map(children, child =>
+        React.isValidElement(child)
           ? React.cloneElement(child as React.ReactElement<any>, { activeTab, onTabChange: handleTabChange })
           : child
       )}
@@ -123,8 +123,8 @@ const Tabs = ({ children, defaultValue, className = "", onValueChange }: { child
 
 const TabsList = ({ children, className = "", activeTab, onTabChange }: { children: React.ReactNode; className?: string; activeTab?: string; onTabChange?: (value: string) => void }) => (
   <div className={`flex space-x-1 bg-gray-100 p-1 rounded-lg mb-4 ${className}`}>
-    {React.Children.map(children, child => 
-      React.isValidElement(child) 
+    {React.Children.map(children, child =>
+      React.isValidElement(child)
         ? React.cloneElement(child as React.ReactElement<any>, { activeTab, onTabChange })
         : child
     )}
@@ -133,11 +133,10 @@ const TabsList = ({ children, className = "", activeTab, onTabChange }: { childr
 
 const TabsTrigger = ({ children, value, activeTab, onTabChange }: { children: React.ReactNode; value: string; activeTab?: string; onTabChange?: (value: string) => void }) => (
   <button
-    className={`px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
-      activeTab === value 
-        ? 'bg-white text-blue-600 shadow-sm' 
+    className={`px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${activeTab === value
+        ? 'bg-white text-blue-600 shadow-sm'
         : 'text-gray-600 hover:text-gray-900'
-    }`}
+      }`}
     onClick={() => onTabChange?.(value)}
   >
     {children}
@@ -164,7 +163,7 @@ const HRWalletPage = () => {
       const data = getMockWalletData('hr');
       setWalletData(data);
       setLoading(false);
-      
+
       // Update user points in context
       if (data.wallet && data.wallet.current_points) {
         setUserPoints(data.wallet.current_points);
@@ -194,13 +193,13 @@ const HRWalletPage = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">HR Wallet</h1>
           <p className="text-gray-600">Manage your points for candidate screening and hiring insights</p>
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Navigation Sidebar */}
           <div className="lg:col-span-1">
             <WalletNavigation />
           </div>
-          
+
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-6">
             {/* Points Overview */}
@@ -257,11 +256,11 @@ const HRWalletPage = () => {
             </div>
 
             <Tabs defaultValue="packages" className="space-y-6">              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="packages">HR Packages</TabsTrigger>
-                <TabsTrigger value="transactions">Transaction History</TabsTrigger>
-                <TabsTrigger value="guide">HR Points Guide</TabsTrigger>
-                <TabsTrigger value="analytics">Analytics</TabsTrigger>
-              </TabsList>
+              <TabsTrigger value="packages">HR Packages</TabsTrigger>
+              <TabsTrigger value="transactions">Transaction History</TabsTrigger>
+              <TabsTrigger value="guide">HR Points Guide</TabsTrigger>
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            </TabsList>
 
               {/* HR Packages Tab */}
               <TabsContent value="packages" className="space-y-6">
@@ -298,7 +297,7 @@ const HRWalletPage = () => {
                                 </Badge>
                               )}
                             </div>
-                            
+
                             <ul className="space-y-2 mb-6">
                               {pkg.features.map((feature, index) => (
                                 <li key={index} className="flex items-center gap-2 text-sm text-gray-600">
@@ -307,7 +306,7 @@ const HRWalletPage = () => {
                                 </li>
                               ))}
                             </ul>
-                            
+
                             <Button className="w-full" variant={pkg.is_popular ? "default" : "outline"}>
                               Purchase Package
                             </Button>
@@ -330,11 +329,10 @@ const HRWalletPage = () => {
                       {transactions.map((transaction) => (
                         <div key={transaction.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                           <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-full ${
-                              transaction.type === 'earned' || transaction.type === 'purchased' 
-                                ? 'bg-green-100 text-green-600' 
+                            <div className={`p-2 rounded-full ${transaction.type === 'earned' || transaction.type === 'purchased'
+                                ? 'bg-green-100 text-green-600'
                                 : 'bg-red-100 text-red-600'
-                            }`}>
+                              }`}>
                               {transaction.category === 'resume_access' && <FaUsers className="h-4 w-4" />}
                               {transaction.category === 'purchase' && <FaShoppingCart className="h-4 w-4" />}
                               {transaction.category === 'company_access' && <FaChartBar className="h-4 w-4" />}
@@ -354,11 +352,10 @@ const HRWalletPage = () => {
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className={`font-semibold ${
-                              transaction.type === 'earned' || transaction.type === 'purchased'
-                                ? 'text-green-600' 
+                            <p className={`font-semibold ${transaction.type === 'earned' || transaction.type === 'purchased'
+                                ? 'text-green-600'
                                 : 'text-red-600'
-                            }`}>
+                              }`}>
                               {transaction.type === 'earned' || transaction.type === 'purchased' ? '+' : '-'}
                               {transaction.points} points
                             </p>
@@ -509,17 +506,17 @@ const HRWalletPage = () => {
                   </CardContent>
                 </Card>
               </TabsContent>
-              
+
               {/* Analytics Tab */}
               <TabsContent value="analytics" className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {/* Points Usage Chart */}
                   <PointsUsageChart stats={stats} userRole="hr" />
-                  
+
                   {/* Spending Patterns Chart */}
                   <SpendingPatternChart transactions={transactions} />
                 </div>
-                
+
                 {/* More detailed analytics */}
                 <Card className="mt-8">
                   <CardHeader>
@@ -541,7 +538,7 @@ const HRWalletPage = () => {
                           <div className="h-2 bg-blue-100 rounded-full overflow-hidden">
                             <div className="h-full bg-blue-500 rounded-full" style={{ width: '30%' }}></div>
                           </div>
-                          
+
                           <div className="flex justify-between">
                             <span className="text-sm">Mid Level</span>
                             <span className="text-sm font-medium">{Math.round(stats.spending_breakdown.resume_access * 0.45)}</span>
@@ -549,7 +546,7 @@ const HRWalletPage = () => {
                           <div className="h-2 bg-blue-100 rounded-full overflow-hidden">
                             <div className="h-full bg-blue-500 rounded-full" style={{ width: '45%' }}></div>
                           </div>
-                          
+
                           <div className="flex justify-between">
                             <span className="text-sm">Senior Level</span>
                             <span className="text-sm font-medium">{Math.round(stats.spending_breakdown.resume_access * 0.25)}</span>
@@ -559,7 +556,7 @@ const HRWalletPage = () => {
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* ROI indicators */}
                       <div className="bg-green-50 p-4 rounded-lg">
                         <h3 className="font-semibold text-green-700 mb-3">ROI Metrics</h3>
@@ -573,7 +570,7 @@ const HRWalletPage = () => {
                               <div className="h-full bg-green-500 rounded-full" style={{ width: '75%' }}></div>
                             </div>
                           </div>
-                          
+
                           <div>
                             <div className="flex justify-between mb-1">
                               <span className="text-sm">Points Efficiency</span>
@@ -585,7 +582,7 @@ const HRWalletPage = () => {
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* Activity by time */}
                       <div className="bg-purple-50 p-4 rounded-lg">
                         <h3 className="font-semibold text-purple-700 mb-3">Activity Times</h3>
@@ -597,7 +594,7 @@ const HRWalletPage = () => {
                           <div className="h-2 bg-purple-100 rounded-full overflow-hidden">
                             <div className="h-full bg-purple-500 rounded-full" style={{ width: '35%' }}></div>
                           </div>
-                          
+
                           <div className="flex justify-between">
                             <span className="text-sm">Afternoon</span>
                             <span className="text-sm font-medium">45%</span>
@@ -605,7 +602,7 @@ const HRWalletPage = () => {
                           <div className="h-2 bg-purple-100 rounded-full overflow-hidden">
                             <div className="h-full bg-purple-500 rounded-full" style={{ width: '45%' }}></div>
                           </div>
-                          
+
                           <div className="flex justify-between">
                             <span className="text-sm">Evening</span>
                             <span className="text-sm font-medium">20%</span>
@@ -616,14 +613,14 @@ const HRWalletPage = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="mt-6 p-4 bg-yellow-50 rounded-lg">
                       <div className="flex items-start">
                         <FaExchangeAlt className="h-5 w-5 text-yellow-600 mr-3 mt-0.5" />
                         <div>
                           <h4 className="font-medium text-yellow-700">Points Efficiency Tips</h4>
                           <p className="text-sm text-gray-600 mt-1">
-                            Looking at your usage patterns, consider purchasing the <strong>HR Professional</strong> package for better value, 
+                            Looking at your usage patterns, consider purchasing the <strong>HR Professional</strong> package for better value,
                             and focus spending on mid-level candidates which have shown the best hiring conversion rate for your company.
                           </p>
                         </div>

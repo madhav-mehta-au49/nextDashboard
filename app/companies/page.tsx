@@ -125,7 +125,7 @@ export default function CompaniesPage() {
       }
     } catch (err) {
       console.error('Error performing company action:', err);
-      
+
       // Show error message using toast or other notification
     }
   };
@@ -158,20 +158,27 @@ export default function CompaniesPage() {
       <EmployeeHeader />
       <SubHeader />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Company Creation CTA Banner */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">        {/* Company Creation CTA Banner */}
         <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-xl p-6 mb-8 text-white">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div>
               <h2 className="text-2xl font-bold mb-2">Represent your company?</h2>
               <p className="text-teal-100">Create a company profile to attract top talent and showcase your brand.</p>
             </div>
-            <Link
-              href="/companies/create"
-              className="mt-4 md:mt-0 px-6 py-3 bg-white text-teal-600 hover:bg-teal-50 font-medium rounded-md shadow-sm transition-colors"
-            >
-              Create Company Profile
-            </Link>
+            <div className="flex gap-3 mt-4 md:mt-0">
+              <Link
+                href="/companies/dashboard"
+                className="px-6 py-3 bg-white/20 text-white hover:bg-white/30 font-medium rounded-md shadow-sm transition-colors border border-white/20"
+              >
+                Company Dashboard
+              </Link>
+              <Link
+                href="/companies/create"
+                className="px-6 py-3 bg-white text-teal-600 hover:bg-teal-50 font-medium rounded-md shadow-sm transition-colors"
+              >
+                Create Company Profile
+              </Link>
+            </div>
           </div>
         </div>
 

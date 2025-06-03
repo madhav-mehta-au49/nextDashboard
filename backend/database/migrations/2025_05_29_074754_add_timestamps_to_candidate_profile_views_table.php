@@ -11,9 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('skills', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->unique();
+        Schema::table('candidate_profile_views', function (Blueprint $table) {
             $table->timestamps();
         });
     }
@@ -23,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('skills');
+        Schema::table('candidate_profile_views', function (Blueprint $table) {
+            $table->dropTimestamps();
+        });
     }
 };

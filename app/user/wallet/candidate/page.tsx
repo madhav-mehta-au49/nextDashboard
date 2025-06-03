@@ -1,16 +1,16 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  FaCoins, 
-  FaArrowUp, 
-  FaArrowDown, 
-  FaShoppingCart, 
+import {
+  FaCoins,
+  FaArrowUp,
+  FaArrowDown,
+  FaShoppingCart,
   FaChartLine,
   FaStar,
   FaUser,
   FaBuilding,
-  FaFileAlt 
+  FaFileAlt
 } from 'react-icons/fa';
 import { getMockWalletData } from '@/services/wallet/pointsMockData';
 import { PointsWallet, PointsTransaction, PointsStats, PointsPackage } from '@/app/user/types/points';
@@ -47,17 +47,17 @@ const CardContent = ({ children, className = "" }: { children: React.ReactNode; 
   </div>
 );
 
-const Button = ({ 
-  children, 
-  variant = "default", 
-  className = "", 
-  onClick, 
-  disabled = false 
-}: { 
-  children: React.ReactNode; 
+const Button = ({
+  children,
+  variant = "default",
+  className = "",
+  onClick,
+  disabled = false
+}: {
+  children: React.ReactNode;
   variant?: "default" | "outline" | "ghost";
-  className?: string; 
-  onClick?: () => void; 
+  className?: string;
+  onClick?: () => void;
   disabled?: boolean;
 }) => {
   const baseClasses = "px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center";
@@ -66,9 +66,9 @@ const Button = ({
     outline: "border border-gray-300 hover:bg-gray-50 text-gray-700",
     ghost: "hover:bg-gray-100 text-gray-600"
   };
-  
+
   return (
-    <button 
+    <button
       className={`${baseClasses} ${variants[variant]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
       onClick={onClick}
       disabled={disabled}
@@ -78,23 +78,23 @@ const Button = ({
   );
 };
 
-const Badge = ({ 
-  children, 
-  variant = "default", 
-  className = "" 
-}: { 
-  children: React.ReactNode; 
+const Badge = ({
+  children,
+  variant = "default",
+  className = ""
+}: {
+  children: React.ReactNode;
   variant?: "default" | "secondary" | "success" | "warning" | "destructive";
   className?: string;
 }) => {
   const variants = {
     default: "bg-blue-100 text-blue-800",
-    secondary: "bg-gray-100 text-gray-800", 
+    secondary: "bg-gray-100 text-gray-800",
     success: "bg-green-100 text-green-800",
     warning: "bg-yellow-100 text-yellow-800",
     destructive: "bg-red-100 text-red-800"
   };
-  
+
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variants[variant]} ${className}`}>
       {children}
@@ -104,16 +104,16 @@ const Badge = ({
 
 const Tabs = ({ children, defaultValue, className = "", onValueChange }: { children: React.ReactNode; defaultValue?: string; className?: string; onValueChange?: (value: string) => void }) => {
   const [activeTab, setActiveTab] = useState(defaultValue || '');
-  
+
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     onValueChange?.(value);
   };
-  
+
   return (
     <div className={`w-full ${className}`}>
-      {React.Children.map(children, child => 
-        React.isValidElement(child) 
+      {React.Children.map(children, child =>
+        React.isValidElement(child)
           ? React.cloneElement(child as React.ReactElement<any>, { activeTab, onTabChange: handleTabChange })
           : child
       )}
@@ -123,8 +123,8 @@ const Tabs = ({ children, defaultValue, className = "", onValueChange }: { child
 
 const TabsList = ({ children, className = "", activeTab, onTabChange }: { children: React.ReactNode; className?: string; activeTab?: string; onTabChange?: (value: string) => void }) => (
   <div className={`flex space-x-1 bg-gray-100 p-1 rounded-lg mb-4 ${className}`}>
-    {React.Children.map(children, child => 
-      React.isValidElement(child) 
+    {React.Children.map(children, child =>
+      React.isValidElement(child)
         ? React.cloneElement(child as React.ReactElement<any>, { activeTab, onTabChange })
         : child
     )}
@@ -133,11 +133,10 @@ const TabsList = ({ children, className = "", activeTab, onTabChange }: { childr
 
 const TabsTrigger = ({ children, value, activeTab, onTabChange }: { children: React.ReactNode; value: string; activeTab?: string; onTabChange?: (value: string) => void }) => (
   <button
-    className={`px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
-      activeTab === value 
-        ? 'bg-white text-blue-600 shadow-sm' 
+    className={`px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${activeTab === value
+        ? 'bg-white text-blue-600 shadow-sm'
         : 'text-gray-600 hover:text-gray-900'
-    }`}
+      }`}
     onClick={() => onTabChange?.(value)}
   >
     {children}
@@ -164,7 +163,7 @@ const CandidateWalletPage = () => {
       const data = getMockWalletData('candidate');
       setWalletData(data);
       setLoading(false);
-      
+
       // Update user points in context
       if (data.wallet && data.wallet.current_points) {
         setUserPoints(data.wallet.current_points);
@@ -186,7 +185,7 @@ const CandidateWalletPage = () => {
   if (!walletData) return null;
 
   const { wallet, transactions, stats, packages } = walletData;
-  
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
       <div className="max-w-7xl mx-auto">
@@ -195,13 +194,13 @@ const CandidateWalletPage = () => {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Candidate Wallet</h1>
           <p className="text-gray-600">Manage your points for resume access and job applications</p>
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Navigation Sidebar */}
           <div className="lg:col-span-1">
             <WalletNavigation />
           </div>
-          
+
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-6">
             {/* Points Overview */}
@@ -300,7 +299,7 @@ const CandidateWalletPage = () => {
                                 </Badge>
                               )}
                             </div>
-                            
+
                             <ul className="space-y-2 mb-6">
                               {pkg.features.map((feature: string, index: number) => (
                                 <li key={index} className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
@@ -309,7 +308,7 @@ const CandidateWalletPage = () => {
                                 </li>
                               ))}
                             </ul>
-                            
+
                             <Button className="w-full text-sm" variant={pkg.is_popular ? "default" : "outline"}>
                               Purchase Now
                             </Button>
@@ -320,34 +319,34 @@ const CandidateWalletPage = () => {
                   </CardContent>
                 </Card>
               </TabsContent>          {/* Analytics Tab */}
-          <TabsContent value="analytics" className="space-y-6">
-            {/* Mobile-First Dashboard - Shows on mobile, hidden on desktop */}
-            <div className="block lg:hidden">
-              <MobileDashboardMetrics 
-                stats={stats} 
-                transactions={transactions} 
-                userRole="candidate" 
-              />
-            </div>
-            
-            {/* Desktop Analytics - Hidden on mobile */}
-            <div className="hidden lg:block">
-              <CandidateAnalyticsChart stats={stats} transactions={transactions} />
-            </div>
-            
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              <div className="xl:col-span-2">
-                <PeriodComparisonChart stats={stats} userRole="candidate" />
-              </div>
-              <div className="hidden md:block">
-                <PointsUsageChart stats={stats} userRole="candidate" />
-              </div>
-            </div>
-            
-            <div className="hidden md:block">
-              <SpendingPatternChart transactions={transactions} period="month" />
-            </div>
-          </TabsContent>
+              <TabsContent value="analytics" className="space-y-6">
+                {/* Mobile-First Dashboard - Shows on mobile, hidden on desktop */}
+                <div className="block lg:hidden">
+                  <MobileDashboardMetrics
+                    stats={stats}
+                    transactions={transactions}
+                    userRole="candidate"
+                  />
+                </div>
+
+                {/* Desktop Analytics - Hidden on mobile */}
+                <div className="hidden lg:block">
+                  <CandidateAnalyticsChart stats={stats} transactions={transactions} />
+                </div>
+
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                  <div className="xl:col-span-2">
+                    <PeriodComparisonChart stats={stats} userRole="candidate" />
+                  </div>
+                  <div className="hidden md:block">
+                    <PointsUsageChart stats={stats} userRole="candidate" />
+                  </div>
+                </div>
+
+                <div className="hidden md:block">
+                  <SpendingPatternChart transactions={transactions} period="month" />
+                </div>
+              </TabsContent>
 
               {/* Transaction History Tab */}
               <TabsContent value="transactions" className="space-y-6">
@@ -360,11 +359,10 @@ const CandidateWalletPage = () => {
                       {transactions.map((transaction) => (
                         <div key={transaction.id} className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg">
                           <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-full ${
-                              transaction.type === 'earned' || transaction.type === 'purchased' 
-                                ? 'bg-green-100 text-green-600' 
+                            <div className={`p-2 rounded-full ${transaction.type === 'earned' || transaction.type === 'purchased'
+                                ? 'bg-green-100 text-green-600'
                                 : 'bg-red-100 text-red-600'
-                            }`}>
+                              }`}>
                               {transaction.type === 'earned' || transaction.type === 'purchased' ? (
                                 <FaArrowUp className="h-3 w-3 sm:h-4 sm:w-4" />
                               ) : (
@@ -379,11 +377,10 @@ const CandidateWalletPage = () => {
                             </div>
                           </div>
                           <div className="text-right flex-shrink-0">
-                            <p className={`font-semibold text-sm sm:text-base ${
-                              transaction.type === 'earned' || transaction.type === 'purchased'
-                                ? 'text-green-600' 
+                            <p className={`font-semibold text-sm sm:text-base ${transaction.type === 'earned' || transaction.type === 'purchased'
+                                ? 'text-green-600'
                                 : 'text-red-600'
-                            }`}>
+                              }`}>
                               {transaction.type === 'earned' || transaction.type === 'purchased' ? '+' : '-'}
                               {transaction.points} pts
                             </p>

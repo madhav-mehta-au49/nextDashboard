@@ -9,67 +9,6 @@ use Illuminate\Http\UploadedFile;
 
 class CandidateService
 {
-    /**
-     * Process and save candidate profile picture
-     */
-    public function processProfilePicture($pictureData, ?string $oldPicturePath = null): ?string
-    {
-        // If no new picture is provided, return the old one
-        if (!$pictureData) {
-            return $oldPicturePath;
-        }
-        
-        // Delete old picture if it exists
-        if ($oldPicturePath && Storage::disk('public')->exists($oldPicturePath)) {
-            Storage::disk('public')->delete($oldPicturePath);
-        }
-        
-        // Handle base64 encoded image
-        if (is_string($pictureData) && Str::startsWith($pictureData, 'data:image')) {
-            return $this->saveBase64Image($pictureData, 'profiles');
-        }
-        
-        // Handle uploaded file
-        if ($pictureData instanceof UploadedFile) {
-            $filename = 'profile_' . Str::uuid() . '.' . $pictureData->getClientOriginalExtension();
-            $path = $pictureData->storeAs('profiles', $filename, 'public');
-            return $path;
-        }
-        
-        // If it's just a URL or path, return it as is
-        return $pictureData;
-    }
-    
-    /**
-     * Process and save candidate cover image
-     */
-    public function processCoverImage($coverData, ?string $oldCoverPath = null): ?string
-    {
-        // If no new cover is provided, return the old one
-        if (!$coverData) {
-            return $oldCoverPath;
-        }
-        
-        // Delete old cover if it exists
-        if ($oldCoverPath && Storage::disk('public')->exists($oldCoverPath)) {
-            Storage::disk('public')->delete($oldCoverPath);
-        }
-        
-        // Handle base64 encoded image
-        if (is_string($coverData) && Str::startsWith($coverData, 'data:image')) {
-            return $this->saveBase64Image($coverData, 'covers');
-        }
-        
-        // Handle uploaded file
-        if ($coverData instanceof UploadedFile) {
-            $filename = 'cover_' . Str::uuid() . '.' . $coverData->getClientOriginalExtension();
-            $path = $coverData->storeAs('covers', $filename, 'public');
-            return $path;
-        }
-        
-        // If it's just a URL or path, return it as is
-        return $coverData;
-    }
     
     /**
      * Process and save candidate resume
@@ -185,7 +124,92 @@ class CandidateService
         
         $completedItems = array_filter($completionItems);
         $totalItems = count($completionItems);
+          return $totalItems > 0 ? round((count($completedItems) / $totalItems) * 100) : 0;
+    }
+      /**
+     * Process and save certification file
+     */
+    public function processCertificationFile($fileData, ?string $oldFilePath = null): ?string
+    {
+        // If no new file is provided, return the old one
+        if (!$fileData) {
+            return $oldFilePath;
+        }
         
-        return $totalItems > 0 ? round((count($completedItems) / $totalItems) * 100) : 0;
+        // Delete old file if it exists
+        if ($oldFilePath && Storage::disk('public')->exists($oldFilePath)) {
+            Storage::disk('public')->delete($oldFilePath);
+        }
+        
+        // Handle uploaded file
+        if ($fileData instanceof UploadedFile) {
+            $filename = 'certification_' . Str::uuid() . '.' . $fileData->getClientOriginalExtension();
+            $path = $fileData->storeAs('certificates', $filename, 'public');
+            return $path;
+        }
+        
+        // If it's just a URL or path, return it as is
+        return $fileData;
+    }
+
+    /**
+     * Process and save profile picture
+     */
+    public function processProfilePicture($fileData, ?string $oldFilePath = null): ?string
+    {
+        // If no new file is provided, return the old one
+        if (!$fileData) {
+            return $oldFilePath;
+        }
+        
+        // Delete old file if it exists
+        if ($oldFilePath && Storage::disk('public')->exists($oldFilePath)) {
+            Storage::disk('public')->delete($oldFilePath);
+        }
+        
+        // Handle base64 image
+        if (is_string($fileData) && Str::startsWith($fileData, 'data:image/')) {
+            return $this->saveBase64Image($fileData, 'profile_pictures');
+        }
+          // Handle uploaded file
+        if ($fileData instanceof UploadedFile) {
+            $filename = 'profile_' . Str::uuid() . '.' . $fileData->getClientOriginalExtension();
+            $path = $fileData->storeAs('profile_pictures', $filename, 'public');
+            return $path;
+        }
+        
+        // If it's just a URL or path, return it as is
+        return $fileData;
+    }
+
+    /**
+     * Process and save cover image
+     */
+    public function processCoverImage($fileData, ?string $oldFilePath = null): ?string
+    {
+        // If no new file is provided, return the old one
+        if (!$fileData) {
+            return $oldFilePath;
+        }
+        
+        // Delete old file if it exists
+        if ($oldFilePath && Storage::disk('public')->exists($oldFilePath)) {
+            Storage::disk('public')->delete($oldFilePath);
+        }
+        
+        // Handle base64 image
+        if (is_string($fileData) && Str::startsWith($fileData, 'data:image/')) {
+            return $this->saveBase64Image($fileData, 'cover_images');
+        }
+        
+        // Handle uploaded file
+        if ($fileData instanceof UploadedFile) {
+            $filename = 'cover_' . Str::uuid() . '.' . $fileData->getClientOriginalExtension();
+            $path = $fileData->storeAs('cover_images', $filename, 'public');
+            return $path;
+        }
+        
+        // If it's just a URL or path, return it as is
+        return $fileData;
     }
 }

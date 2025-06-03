@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '../contexts/UserContext';
 import { RoleSelector } from '../components/RoleSelector';
 import { UserRole } from '../types/points';
-import { 
-  FaWallet, 
-  FaUser, 
-  FaUsers, 
+import {
+  FaWallet,
+  FaUser,
+  FaUsers,
   FaBuilding,
   FaSpinner,
   FaCheckCircle,
@@ -38,7 +38,7 @@ const WalletPage = () => {
   const handleRoleSelect = (role: string) => {
     setLoading(true);
     setUserRole(role as any);
-    
+
     // Navigate to the specific wallet after a short delay
     setTimeout(() => {
       router.push(`/user/wallet/${role}`);
@@ -72,7 +72,7 @@ const WalletPage = () => {
         </div>
 
         {/* Role Selector Component */}
-        <RoleSelector 
+        <RoleSelector
           onRoleSelect={handleRoleSelect}
           autoRedirect={false}
           className="mb-12"

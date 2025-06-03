@@ -35,16 +35,12 @@ Route::get('/companies/{company}', [CompanyController::class, 'show']);
 Route::get('/candidates/{candidate}', [CandidateController::class, 'showPublic']);
 Route::get('/users/{user}/profile', [UserController::class, 'publicProfile']);
 
-// 🔐 Auth Routes
-Route::middleware('guest')->group(function () {
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
-});
+// OAuth Routes (need to stay in web.php for redirects)
+Route::get('/auth/{provider}', [AuthController::class, 'redirectToProvider']);
+Route::get('/auth/{provider}/callback', [AuthController::class, 'handleProviderCallback']);
 
+// Authenticated routes
 Route::middleware('auth')->group(function () {
-    Route::get('/user', [AuthController::class, 'user']);
-    Route::post('/logout', [AuthController::class, 'logout']);
-
     // ✅ User Profile
     Route::put('/user', [UserController::class, 'update']);
 
@@ -52,7 +48,7 @@ Route::middleware('auth')->group(function () {
     Route::apiResource('/educations', EducationController::class);
     Route::apiResource('/certifications', CertificationController::class);
     Route::apiResource('/experiences', ExperienceController::class);
-    Route::apiResource('/skills', SkillController::class);
+    // Skills routes moved to api.php to avoid conflicts
 
     // ✅ Job Applications
     Route::post('/job-applications', [JobApplicationController::class, 'store']);

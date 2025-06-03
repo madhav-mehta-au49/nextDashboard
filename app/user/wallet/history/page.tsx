@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-  FaArrowLeft, 
-  FaCoins, 
-  FaCalendar, 
-  FaFileAlt, 
+import {
+  FaArrowLeft,
+  FaCoins,
+  FaCalendar,
+  FaFileAlt,
   FaArrowUp,
   FaArrowDown,
   FaSearch,
@@ -43,17 +43,17 @@ const CardContent = ({ children, className = "" }: { children: React.ReactNode; 
   </div>
 );
 
-const Button = ({ 
-  children, 
-  variant = "default", 
-  className = "", 
-  onClick, 
-  disabled = false 
-}: { 
-  children: React.ReactNode; 
+const Button = ({
+  children,
+  variant = "default",
+  className = "",
+  onClick,
+  disabled = false
+}: {
+  children: React.ReactNode;
   variant?: "default" | "outline" | "ghost";
-  className?: string; 
-  onClick?: () => void; 
+  className?: string;
+  onClick?: () => void;
   disabled?: boolean;
 }) => {
   const baseClasses = "px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center";
@@ -62,9 +62,9 @@ const Button = ({
     outline: "border border-gray-300 hover:bg-gray-50 text-gray-700",
     ghost: "hover:bg-gray-100 text-gray-600"
   };
-  
+
   return (
-    <button 
+    <button
       className={`${baseClasses} ${variants[variant]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
       onClick={onClick}
       disabled={disabled}
@@ -74,23 +74,23 @@ const Button = ({
   );
 };
 
-const Badge = ({ 
-  children, 
-  variant = "default", 
-  className = "" 
-}: { 
-  children: React.ReactNode; 
+const Badge = ({
+  children,
+  variant = "default",
+  className = ""
+}: {
+  children: React.ReactNode;
   variant?: "default" | "secondary" | "success" | "warning" | "destructive";
   className?: string;
 }) => {
   const variants = {
     default: "bg-blue-100 text-blue-800",
-    secondary: "bg-gray-100 text-gray-800", 
+    secondary: "bg-gray-100 text-gray-800",
     success: "bg-green-100 text-green-800",
     warning: "bg-yellow-100 text-yellow-800",
     destructive: "bg-red-100 text-red-800"
   };
-  
+
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variants[variant]} ${className}`}>
       {children}
@@ -126,29 +126,29 @@ const TransactionHistoryPage = () => {
 
   useEffect(() => {
     let result = transactions;
-    
+
     // Filter by type
     if (filter !== 'all') {
       result = result.filter(t => t.type === filter);
     }
-    
+
     // Filter by search term
     if (searchTerm) {
-      result = result.filter(t => 
+      result = result.filter(t =>
         t.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t.category.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
+
     // Filter by date range
     if (dateRange.start) {
       result = result.filter(t => new Date(t.created_at) >= new Date(dateRange.start));
     }
-    
+
     if (dateRange.end) {
       result = result.filter(t => new Date(t.created_at) <= new Date(dateRange.end));
     }
-    
+
     setFilteredTransactions(result);
   }, [filter, searchTerm, dateRange, transactions]);
 
@@ -222,7 +222,7 @@ const TransactionHistoryPage = () => {
       bonus: 'bg-teal-100 text-teal-800',
       refund: 'bg-gray-100 text-gray-800'
     };
-    
+
     const categoryLabel: Record<string, string> = {
       resume_access: 'Resume Access',
       job_application: 'Job Application',
@@ -232,7 +232,7 @@ const TransactionHistoryPage = () => {
       bonus: 'Bonus',
       refund: 'Refund'
     };
-    
+
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${categoryStyles[category] || 'bg-gray-100 text-gray-800'}`}>
         {categoryLabel[category] || category}
@@ -245,14 +245,14 @@ const TransactionHistoryPage = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <button 
+          <button
             onClick={() => router.back()}
             className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
           >
             <FaArrowLeft className="mr-2" />
             <span>Back</span>
           </button>
-          
+
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center">
               <FaFileAlt className="h-8 w-8 text-blue-600 mr-3" />
@@ -261,13 +261,13 @@ const TransactionHistoryPage = () => {
                 <p className="text-gray-600">View your points transactions and activity</p>
               </div>
             </div>
-            
+
             <Button variant="outline" className="hidden sm:flex items-center">
               <FaDownload className="mr-2 h-4 w-4" />
               Export History
             </Button>
           </div>
-          
+
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="relative">
@@ -282,7 +282,7 @@ const TransactionHistoryPage = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            
+
             <div className="flex items-center space-x-2">
               <div className="relative flex-1">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -303,7 +303,7 @@ const TransactionHistoryPage = () => {
                 onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
               />
             </div>
-            
+
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <FaFilter className="h-4 w-4 text-gray-400" />
@@ -333,7 +333,7 @@ const TransactionHistoryPage = () => {
               </span>
             </div>
           </CardHeader>
-          
+
           {loading ? (
             <CardContent className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
@@ -349,8 +349,8 @@ const TransactionHistoryPage = () => {
                   : 'You haven\'t made any transactions yet'}
               </p>
               {(searchTerm || filter !== 'all' || dateRange.start || dateRange.end) && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="mt-4"
                   onClick={() => {
                     setSearchTerm('');
@@ -410,11 +410,10 @@ const TransactionHistoryPage = () => {
                         {getCategoryBadge(transaction.category)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          transaction.status === 'completed' ? 'bg-green-100 text-green-800' :
-                          transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${transaction.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
+                          }`}>
                           {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
                         </span>
                       </td>
@@ -450,7 +449,7 @@ const TransactionHistoryPage = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -468,20 +467,19 @@ const TransactionHistoryPage = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500">Net Balance Change</p>
-                  <p className={`text-2xl font-bold ${
-                    transactions.reduce((sum, t) => 
-                      sum + (t.type === 'spent' ? -t.points : t.points), 0) >= 0
+                  <p className={`text-2xl font-bold ${transactions.reduce((sum, t) =>
+                    sum + (t.type === 'spent' ? -t.points : t.points), 0) >= 0
                       ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {transactions.reduce((sum, t) => 
+                    }`}>
+                    {transactions.reduce((sum, t) =>
                       sum + (t.type === 'spent' ? -t.points : t.points), 0) >= 0 ? '+' : ''}
-                    {transactions.reduce((sum, t) => 
+                    {transactions.reduce((sum, t) =>
                       sum + (t.type === 'spent' ? -t.points : t.points), 0)}
                   </p>
                 </div>

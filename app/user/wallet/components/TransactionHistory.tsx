@@ -3,15 +3,15 @@
 import React, { useState, useEffect } from 'react';
 import { Transaction } from '@/app/user/types/wallet';
 import { getTransactions } from '@/services/wallet/walletApi';
-import { 
-  FaFilter, 
-  FaDownload, 
+import {
+  FaFilter,
+  FaDownload,
   FaSearch,
   FaArrowUp,
   FaArrowDown,
   FaCheckCircle,
   FaClock,
-  FaTimesCircle 
+  FaTimesCircle
 } from 'react-icons/fa';
 
 interface TransactionHistoryProps {
@@ -20,10 +20,10 @@ interface TransactionHistoryProps {
   onRefresh: () => void;
 }
 
-const TransactionHistory: React.FC<TransactionHistoryProps> = ({ 
-  transactions: initialTransactions, 
-  userId, 
-  onRefresh 
+const TransactionHistory: React.FC<TransactionHistoryProps> = ({
+  transactions: initialTransactions,
+  userId,
+  onRefresh
 }) => {
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
   const [loading, setLoading] = useState(false);
@@ -44,7 +44,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
 
   const fetchTransactions = async () => {
     try {
-      setLoading(true);      const params = {
+      setLoading(true); const params = {
         page: currentPage,
         limit: 20,
         ...(filters.type && filters.type !== '' && { type: filters.type as 'credit' | 'debit' }),
@@ -88,8 +88,8 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   };
 
   const getTypeIcon = (type: string) => {
-    return type === 'credit' ? 
-      <FaArrowDown className="w-4 h-4 text-green-500" /> : 
+    return type === 'credit' ?
+      <FaArrowDown className="w-4 h-4 text-green-500" /> :
       <FaArrowUp className="w-4 h-4 text-red-500" />;
   };
 
@@ -116,7 +116,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         Currency: transaction.currency,
         Description: transaction.description,
         Status: transaction.status
-      }));      if (data.length === 0) {
+      })); if (data.length === 0) {
         alert('No transactions to export');
         return;
       }
@@ -142,7 +142,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     if (filters.search) {
       const searchTerm = filters.search.toLowerCase();
       return transaction.description.toLowerCase().includes(searchTerm) ||
-             transaction.category.toLowerCase().includes(searchTerm);
+        transaction.category.toLowerCase().includes(searchTerm);
     }
     return true;
   });

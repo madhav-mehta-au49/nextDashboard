@@ -4,93 +4,63 @@ namespace App\Http\Controllers;
 
 use App\Models\JobApplication;
 use App\Models\JobListing;
-use App\Http\Requests\StoreJobApplicationRequest;
-use App\Http\Requests\UpdateJobApplicationRequest;
+use App\Http\Requests\JobApplicationRequest;
+use App\Http\Resources\JobApplicationResource;
+use App\Services\JobApplicationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class JobApplicationController extends Controller
 {
-    /**
+    protected $jobApplicationService;
+
+    public function __construct(JobApplicationService $jobApplicationService)
+    {
+        $this->jobApplicationService = $jobApplicationService;
+    }    /**
      * Display a listing of the resource.
      */
     public function index(Request $request): JsonResponse
     {
-        $user = $request->user();
-        $query = JobApplication::with(['jobListing', 'candidate', 'jobListing.company']);
-        
-        // Filter by status
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
-        
-        // If user is a candidate, show only their applications
-        if ($user->isCandidate()) {
-            $query->whereHas('candidate', function($q) use ($user) {
-                $q->where('user_id', $user->id);
-            });
-        }
-        
-        // If user is an employer, show only applications for their company's jobs
-        if ($user->isEmployer() || $user->isHR()) {
-            $query->whereHas('jobListing.company', function($q) use ($user) {
-                $q->whereHas('admins', function($q2) use ($user) {
-                    $q2->where('users.id', $user->id);
-                });
-            });
-        }
-        
-        $applications = $query->paginate($request->per_page ?? 10);
+        $applications = $this->jobApplicationService->getApplicationsForUser(
+            $request->user(),
+            $request->only(['status', 'per_page', 'page'])
+        );
         
         return response()->json([
             'status' => 'success',
-            'data' => $applications
+            'data' => JobApplicationResource::collection($applications),
+            'meta' => [
+                'current_page' => $applications->currentPage(),
+                'last_page' => $applications->lastPage(),
+                'per_page' => $applications->perPage(),
+                'total' => $applications->total()
+            ]
         ]);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreJobApplicationRequest $request): JsonResponse
+    public function store(JobApplicationRequest $request): JsonResponse
     {
-        $user = $request->user();
-        
-        // Ensure user is a candidate
-        if (!$user->isCandidate()) {
+        try {
+            $application = $this->jobApplicationService->submitApplication(
+                $request->user(),
+                $request->validated()
+            );
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Application submitted successfully',
+                'data' => new JobApplicationResource($application)
+            ], 201);
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Only candidates can apply for jobs'
-            ], 403);
-        }
-        
-        $candidate = $user->candidate;
-        
-        // Check if already applied
-        $jobListing = JobListing::findOrFail($request->job_listing_id);
-        if ($candidate->appliedJobs()->where('job_listing_id', $jobListing->id)->exists()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'You have already applied for this job'
+                'message' => $e->getMessage()
             ], 400);
         }
-        
-        // Create application
-        $application = JobApplication::create([
-            'job_listing_id' => $request->job_listing_id,
-            'candidate_id' => $candidate->id,
-            'cover_letter' => $request->cover_letter,
-            'resume_url' => $request->resume_url ?? $candidate->resume_url,
-            'status' => 'pending'
-        ]);
-        
-        // Increment applicants count
-        $jobListing->increment('applicants_count');
-        
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Application submitted successfully',
-            'data' => $application
-        ], 201);
     }
 
     /**
@@ -98,73 +68,57 @@ class JobApplicationController extends Controller
      */
     public function show(JobApplication $jobApplication): JsonResponse
     {
-        $user = request()->user();
-        
-        // Ensure user has permission to view this application
-        if ($user->isCandidate() && $user->candidate->id !== $jobApplication->candidate_id) {
+        try {
+            if (!$this->jobApplicationService->checkUserCanViewApplication(
+                request()->user(),
+                $jobApplication
+            )) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Unauthorized to view this application'
+                ], 403);
+            }
+            
+            return response()->json([
+                'status' => 'success',
+                'data' => new JobApplicationResource($jobApplication->load([
+                    'jobListing', 
+                    'candidate', 
+                    'jobListing.company',
+                    'answers.question'
+                ]))
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'You do not have permission to view this application'
+                'message' => $e->getMessage()
             ], 403);
         }
-        
-        if (($user->isEmployer() || $user->isHR()) && 
-            !$user->administeredCompanies()->where('companies.id', $jobApplication->jobListing->company_id)->exists()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'You do not have permission to view this application'
-            ], 403);
-        }
-        
-        $jobApplication->load(['jobListing', 'candidate', 'jobListing.company']);
-        
-        return response()->json([
-            'status' => 'success',
-            'data' => $jobApplication
-        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateJobApplicationRequest $request, JobApplication $jobApplication): JsonResponse
+    public function update(JobApplicationRequest $request, JobApplication $jobApplication): JsonResponse
     {
-        $user = $request->user();
-        
-        // Ensure user has permission to update this application
-        if ($user->isCandidate() && $user->candidate->id !== $jobApplication->candidate_id) {
+        try {
+            $updatedApplication = $this->jobApplicationService->updateApplication(
+                $request->user(),
+                $jobApplication,
+                $request->validated()
+            );
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Application updated successfully',
+                'data' => new JobApplicationResource($updatedApplication)
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'You do not have permission to update this application'
+                'message' => $e->getMessage()
             ], 403);
         }
-        
-        if (($user->isEmployer() || $user->isHR()) && 
-            !$user->administeredCompanies()->where('companies.id', $jobApplication->jobListing->company_id)->exists()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'You do not have permission to update this application'
-            ], 403);
-        }
-        
-        // Candidates can only update cover letter and resume
-        if ($user->isCandidate()) {
-            $jobApplication->update([
-                'cover_letter' => $request->cover_letter ?? $jobApplication->cover_letter,
-                'resume_url' => $request->resume_url ?? $jobApplication->resume_url
-            ]);
-        } else {
-            // Employers/HR can update status
-            $jobApplication->update([
-                'status' => $request->status ?? $jobApplication->status
-            ]);
-        }
-        
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Application updated successfully',
-            'data' => $jobApplication
-        ]);
     }
 
     /**
@@ -172,33 +126,92 @@ class JobApplicationController extends Controller
      */
     public function destroy(JobApplication $jobApplication): JsonResponse
     {
-        $user = request()->user();
-        
-        // Ensure user has permission to delete this application
-        if ($user->isCandidate() && $user->candidate->id !== $jobApplication->candidate_id) {
+        try {
+            $this->jobApplicationService->deleteApplication(
+                request()->user(),
+                $jobApplication
+            );
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Application deleted successfully'
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'You do not have permission to delete this application'
+                'message' => $e->getMessage()
             ], 403);
         }
-        
-        if (($user->isEmployer() || $user->isHR()) && 
-            !$user->administeredCompanies()->where('companies.id', $jobApplication->jobListing->company_id)->exists()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'You do not have permission to delete this application'
-            ], 403);
-        }
-        
-        // Decrement applicants count
-        $jobApplication->jobListing->decrement('applicants_count');
-        
-        $jobApplication->delete();
+    }
+
+    /**
+     * Get application analytics for the authenticated user
+     */
+    public function analytics(Request $request): JsonResponse
+    {
+        $analytics = $this->jobApplicationService->getUserApplicationAnalytics(
+            $request->user()
+        );
         
         return response()->json([
             'status' => 'success',
-            'message' => 'Application deleted successfully'
+            'data' => $analytics
         ]);
+    }
+
+    /**
+     * Get matching candidates for a job listing
+     */
+    public function matchingCandidates(Request $request, JobListing $jobListing): JsonResponse
+    {
+        try {
+            $candidates = $this->jobApplicationService->getMatchingCandidates(
+                $request->user(),
+                $jobListing,
+                $request->only(['limit', 'min_score'])
+            );
+            
+            return response()->json([
+                'status' => 'success',
+                'data' => $candidates
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 403);
+        }
+    }
+
+    /**
+     * Bulk update application statuses
+     */
+    public function bulkUpdateStatus(Request $request): JsonResponse
+    {
+        $request->validate([
+            'application_ids' => 'required|array',
+            'application_ids.*' => 'required|integer|exists:job_applications,id',
+            'status' => 'required|string|in:pending,reviewing,interviewed,offered,hired,rejected'
+        ]);
+
+        try {
+            $updatedCount = $this->jobApplicationService->bulkUpdateApplicationStatus(
+                $request->user(),
+                $request->application_ids,
+                $request->status
+            );
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => "Successfully updated {$updatedCount} applications",
+                'data' => ['updated_count' => $updatedCount]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 403);
+        }
     }
 }
 

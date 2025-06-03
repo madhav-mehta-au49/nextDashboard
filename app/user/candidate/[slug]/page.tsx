@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   FaEdit,
   FaExternalLinkAlt,
@@ -44,7 +45,7 @@ export default function CandidateProfile() {
   const [candidateData, setCandidateData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile');  const [applications, setApplications] = useState<Application[]>([]);
+  const [activeTab, setActiveTab] = useState('profile'); const [applications, setApplications] = useState<Application[]>([]);
   const [applicationsLoading, setApplicationsLoading] = useState(false);
 
   const fetchApplications = async (candidateId: string) => {
@@ -69,10 +70,11 @@ export default function CandidateProfile() {
         setIsLoading(false);
         return;
       }
-      
+
       try {
         // First, try to fetch by slug
-        try {          console.log(`Attempting to fetch candidate with slug: ${slug}`);
+        try {
+          console.log(`Attempting to fetch candidate with slug: ${slug}`);
           const data = await getCandidateBySlug(slug);
           if (data) {
             console.log('Successfully loaded candidate by slug:', data.id);
@@ -90,7 +92,7 @@ export default function CandidateProfile() {
           if (slugError.response && slugError.response.status === 404) {
             console.warn('Candidate profile not found with slug:', slug);
           } else {
-            console.error('Error fetching candidate by slug:', 
+            console.error('Error fetching candidate by slug:',
               slugError.response?.data?.message || slugError.message);
           }
         }
@@ -99,9 +101,10 @@ export default function CandidateProfile() {
         try {
           // Import the getCandidate function
           const { getCandidate } = await import('@/app/services/candidate/candidateApi');
-          
+
           // Check if slug is numeric (could be an ID)
-          if (!isNaN(Number(slug))) {            console.log(`Attempting to fetch candidate by ID: ${slug}`);
+          if (!isNaN(Number(slug))) {
+            console.log(`Attempting to fetch candidate by ID: ${slug}`);
             const data = await getCandidate(Number(slug));
             if (data) {
               console.log('Successfully loaded candidate by ID');
@@ -127,7 +130,7 @@ export default function CandidateProfile() {
         setIsLoading(false);
       }
     };
-    
+
     fetchData();
   }, [slug]);
 
@@ -162,7 +165,7 @@ export default function CandidateProfile() {
     <div className="bg-gray-50 dark:bg-gray-900 min-h-screen">
       <Header />
       <SubHeader />
-      
+
       {/* Cover Image */}
       <div className="relative h-[200px] md:h-[250px] overflow-hidden">
         <div
@@ -178,13 +181,13 @@ export default function CandidateProfile() {
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-lg p-6">
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
               <div className="border border-gray-200 dark:border-gray-700 rounded-full p-1 bg-white shadow-md">                <div className="relative h-24 w-24 md:h-28 md:w-28 rounded-full overflow-hidden">
-                  <Image
-                    src={candidateData.profile_picture || 'https://via.placeholder.com/150x150?text=Profile'}
-                    alt={candidateData.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
+                <Image
+                  src={candidateData.profile_picture || 'https://via.placeholder.com/150x150?text=Profile'}
+                  alt={candidateData.name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
               </div>
 
               <div className="flex flex-col flex-1">
@@ -202,13 +205,16 @@ export default function CandidateProfile() {
                 <div className="flex flex-wrap gap-3 mt-4">
                   <button className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors">
                     Connect
-                  </button>
-                  <button className="px-4 py-2 border border-teal-600 text-teal-600 rounded-md hover:bg-teal-50 transition-colors">
+                  </button>                  <button className="px-4 py-2 border border-teal-600 text-teal-600 rounded-md hover:bg-teal-50 transition-colors">
                     Message
                   </button>
-                  <button className="p-2 border border-teal-600 text-teal-600 rounded-md hover:bg-teal-50 transition-colors">
+                  <Link
+                    href={`/user/candidate/${slug}/edit`}
+                    className="p-2 border border-teal-600 text-teal-600 rounded-md hover:bg-teal-50 transition-colors flex items-center justify-center"
+                    title="Edit Profile"
+                  >
                     <FaEdit />
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -245,10 +251,18 @@ export default function CandidateProfile() {
 
               <div className="p-6">
                 {activeTab === 'profile' ? (
-                  <div>
-                    {/* About Section */}
+                  <div>                    {/* About Section */}
                     <div className="mb-8">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">About</h3>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">About</h3>
+                        <Link
+                          href={`/user/candidate/${slug}/edit`}
+                          className="text-teal-600 hover:text-teal-800 text-sm flex items-center"
+                        >
+                          <FaEdit className="mr-1" />
+                          Edit
+                        </Link>
+                      </div>
                       <div className={`text-gray-700 dark:text-gray-300 ${!isAboutOpen && 'line-clamp-3'}`}>
                         {candidateData.about}
                       </div>
@@ -287,13 +301,20 @@ export default function CandidateProfile() {
                           <div className="text-gray-500 dark:text-gray-400">No featured items.</div>
                         )}
                       </div>
-                    </div>
-
-                    {/* Experience Section */}
+                    </div>                    {/* Experience Section */}
                     <div className="mb-8">
-                      <div className="flex items-center mb-4">
-                        <FaBriefcase className="text-teal-600 mr-2" />
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Experience</h3>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center">
+                          <FaBriefcase className="text-teal-600 mr-2" />
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Experience</h3>
+                        </div>
+                        <Link
+                          href={`/user/candidate/${slug}/edit?step=2`}
+                          className="text-teal-600 hover:text-teal-800 text-sm flex items-center"
+                        >
+                          <FaEdit className="mr-1" />
+                          Edit
+                        </Link>
                       </div>
                       <hr className="mb-4 border-gray-200 dark:border-gray-700" />                      <div className="space-y-6">
                         {Array.isArray(candidateData.experiences) && candidateData.experiences.length > 0 ? (
@@ -315,13 +336,20 @@ export default function CandidateProfile() {
                           <div className="text-gray-500 dark:text-gray-400">No experience listed.</div>
                         )}
                       </div>
-                    </div>
-
-                    {/* Education Section */}
+                    </div>                    {/* Education Section */}
                     <div className="mb-8">
-                      <div className="flex items-center mb-4">
-                        <FaSchool className="text-teal-600 mr-2" />
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Education</h3>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center">
+                          <FaSchool className="text-teal-600 mr-2" />
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Education</h3>
+                        </div>
+                        <Link
+                          href={`/user/candidate/${slug}/edit?step=3`}
+                          className="text-teal-600 hover:text-teal-800 text-sm flex items-center"
+                        >
+                          <FaEdit className="mr-1" />
+                          Edit
+                        </Link>
                       </div>
                       <hr className="mb-4 border-gray-200 dark:border-gray-700" />                      <div className="space-y-6">
                         {Array.isArray(candidateData.educations) && candidateData.educations.length > 0 ? (
@@ -340,19 +368,27 @@ export default function CandidateProfile() {
                                 </p>
                               )}
                             </div>
-                          ))                        ) : (
+                          ))) : (
                           <div className="text-gray-500 dark:text-gray-400">No education listed.</div>
                         )}
                       </div>
-                    </div>
-
-                    {/* Certifications Section */}
+                    </div>                    {/* Certifications Section */}
                     <div className="mb-8">
-                      <div className="flex items-center mb-4">
-                        <FaCertificate className="text-teal-600 mr-2" />
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Certifications</h3>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center">
+                          <FaCertificate className="text-teal-600 mr-2" />
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Certifications</h3>
+                        </div>
+                        <Link
+                          href={`/user/candidate/${slug}/edit?step=5`}
+                          className="text-teal-600 hover:text-teal-800 text-sm flex items-center"
+                        >
+                          <FaEdit className="mr-1" />
+                          Edit
+                        </Link>
                       </div>
-                      <hr className="mb-4 border-gray-200 dark:border-gray-700" />                      <div className="space-y-6">
+                      <hr className="mb-4 border-gray-200 dark:border-gray-700" />
+                      <div className="space-y-6">
                         {Array.isArray(candidateData.certifications) && candidateData.certifications.length > 0 ? (
                           candidateData.certifications.map((cert, idx) => (
                             <div key={idx}>
@@ -361,15 +397,14 @@ export default function CandidateProfile() {
                                 {cert.issuing_organization}
                               </p>
                               <p className="text-sm text-gray-600 dark:text-gray-400">
-                                Issued {new Date(cert.issue_date).getFullYear()} 
+                                Issued {new Date(cert.issue_date).getFullYear()}
                                 {cert.expiration_date && ` • Expires ${new Date(cert.expiration_date).getFullYear()}`}
                               </p>
                               {cert.credential_id && (
                                 <p className="text-sm text-gray-600 dark:text-gray-400">
                                   Credential ID: {cert.credential_id}
                                 </p>
-                              )}
-                              {cert.credential_url && (
+                              )}                              {cert.credential_url && (
                                 <a
                                   href={cert.credential_url}
                                   target="_blank"
@@ -379,23 +414,123 @@ export default function CandidateProfile() {
                                   Show credential <FaExternalLinkAlt className="ml-1 text-xs" />
                                 </a>
                               )}
+                              {cert.file_path && (
+                                <a
+                                  href={cert.file_path}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-teal-600 hover:text-teal-800 text-sm flex items-center mt-1"
+                                >
+                                  View Certificate <FaExternalLinkAlt className="ml-1 text-xs" />
+                                </a>
+                              )}
                             </div>
                           ))
                         ) : (
                           <div className="text-gray-500 dark:text-gray-400">No certifications listed.</div>
                         )}
                       </div>
-                    </div>                    {/* Resume Section */}
+                    </div>                    {/* Career Preferences Section */}
+                    <div className="mb-8">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center">
+                          <FaBriefcase className="text-teal-600 mr-2" />
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Career Preferences</h3>
+                        </div>
+                        <Link
+                          href={`/user/candidate/${slug}/edit?step=1`}
+                          className="text-teal-600 hover:text-teal-800 text-sm flex items-center"
+                        >
+                          <FaEdit className="mr-1" />
+                          Edit
+                        </Link>
+                      </div>
+                      <hr className="mb-4 border-gray-200 dark:border-gray-700" />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {candidateData.desired_job_title && (
+                          <div>
+                            <div className="flex items-center mb-2">
+                              <FaBriefcase className="text-gray-400 mr-2 text-sm" />
+                              <h4 className="font-medium text-gray-900 dark:text-white">Desired Job Title</h4>
+                            </div>
+                            <p className="text-gray-700 dark:text-gray-300">{candidateData.desired_job_title}</p>
+                          </div>
+                        )}
+
+                        {candidateData.desired_salary && (
+                          <div>
+                            <div className="flex items-center mb-2">
+                              <FaStar className="text-gray-400 mr-2 text-sm" />
+                              <h4 className="font-medium text-gray-900 dark:text-white">Desired Salary</h4>
+                            </div>
+                            <p className="text-gray-700 dark:text-gray-300">${candidateData.desired_salary}</p>
+                          </div>
+                        )}
+
+                        {candidateData.desired_location && (
+                          <div>
+                            <div className="flex items-center mb-2">
+                              <FaMapMarkerAlt className="text-gray-400 mr-2 text-sm" />
+                              <h4 className="font-medium text-gray-900 dark:text-white">Preferred Location</h4>
+                            </div>
+                            <p className="text-gray-700 dark:text-gray-300">{candidateData.desired_location}</p>
+                          </div>
+                        )}
+
+                        {candidateData.work_type_preference && (
+                          <div>
+                            <div className="flex items-center mb-2">
+                              <FaBriefcase className="text-gray-400 mr-2 text-sm" />
+                              <h4 className="font-medium text-gray-900 dark:text-white">Work Type</h4>
+                            </div>
+                            <p className="text-gray-700 dark:text-gray-300 capitalize">{candidateData.work_type_preference}</p>
+                          </div>
+                        )}
+
+                        {candidateData.availability && (
+                          <div>
+                            <div className="flex items-center mb-2">
+                              <FaClock className="text-gray-400 mr-2 text-sm" />
+                              <h4 className="font-medium text-gray-900 dark:text-white">Availability</h4>
+                            </div>
+                            <p className="text-gray-700 dark:text-gray-300 capitalize">{candidateData.availability}</p>
+                          </div>
+                        )}
+
+                        {candidateData.portfolio_url && (
+                          <div>
+                            <div className="flex items-center mb-2">
+                              <FaLink className="text-gray-400 mr-2 text-sm" />
+                              <h4 className="font-medium text-gray-900 dark:text-white">Portfolio</h4>
+                            </div>
+                            <a
+                              href={candidateData.portfolio_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-teal-600 hover:text-teal-800 flex items-center"
+                            >
+                              View Portfolio <FaExternalLinkAlt className="ml-1 text-xs" />
+                            </a>
+                          </div>
+                        )}
+                      </div>
+
+                      {!candidateData.desired_job_title && !candidateData.desired_salary && !candidateData.desired_location && !candidateData.work_type_preference && !candidateData.availability && !candidateData.portfolio_url && (
+                        <div className="text-gray-500 dark:text-gray-400">No career preferences set.</div>
+                      )}
+                    </div>
+
+                    {/* Resume Section */}
                     <div className="mb-8">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Resume</h3>
                       <div className="border border-gray-200 dark:border-gray-700 rounded-md p-4 bg-gray-50 dark:bg-gray-700">
-                        {candidateData.resume ? (
+                        {candidateData.resume_url ? (
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
                               <div className="flex-shrink-0">
                                 <svg className="h-8 w-8 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                                  <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4z"/>
-                                  <path d="M6 8h8v1H6V8zm0 2h8v1H6v-1zm0 2h5v1H6v-1z"/>
+                                  <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4z" />
+                                  <path d="M6 8h8v1H6V8zm0 2h8v1H6v-1zm0 2h5v1H6v-1z" />
                                 </svg>
                               </div>
                               <div>
@@ -409,14 +544,14 @@ export default function CandidateProfile() {
                             </div>
                             <div className="flex space-x-2">
                               <button
-                                onClick={() => window.open(candidateData.resume, '_blank')}
+                                onClick={() => window.open(candidateData.resume_url, '_blank')}
                                 className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
                               >
                                 <FaExternalLinkAlt className="mr-1.5 h-3 w-3" />
                                 View
                               </button>
                               <a
-                                href={candidateData.resume}
+                                href={candidateData.resume_url}
                                 download
                                 className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
                               >
@@ -434,11 +569,18 @@ export default function CandidateProfile() {
                           </div>
                         )}
                       </div>
-                    </div>
-
-                    {/* Skills Section */}
+                    </div>                    {/* Skills Section */}
                     <div className="mb-8">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Skills & Endorsements</h3>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Skills & Endorsements</h3>
+                        <Link
+                          href={`/user/candidate/${slug}/edit?step=4`}
+                          className="text-teal-600 hover:text-teal-800 text-sm flex items-center"
+                        >
+                          <FaEdit className="mr-1" />
+                          Edit
+                        </Link>
+                      </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {Array.isArray(candidateData.skills) && candidateData.skills.length > 0 ? (
                           candidateData.skills.map((skillItem, idx) => (
@@ -494,7 +636,7 @@ export default function CandidateProfile() {
                         )}
                       </div>
                     </div>
-                  </div>                ) : (
+                  </div>) : (
                   <div>
                     {/* Application Status Section */}
                     <div className="mb-8">
@@ -504,7 +646,7 @@ export default function CandidateProfile() {
                           {applications.length} applications
                         </span>
                       </div>
-                      
+
                       {applicationsLoading ? (
                         <div className="flex justify-center items-center py-8">
                           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal-500"></div>
@@ -532,7 +674,7 @@ export default function CandidateProfile() {
                                     )}
                                   </div>
                                 </div>
-                                
+
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-start justify-between">
                                     <div>
@@ -546,21 +688,20 @@ export default function CandidateProfile() {
                                         Applied on {new Date(application.applied_at).toLocaleDateString()}
                                       </p>
                                     </div>
-                                    
+
                                     <div className="flex flex-col items-end space-y-2">
-                                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                        application.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' :
-                                        application.status === 'reviewed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
-                                        application.status === 'shortlisted' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
-                                        application.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
-                                        'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
-                                      }`}>
+                                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${application.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' :
+                                          application.status === 'reviewed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
+                                            application.status === 'shortlisted' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
+                                              application.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
+                                                'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
+                                        }`}>
                                         {application.status === 'pending' && <FaClock className="mr-1" />}
                                         {application.status === 'reviewed' && <FaEye className="mr-1" />}
                                         {application.status === 'shortlisted' && <FaCheckCircle className="mr-1" />}
                                         {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
                                       </span>
-                                      
+
                                       <a
                                         href={`/user/jobs/${application.job_id}`}
                                         className="text-xs text-teal-600 hover:text-teal-800 flex items-center"
@@ -569,7 +710,7 @@ export default function CandidateProfile() {
                                       </a>
                                     </div>
                                   </div>
-                                  
+
                                   {application.updated_at !== application.applied_at && (
                                     <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
                                       <p className="text-xs text-gray-500 dark:text-gray-500">
@@ -622,21 +763,27 @@ export default function CandidateProfile() {
                   Profile Actions
                 </p>
 
-                <div className="space-y-2">
-                  <button className="w-full text-left text-sm px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md flex items-center">
-                    <FaEdit className="mr-2" />
-                    Edit Profile
-                  </button>
-
-                  <button className="w-full text-left text-sm px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md flex items-center">
+                <div className="space-y-2">                  <Link
+                  href={`/user/candidate/${slug}/edit`}
+                  className="w-full text-left text-sm px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md flex items-center"
+                >
+                  <FaEdit className="mr-2" />
+                  Edit Profile
+                </Link>                  <Link
+                  href={`/user/candidate/${slug}/edit?step=2`}
+                  className="w-full text-left text-sm px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md flex items-center"
+                >
                     <FaBriefcase className="mr-2" />
                     Add Experience
-                  </button>
+                  </Link>
 
-                  <button className="w-full text-left text-sm px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md flex items-center">
+                  <Link
+                    href={`/user/candidate/${slug}/edit?step=3`}
+                    className="w-full text-left text-sm px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md flex items-center"
+                  >
                     <FaSchool className="mr-2" />
                     Add Education
-                  </button>
+                  </Link>
                 </div>
 
                 <hr className="my-3 border-gray-200 dark:border-gray-700" />

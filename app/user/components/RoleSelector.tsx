@@ -2,11 +2,11 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  FaUser, 
-  FaUsers, 
-  FaBuilding, 
-  FaCoins, 
+import {
+  FaUser,
+  FaUsers,
+  FaBuilding,
+  FaCoins,
   FaArrowRight,
   FaSpinner,
   FaCheckCircle
@@ -78,8 +78,8 @@ const userTypes: UserTypeOption[] = [
   }
 ];
 
-export const RoleSelector: React.FC<RoleSelectorProps> = ({ 
-  onRoleSelect, 
+export const RoleSelector: React.FC<RoleSelectorProps> = ({
+  onRoleSelect,
   autoRedirect = true,
   className = ""
 }) => {
@@ -96,7 +96,7 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
 
     // Save user role to localStorage
     localStorage.setItem('userRole', userType);
-    
+
     // Set default points based on role
     const defaultPoints = {
       candidate: 42,
@@ -112,7 +112,7 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
     if (autoRedirect) {
       router.push(`/user/wallet/${userType}`);
     }
-    
+
     setLoading(false);
   };
 
@@ -132,11 +132,10 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
         {userTypes.map((type) => (
           <div
             key={type.id}
-            className={`relative bg-white rounded-xl shadow-lg border-2 transition-all duration-300 cursor-pointer hover:shadow-xl transform hover:-translate-y-1 ${
-              selectedUserType === type.id 
-                ? `border-${type.color}-500 ring-4 ring-${type.color}-200` 
+            className={`relative bg-white rounded-xl shadow-lg border-2 transition-all duration-300 cursor-pointer hover:shadow-xl transform hover:-translate-y-1 ${selectedUserType === type.id
+                ? `border-${type.color}-500 ring-4 ring-${type.color}-200`
                 : 'border-gray-200 hover:border-gray-300'
-            }`}
+              }`}
             onClick={() => !loading && handleUserTypeSelect(type.id)}
           >
             {/* Loading overlay */}
@@ -184,10 +183,9 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
 
               {/* CTA */}
               <div className="mt-4">
-                <button 
-                  className={`w-full bg-gradient-to-r ${type.bgGradient} text-white py-2 px-4 rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center justify-center ${
-                    loading ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
+                <button
+                  className={`w-full bg-gradient-to-r ${type.bgGradient} text-white py-2 px-4 rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center justify-center ${loading ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                   disabled={loading}
                 >
                   {loading && selectedUserType === type.id ? (

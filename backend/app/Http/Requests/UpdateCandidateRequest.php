@@ -15,6 +15,29 @@ class UpdateCandidateRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation()
+    {
+        // Handle JSON strings for arrays when FormData is used (BEFORE validation)
+        $jsonFields = ['experiences', 'educations', 'skills', 'certifications'];
+        $mergeData = [];
+        
+        foreach ($jsonFields as $field) {
+            if ($this->has($field) && is_string($this->$field)) {
+                $decoded = json_decode($this->$field, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $mergeData[$field] = $decoded;
+                }
+            }
+        }
+        
+        if (!empty($mergeData)) {
+            $this->merge($mergeData);
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
@@ -33,8 +56,8 @@ class UpdateCandidateRequest extends FormRequest
             'user_id' => 'sometimes|exists:users,id',
             'availability' => 'nullable|string|in:Actively looking,Open to opportunities,Not actively looking',
             'resume_url' => 'nullable|string|max:255',
-            'profile_picture' => 'nullable|string|max:255',
-            'cover_image' => 'nullable|string|max:255',
+            'profile_picture' => 'nullable|string|max:10485760', // 10MB in base64 characters
+            'cover_image' => 'nullable|string|max:10485760', // 10MB in base64 characters
             'connections' => 'nullable|integer',
             'desired_job_title' => 'nullable|string|max:255',
             'desired_salary' => 'nullable|numeric',
@@ -74,7 +97,7 @@ class UpdateCandidateRequest extends FormRequest
             'certifications' => 'sometimes|array',
             'certifications.*.id' => 'sometimes|integer|exists:certifications,id',
             'certifications.*.name' => 'required_with:certifications|string|max:255',
-            'certifications.*.issuer' => 'required_with:certifications|string|max:255',
+            'certifications.*.issuing_organization' => 'required_with:certifications|string|max:255',
             'certifications.*.issue_date' => 'required_with:certifications|date',
             'certifications.*.expiration_date' => 'nullable|date|after_or_equal:certifications.*.issue_date',
             'certifications.*.credential_id' => 'nullable|string|max:255',
@@ -84,6 +107,17 @@ class UpdateCandidateRequest extends FormRequest
             'skills' => 'sometimes|array',
             'skills.*.id' => 'sometimes|integer|exists:skills,id',
             'skills.*.name' => 'required_with:skills|string|max:255',
+            
+            // Certification file validation (support both formats from FormData)
+            'certification_files' => 'sometimes|array',
+            'certification_files.*' => 'sometimes|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240', // 10MB max
+            
+            // Also support bracket notation for FormData
+            'certification_files.0' => 'sometimes|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240',
+            'certification_files.1' => 'sometimes|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240',
+            'certification_files.2' => 'sometimes|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240',
+            'certification_files.3' => 'sometimes|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240',
+            'certification_files.4' => 'sometimes|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240',
         ];
     }
     

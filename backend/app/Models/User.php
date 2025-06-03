@@ -26,6 +26,8 @@ class User extends Authenticatable
         'profile_picture',
         'cover_image',
         'role',
+        'google_id',
+        'linkedin_id',
     ];
 
     /**

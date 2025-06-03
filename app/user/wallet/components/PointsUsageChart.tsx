@@ -60,7 +60,7 @@ const PointsUsageChart: React.FC<PointsUsageChartProps> = ({ stats, userRole }) 
       <div className="px-6 py-5 border-b border-gray-200">
         <h3 className="text-lg font-semibold text-gray-900">Points Usage Analytics</h3>
       </div>
-      
+
       <div className="p-6">
         {/* Current/Previous Month Comparison */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -90,7 +90,7 @@ const PointsUsageChart: React.FC<PointsUsageChartProps> = ({ stats, userRole }) 
                 <div className="flex flex-col items-center">
                   <span className="text-xs font-medium text-green-600">+{stats.current_month.earned}</span>
                   <div className="h-16 w-8 bg-gray-200 rounded-t-lg relative overflow-hidden">
-                    <div 
+                    <div
                       className="absolute bottom-0 left-0 right-0 bg-green-400 rounded-t-lg"
                       style={{ height: `${(stats.current_month.earned / Math.max(stats.current_month.earned + stats.current_month.spent, 1)) * 100}%` }}
                     ></div>
@@ -100,7 +100,7 @@ const PointsUsageChart: React.FC<PointsUsageChartProps> = ({ stats, userRole }) 
                 <div className="flex flex-col items-center">
                   <span className="text-xs font-medium text-red-600">-{stats.current_month.spent}</span>
                   <div className="h-16 w-8 bg-gray-200 rounded-t-lg relative overflow-hidden">
-                    <div 
+                    <div
                       className="absolute bottom-0 left-0 right-0 bg-red-400 rounded-t-lg"
                       style={{ height: `${(stats.current_month.spent / Math.max(stats.current_month.earned + stats.current_month.spent, 1)) * 100}%` }}
                     ></div>
@@ -110,7 +110,7 @@ const PointsUsageChart: React.FC<PointsUsageChartProps> = ({ stats, userRole }) 
               </div>
             </div>
           </div>
-          
+
           <div className="bg-gray-50 rounded-lg p-4">
             <div className="flex items-center justify-between mb-2">
               <h4 className="font-medium text-gray-700">Previous Month</h4>
@@ -137,7 +137,7 @@ const PointsUsageChart: React.FC<PointsUsageChartProps> = ({ stats, userRole }) 
                 <div className="flex flex-col items-center">
                   <span className="text-xs font-medium text-green-600">+{stats.last_month.earned}</span>
                   <div className="h-16 w-8 bg-gray-200 rounded-t-lg relative overflow-hidden">
-                    <div 
+                    <div
                       className="absolute bottom-0 left-0 right-0 bg-green-400 rounded-t-lg"
                       style={{ height: `${(stats.last_month.earned / Math.max(stats.last_month.earned + stats.last_month.spent, 1)) * 100}%` }}
                     ></div>
@@ -147,7 +147,7 @@ const PointsUsageChart: React.FC<PointsUsageChartProps> = ({ stats, userRole }) 
                 <div className="flex flex-col items-center">
                   <span className="text-xs font-medium text-red-600">-{stats.last_month.spent}</span>
                   <div className="h-16 w-8 bg-gray-200 rounded-t-lg relative overflow-hidden">
-                    <div 
+                    <div
                       className="absolute bottom-0 left-0 right-0 bg-red-400 rounded-t-lg"
                       style={{ height: `${(stats.last_month.spent / Math.max(stats.last_month.earned + stats.last_month.spent, 1)) * 100}%` }}
                     ></div>
@@ -158,11 +158,11 @@ const PointsUsageChart: React.FC<PointsUsageChartProps> = ({ stats, userRole }) 
             </div>
           </div>
         </div>
-        
+
         {/* Category Breakdown Chart */}
         <div className="mt-8">
           <h4 className="font-medium text-gray-700 mb-4">Points Spending by Category</h4>
-          
+
           <div className="space-y-4">
             {stats.top_categories.map((category, index) => (
               <div key={index} className="space-y-1">
@@ -182,15 +182,14 @@ const PointsUsageChart: React.FC<PointsUsageChartProps> = ({ stats, userRole }) 
                     <span className="text-sm font-medium text-gray-900">{category.amount} pts</span>
                   </div>
                 </div>
-                
+
                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full rounded-full ${
-                      category.category === 'resume_access' ? 'bg-blue-500' :
-                      category.category === 'job_applications' ? 'bg-green-500' :
-                      category.category === 'company_access' ? 'bg-purple-500' :
-                      category.category === 'premium_features' ? 'bg-yellow-500' : 'bg-gray-500'
-                    }`}
+                  <div
+                    className={`h-full rounded-full ${category.category === 'resume_access' ? 'bg-blue-500' :
+                        category.category === 'job_applications' ? 'bg-green-500' :
+                          category.category === 'company_access' ? 'bg-purple-500' :
+                            category.category === 'premium_features' ? 'bg-yellow-500' : 'bg-gray-500'
+                      }`}
                     style={{ width: getBarWidth(category.percentage) }}
                   ></div>
                 </div>
@@ -198,14 +197,14 @@ const PointsUsageChart: React.FC<PointsUsageChartProps> = ({ stats, userRole }) 
             ))}
           </div>
         </div>
-        
+
         {/* Role-specific metrics */}
         <div className="mt-8 bg-gray-50 rounded-lg p-4">
           <h4 className="font-medium text-gray-700 mb-4">
-            {userRole === 'candidate' ? 'Candidate' : 
-             userRole === 'hr' ? 'HR Professional' : 'Enterprise'} Metrics
+            {userRole === 'candidate' ? 'Candidate' :
+              userRole === 'hr' ? 'HR Professional' : 'Enterprise'} Metrics
           </h4>
-          
+
           <div className="grid grid-cols-2 gap-4">
             {userRole === 'candidate' && (
               <>
@@ -219,7 +218,7 @@ const PointsUsageChart: React.FC<PointsUsageChartProps> = ({ stats, userRole }) 
                 </div>
               </>
             )}
-            
+
             {userRole === 'hr' && (
               <>
                 <div className="bg-white p-3 rounded-lg shadow-sm">
@@ -232,7 +231,7 @@ const PointsUsageChart: React.FC<PointsUsageChartProps> = ({ stats, userRole }) 
                 </div>
               </>
             )}
-            
+
             {userRole === 'company' && (
               <>
                 <div className="bg-white p-3 rounded-lg shadow-sm">

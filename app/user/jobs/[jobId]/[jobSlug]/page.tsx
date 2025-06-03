@@ -10,6 +10,7 @@ import JobDescription from "../../../components/jobs/JobDescription";
 import { JobSchema } from "../../../components/jobs/JobSchema";
 import SimilarJobs from "../../../components/jobs/SimilarJobs";
 import EmployeeHeader from "@/components/EmployeeHeader";
+import { useJob } from "@/hooks/useJobs";
 
 interface JobPageProps {
   params: {
@@ -19,41 +20,95 @@ interface JobPageProps {
 }
 
 const JobPage = ({ params }: JobPageProps) => {
-  // Mock job data - in a real app, you would fetch this from an API based on jobId
-  const job = {
-    id: params.jobId,
-    title: "Senior Software Engineer", // In real app, fetch this based on jobId
-    company: "Tech Corp",
-    location: "San Francisco, CA",
-    logoUrl: "https://via.placeholder.com/150",
-    jobUrl: "https://example.com/job/1",
-    description: "We are looking for a talented Senior Software Engineer to join our team. You will be responsible for developing high-quality software solutions, collaborating with cross-functional teams, and mentoring junior developers.",
-    salary: "$120,000 - $180,000",
-    employmentType: "Full-time",
-    requirements: [
-      "5+ years of experience in software development",
-      "Strong knowledge of JavaScript and TypeScript",
-      "Experience with React and Node.js",
-      "Bachelor's degree in Computer Science or related field",
-      "Excellent problem-solving and communication skills",
-      "Experience with cloud platforms (AWS, Azure, or GCP)"
-    ],
-    benefits: [
-      "Health, dental, and vision insurance",
-      "401(k) matching",
-      "Flexible work hours",
-      "Remote work options",
-      "Professional development budget",
-      "Generous paid time off"
-    ],
+  // Fetch real job data using the useJob hook
+  const { job, loading, error, fetchJob } = useJob();
+
+  // Fetch job data when component mounts or jobId changes
+  useEffect(() => {
+    if (params.jobId) {
+      fetchJob(parseInt(params.jobId));
+    }
+  }, [params.jobId, fetchJob]);
+  // Prepare job data for display (moved up to avoid conditional hook calls)
+  const jobData = job ? {
+    id: job.id.toString(),
+    title: job.title,
+    company: job.company.name,
+    location: job.location,
+    logoUrl: job.company.logo_url || "https://via.placeholder.com/150",
+    jobUrl: `#`,
+    description: job.description,
+    salary: job.salary?.display || `$${job.salary?.min ? parseInt(job.salary.min).toLocaleString() : 'N/A'} - $${job.salary?.max ? parseInt(job.salary.max).toLocaleString() : 'N/A'}`,
+    employmentType: job.type || "Not specified",
+    requirements: job.requirements ? (Array.isArray(job.requirements) ? job.requirements : [job.requirements]) : ["Requirements not specified"],
+    benefits: job.benefits ? (Array.isArray(job.benefits) ? job.benefits : [job.benefits]) : ["Benefits not specified"],
     companyDetails: {
-      about: "Tech Corp is a leading software company specializing in cloud solutions. We build innovative products that help businesses streamline their operations and improve efficiency.",
-      size: "1000-5000 employees",
-      industry: "Information Technology",
-      website: "https://techcorp.example.com"
+      about: job.company.description || "No company description available.",
+      size: job.company.size || "Not specified",
+      industry: job.company.industry || "Not specified",
+      website: job.company.website || "#"
     },
-    postedDate: "2 weeks ago"
-  };
+    postedDate: job.posted_date ? new Date(job.posted_date).toLocaleDateString() : "Recently posted"
+  } : null;
+
+  // Add structured data for SEO (moved up before conditional returns)
+  useEffect(() => {
+    if (jobData) {
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.innerHTML = JSON.stringify(JobSchema(jobData));
+      document.head.appendChild(script);
+
+      return () => {
+        document.head.removeChild(script);
+      };
+    }
+  }, [jobData]);
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Header />
+        <EmployeeHeader />
+        <SubHeader />
+        <main className="flex-grow py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-teal-500"></div>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error || !job) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Header />
+        <EmployeeHeader />
+        <SubHeader />
+        <main className="flex-grow py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center py-8">
+              <h1 className="text-2xl font-bold text-gray-900 mb-4">Job Not Found</h1>
+              <p className="text-gray-600 mb-4">{error || 'The job you are looking for does not exist.'}</p>
+              <a
+                href="/user/jobs"
+                className="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700"
+              >
+                Back to Jobs
+              </a>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   // Mock similar jobs data
   const similarJobs = [
@@ -70,18 +125,6 @@ const JobPage = ({ params }: JobPageProps) => {
     // ... other similar jobs
   ];
 
-  // Add structured data for SEO
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.type = 'application/ld+json';
-    script.innerHTML = JSON.stringify(JobSchema(job));
-    document.head.appendChild(script);
-
-    return () => {
-      document.head.removeChild(script);
-    };
-  }, []);
-
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
@@ -92,29 +135,26 @@ const JobPage = ({ params }: JobPageProps) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Job Header */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-            <div className="flex flex-col md:flex-row md:items-center">
-              <div className="flex-shrink-0 mb-4 md:mb-0 md:mr-6">
-                <div className="relative h-16 w-16 rounded-md overflow-hidden bg-gray-100 border border-gray-200">
-                  <Image
-                    src={job.logoUrl}
-                    alt={`${job.company} logo`}
-                    fill
-                    className="object-contain"
-                  />
-                </div>
+            <div className="flex flex-col md:flex-row md:items-center">              <div className="flex-shrink-0 mb-4 md:mb-0 md:mr-6">
+              <div className="relative h-16 w-16 rounded-md overflow-hidden bg-gray-100 border border-gray-200">
+                <Image
+                  src={jobData.logoUrl}
+                  alt={`${jobData.company} logo`}
+                  fill
+                  className="object-contain"
+                />
               </div>
-              <div className="flex-grow">
-                <h1 className="text-2xl font-bold text-gray-900 mb-1">{job.title}</h1>
-                <p className="text-lg text-gray-600 mb-2">{job.company} • {job.location}</p>
-                <div className="flex flex-wrap gap-2 mb-2">
+            </div>              <div className="flex-grow">
+                <h1 className="text-2xl font-bold text-gray-900 mb-1">{jobData.title}</h1>
+                <p className="text-lg text-gray-600 mb-2">{jobData.company} • {jobData.location}</p>                <div className="flex flex-wrap gap-2 mb-2">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
-                    {job.employmentType}
+                    {jobData.employmentType}
                   </span>
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {job.postedDate}
+                    {jobData.postedDate}
                   </span>
                 </div>
-                <p className="text-teal-600 font-semibold">{job.salary}</p>
+                <p className="text-teal-600 font-semibold">{jobData.salary}</p>
               </div>
               <div className="mt-4 md:mt-0">
                 <button className="w-full md:w-auto px-6 py-3 bg-teal-600 text-white font-medium rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-colors">
@@ -124,34 +164,33 @@ const JobPage = ({ params }: JobPageProps) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">            {/* Main Content */}
             <div className="lg:col-span-2">
               <JobDescription
-                title={job.title}
-                company={job.company}
-                location={job.location}
-                description={job.description}
-                requirements={job.requirements}
-                benefits={job.benefits}
-                postedDate={job.postedDate}
-                salary={job.salary}
-                employmentType={job.employmentType}
-                jobUrl={job.jobUrl}
+                title={jobData.title}
+                company={jobData.company}
+                location={jobData.location}
+                description={jobData.description}
+                requirements={jobData.requirements}
+                benefits={jobData.benefits}
+                postedDate={jobData.postedDate}
+                salary={jobData.salary}
+                employmentType={jobData.employmentType}
+                jobUrl={jobData.jobUrl}
               />
             </div>
 
             {/* Sidebar */}
             <div className="space-y-8">
               <CompanyDetails
-                company={job.company}
-                logoUrl={job.logoUrl}
-                about={job.companyDetails.about}
-                size={job.companyDetails.size}
-                industry={job.companyDetails.industry}
-                website={job.companyDetails.website}
+                company={jobData.company}
+                logoUrl={jobData.logoUrl}
+                about={jobData.companyDetails.about}
+                size={jobData.companyDetails.size}
+                industry={jobData.companyDetails.industry}
+                website={jobData.companyDetails.website}
               />
-              
+
               {/* Quick Apply Card */}
               <div className="bg-gradient-to-r from-teal-500 to-blue-500 rounded-lg shadow-md overflow-hidden">
                 <div className="p-6 text-center">
@@ -162,7 +201,7 @@ const JobPage = ({ params }: JobPageProps) => {
                   </button>
                 </div>
               </div>
-              
+
               {/* Job Alert Card */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Get Similar Job Alerts</h3>

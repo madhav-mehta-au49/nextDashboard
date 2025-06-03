@@ -24,11 +24,11 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
   resumeFile,
   setResumeFile
 }) => {
-  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setProfileData(prev => ({ ...prev, [name]: value }));
   };
-  
+
   const handleProfilePictureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -39,7 +39,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
       reader.readAsDataURL(file);
     }
   };
-  
+
   const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -62,7 +62,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
 
   const getResumeIcon = () => {
     if (!resumeFile) return <FaFileAlt />;
-    
+
     const extension = resumeFile.name.split('.').pop()?.toLowerCase();
     if (extension === 'pdf') return <FaFilePdf />;
     if (extension === 'doc' || extension === 'docx') return <FaFileWord />;
@@ -72,7 +72,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Basic Information</h2>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -89,7 +89,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
             placeholder="e.g., John Doe"
           />
         </div>
-        
+
         <div>
           <label htmlFor="headline" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Professional Headline*
@@ -105,7 +105,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
             placeholder="e.g., Senior Software Engineer at Tech Company"
           />
         </div>
-        
+
         <div>
           <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Location*
@@ -121,7 +121,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
             placeholder="e.g., San Francisco, CA"
           />
         </div>
-        
+
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Email Address*
@@ -137,7 +137,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
             placeholder="e.g., john.doe@example.com"
           />
         </div>
-        
+
         <div>
           <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Phone Number
@@ -152,9 +152,8 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
             placeholder="e.g., (123) 456-7890"
           />
         </div>
-        
         <div>
-        <label htmlFor="website" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="website" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Website/Portfolio
           </label>
           <input
@@ -168,7 +167,77 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
           />
         </div>
       </div>
-      
+
+      {/* Career Preferences Section */}
+      <div className="border-t border-gray-200 dark:border-gray-600 pt-6">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Career Preferences</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label htmlFor="desired_job_title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Desired Job Title
+            </label>
+            <input
+              type="text"
+              id="desired_job_title"
+              name="desired_job_title"
+              value={profileData.desired_job_title || ''}
+              onChange={handleProfileChange}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
+              placeholder="e.g., Senior Software Engineer"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="desired_salary" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Desired Salary (Annual)
+            </label>
+            <input
+              type="number"
+              id="desired_salary"
+              name="desired_salary"
+              value={profileData.desired_salary || ''}
+              onChange={handleProfileChange}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
+              placeholder="e.g., 100000"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="desired_location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Desired Work Location
+            </label>
+            <input
+              type="text"
+              id="desired_location"
+              name="desired_location"
+              value={profileData.desired_location || ''}
+              onChange={handleProfileChange}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
+              placeholder="e.g., San Francisco, CA or Remote"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="work_type_preference" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Work Type Preference
+            </label>
+            <select
+              id="work_type_preference"
+              name="work_type_preference"
+              value={profileData.work_type_preference || ''}
+              onChange={handleProfileChange}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="">Select work type</option>
+              <option value="remote">Remote</option>
+              <option value="onsite">On-site</option>
+              <option value="hybrid">Hybrid</option>
+              <option value="flexible">Flexible</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
       <div>
         <label htmlFor="about" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           About/Summary
@@ -183,7 +252,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
           placeholder="Write a brief summary about yourself, your experience, and your career goals..."
         />
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -192,11 +261,11 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
           <div className="mt-1 flex items-center space-x-4">
             <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
               {profilePicture ? (
-                <Image 
-                  src={profilePicture} 
-                  alt="Profile" 
-                  width={96} 
-                  height={96} 
+                <Image
+                  src={profilePicture}
+                  alt="Profile"
+                  width={96}
+                  height={96}
                   className="object-cover w-full h-full"
                 />
               ) : (
@@ -227,7 +296,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
             </div>
           </div>
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Cover Image
@@ -235,11 +304,11 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
           <div className="mt-1 flex flex-col space-y-2">
             <div className="h-32 w-full rounded-md overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
               {coverImage ? (
-                <Image 
-                  src={coverImage} 
-                  alt="Cover" 
-                  width={400} 
-                  height={128} 
+                <Image
+                  src={coverImage}
+                  alt="Cover"
+                  width={400}
+                  height={128}
                   className="object-cover w-full h-full"
                 />
               ) : (

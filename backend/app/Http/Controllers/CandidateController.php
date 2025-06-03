@@ -31,6 +31,29 @@ class CandidateController extends Controller
     {
         $this->candidateService = $candidateService;
     }
+
+    /**
+     * Get the current authenticated user's candidate profile
+     */
+    public function getCurrentUserProfile(): JsonResponse
+    {
+        $user = Auth::user();
+        
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+        
+        $candidate = $user->candidate;
+        
+        if (!$candidate) {
+            return response()->json(['candidate' => null], 200);
+        }
+        
+        return response()->json([
+            'candidate' => new CandidateResource($candidate)
+        ], 200);
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -151,9 +174,13 @@ class CandidateController extends Controller
             
             $candidate = Candidate::create($validatedData);
             
-            // Handle experiences if provided
-            if ($request->has('experiences') && is_array($request->experiences)) {
-                foreach ($request->experiences as $experience) {
+            // Handle experiences - support both array and JSON string from FormData
+            $experiences = $request->experiences;
+            if (is_string($experiences)) {
+                $experiences = json_decode($experiences, true);
+            }
+            if (is_array($experiences)) {
+                foreach ($experiences as $experience) {
                     // Make sure both company and company_name fields are set
                     if (isset($experience['company']) && !isset($experience['company_name'])) {
                         $experience['company_name'] = $experience['company'];
@@ -166,17 +193,25 @@ class CandidateController extends Controller
                 }
             }
             
-            // Handle educations if provided
-            if ($request->has('educations') && is_array($request->educations)) {
-                foreach ($request->educations as $education) {
+            // Handle educations - support both array and JSON string from FormData
+            $educations = $request->educations;
+            if (is_string($educations)) {
+                $educations = json_decode($educations, true);
+            }
+            if (is_array($educations)) {
+                foreach ($educations as $education) {
                     $candidate->educations()->create($education);
                 }
             }
             
-            // Handle skills if provided
-            if ($request->has('skills') && is_array($request->skills)) {
+            // Handle skills - support both array and JSON string from FormData
+            $skills = $request->skills;
+            if (is_string($skills)) {
+                $skills = json_decode($skills, true);
+            }
+            if (is_array($skills)) {
                 $skillIds = [];
-                foreach ($request->skills as $skill) {
+                foreach ($skills as $skill) {
                     // If skill has an id, use it directly, otherwise create new skill
                     if (isset($skill['id'])) {
                         $skillIds[] = $skill['id'];
@@ -188,9 +223,21 @@ class CandidateController extends Controller
                 $candidate->skills()->sync($skillIds);
             }
             
-            // Handle certifications if provided
-            if ($request->has('certifications') && is_array($request->certifications)) {
-                foreach ($request->certifications as $certification) {
+            // Handle certifications - support both array and JSON string from FormData
+            $certifications = $request->certifications;
+            if (is_string($certifications)) {
+                $certifications = json_decode($certifications, true);
+            }
+            if (is_array($certifications)) {
+                foreach ($certifications as $index => $certification) {
+                    // Handle certification file upload if present
+                    $fileKey = "certification_files.{$index}";
+                    if ($request->hasFile($fileKey)) {
+                        $certification['file_path'] = $this->candidateService->processCertificationFile(
+                            $request->file($fileKey)
+                        );
+                    }
+                    
                     $candidate->certifications()->create($certification);
                 }
             }
@@ -262,11 +309,17 @@ class CandidateController extends Controller
      */
     public function update(UpdateCandidateRequest $request, Candidate $candidate): JsonResponse
     {
+        \Log::info("=== CANDIDATE UPDATE METHOD CALLED ===");
+        \Log::info("Request method: " . $request->method());
+        \Log::info("Request URL: " . $request->url());
+        \Log::info("Candidate ID: " . $candidate->id);
+        \Log::info("Request data keys: " . implode(', ', array_keys($request->all())));
+        
         // Begin transaction to ensure data consistency
         DB::beginTransaction();
         
         try {
-            // Get validated data
+            // Get validated data (JSON decoding is now handled in prepareForValidation)
             $validatedData = $request->validated();
             
             // Handle file uploads using CandidateService
@@ -362,23 +415,58 @@ class CandidateController extends Controller
                 }
             }
             
-            // Handle certifications if provided
-            if ($request->has('certifications') && is_array($request->certifications)) {
+            // Handle certifications if provided - support both array and JSON string from FormData
+            $certifications = $request->certifications;
+            if (is_string($certifications)) {
+                $certifications = json_decode($certifications, true);
+            }
+            if (is_array($certifications)) {
                 // Get existing certification IDs to track what should be deleted
                 $existingCertificationIds = $candidate->certifications->pluck('id')->toArray();
                 $updatedCertificationIds = [];
                 
-                foreach ($request->certifications as $certificationData) {
+                foreach ($certifications as $index => $certificationData) {
+                    // Handle certification file upload if present
+                    // Try both formats: certification_files[index] and certification_files.index
+                    $fileKey1 = "certification_files[{$index}]";
+                    $fileKey2 = "certification_files.{$index}";
+                    \Log::info("Checking for certification file at keys: {$fileKey1} or {$fileKey2}");
+                    \Log::info("Available files: " . implode(', ', array_keys($request->allFiles())));
+                    
+                    if ($request->hasFile($fileKey1)) {
+                        \Log::info("Processing certification file for index {$index} with key {$fileKey1}");
+                        $certificationData['file_path'] = $this->candidateService->processCertificationFile(
+                            $request->file($fileKey1)
+                        );
+                        \Log::info("File processed successfully, path: " . $certificationData['file_path']);
+                    } elseif ($request->hasFile($fileKey2)) {
+                        \Log::info("Processing certification file for index {$index} with key {$fileKey2}");
+                        $certificationData['file_path'] = $this->candidateService->processCertificationFile(
+                            $request->file($fileKey2)
+                        );
+                        \Log::info("File processed successfully, path: " . $certificationData['file_path']);
+                    } else {
+                        \Log::info("No file found for either key: {$fileKey1} or {$fileKey2}");
+                    }
+                    
+                    \Log::info("Processing certification data for index {$index}: " . json_encode($certificationData));
+                    
                     if (isset($certificationData['id'])) {
                         // Update existing certification
                         $certification = $candidate->certifications()->find($certificationData['id']);
                         if ($certification) {
+                            \Log::info("Updating existing certification ID {$certification->id} with data: " . json_encode($certificationData));
                             $certification->update($certificationData);
+                            \Log::info("Certification updated. New file_path: " . $certification->file_path);
                             $updatedCertificationIds[] = $certification->id;
+                        } else {
+                            \Log::warning("Certification with ID {$certificationData['id']} not found for candidate {$candidate->id}");
                         }
                     } else {
                         // Create new certification
+                        \Log::info("Creating new certification with data: " . json_encode($certificationData));
                         $certification = $candidate->certifications()->create($certificationData);
+                        \Log::info("New certification created with ID {$certification->id} and file_path: " . $certification->file_path);
                         $updatedCertificationIds[] = $certification->id;
                     }
                 }
@@ -538,7 +626,7 @@ class CandidateController extends Controller
         $recommendedJobs = JobListing::whereHas('skills', function($query) use ($candidateSkillIds) {
             $query->whereIn('skills.id', $candidateSkillIds);
         })
-        ->where('status', 'active')
+        ->whereIn('status', ['active', 'published']) // Show both active and published jobs
         ->where(function($query) use ($candidate) {
             // Match location if specified
             if ($candidate->desired_location) {
@@ -723,7 +811,7 @@ class CandidateController extends Controller
         $recommendedJobs = JobListing::whereHas('skills', function($query) use ($candidate) {
                 $query->whereIn('skills.id', $candidate->skills()->pluck('skills.id'));
             })
-            ->where('status', 'active')
+            ->whereIn('status', ['active', 'published']) // Show both active and published jobs
             ->with(['company'])
             ->orderBy('created_at', 'desc')
             ->take(3)

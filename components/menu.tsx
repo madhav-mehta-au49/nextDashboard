@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  HomeIcon, 
-  BriefcaseIcon, 
-  BuildingIcon, 
-  UsersIcon, 
-  MessageSquareIcon, 
-  FileTextIcon, 
-  SettingsIcon, 
+import {
+  HomeIcon,
+  BriefcaseIcon,
+  BuildingIcon,
+  UsersIcon,
+  MessageSquareIcon,
+  FileTextIcon,
+  SettingsIcon,
   HelpCircleIcon,
   ChevronDownIcon,
   ChevronRightIcon,
@@ -51,7 +51,7 @@ const menuItems: MenuItem[] = [
     label: 'Candidates',
     href: '/candidates',
     icon: <UsersIcon className="h-5 w-5" />,
-  },  {
+  }, {
     label: 'Messages',
     href: '/messages',
     icon: <MessageSquareIcon className="h-5 w-5" />,
@@ -113,36 +113,33 @@ const Menu: React.FC = () => {
                 <div>
                   <button
                     onClick={() => toggleExpand(item.label)}
-                    className={`flex items-center justify-between w-full px-4 py-2.5 text-sm font-medium rounded-md transition-colors ${
-                      isActive(item.href)
+                    className={`flex items-center justify-between w-full px-4 py-2.5 text-sm font-medium rounded-md transition-colors ${isActive(item.href)
                         ? 'bg-teal-50 text-teal-700'
                         : 'text-gray-700 hover:bg-gray-100'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center">
                       <span className="mr-3 text-gray-500">{item.icon}</span>
                       {item.label}
                     </div>
                     <ChevronDownIcon
-                      className={`h-4 w-4 transition-transform ${
-                        expandedItems[item.label] ? 'transform rotate-180' : ''
-                      }`}
+                      className={`h-4 w-4 transition-transform ${expandedItems[item.label] ? 'transform rotate-180' : ''
+                        }`}
                     />
                   </button>
-                  
+
                   {expandedItems[item.label] && (
                     <ul className="mt-1 ml-6 space-y-1">
                       {item.children.map((child) => (
                         <li key={child.label}>
                           <Link
                             href={child.href}
-                            className={`flex items-center px-4 py-2 text-sm rounded-md transition-colors ${
-                              isActive(child.href)
+                            className={`flex items-center px-4 py-2 text-sm rounded-md transition-colors ${isActive(child.href)
                                 ? 'bg-teal-50 text-teal-700'
                                 : 'text-gray-600 hover:bg-gray-100'
-                            }`}
+                              }`}
                           >
-                                                        <span className="mr-3 text-gray-400">{child.icon}</span>
+                            <span className="mr-3 text-gray-400">{child.icon}</span>
                             {child.label}
                           </Link>
                         </li>
@@ -153,11 +150,10 @@ const Menu: React.FC = () => {
               ) : (
                 <Link
                   href={item.href}
-                  className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-md transition-colors ${
-                    isActive(item.href)
+                  className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-md transition-colors ${isActive(item.href)
                       ? 'bg-teal-50 text-teal-700'
                       : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                    }`}
                 >
                   <span className="mr-3 text-gray-500">{item.icon}</span>
                   {item.label}

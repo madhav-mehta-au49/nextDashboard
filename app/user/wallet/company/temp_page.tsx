@@ -2,11 +2,11 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  FaArrowLeft, 
-  FaCoins, 
-  FaChartLine, 
-  FaUsers, 
+import {
+  FaArrowLeft,
+  FaCoins,
+  FaChartLine,
+  FaUsers,
   FaBuilding,
   FaCrown,
   FaShoppingCart,
@@ -45,23 +45,23 @@ const CardContent = ({ children, className = "" }: { children: React.ReactNode; 
   </div>
 );
 
-const Button = ({ children, className = "", variant = "default", onClick, disabled }: { 
-  children: React.ReactNode; 
-  className?: string; 
+const Button = ({ children, className = "", variant = "default", onClick, disabled }: {
+  children: React.ReactNode;
+  className?: string;
   variant?: string;
   onClick?: () => void;
   disabled?: boolean;
 }) => {
   const baseClasses = "px-4 py-2 rounded-md font-medium transition-colors duration-200 flex items-center justify-center";
-  const variantClasses = variant === "outline" 
-    ? "border border-gray-300 text-gray-700 bg-white hover:bg-gray-50" 
+  const variantClasses = variant === "outline"
+    ? "border border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
     : variant === "secondary"
-    ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-    : "text-white bg-blue-600 hover:bg-blue-700";
-  
+      ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+      : "text-white bg-blue-600 hover:bg-blue-700";
+
   return (
-    <button 
-      className={`${baseClasses} ${variantClasses} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`} 
+    <button
+      className={`${baseClasses} ${variantClasses} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
       onClick={onClick}
       disabled={disabled}
     >
@@ -70,20 +70,20 @@ const Button = ({ children, className = "", variant = "default", onClick, disabl
   );
 };
 
-const Badge = ({ children, variant = "default", className = "" }: { 
-  children: React.ReactNode; 
+const Badge = ({ children, variant = "default", className = "" }: {
+  children: React.ReactNode;
   variant?: string;
   className?: string;
 }) => {
   const baseClasses = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium";
-  const variantClasses = variant === "secondary" 
-    ? "bg-gray-100 text-gray-800" 
+  const variantClasses = variant === "secondary"
+    ? "bg-gray-100 text-gray-800"
     : variant === "success"
-    ? "bg-green-100 text-green-800"
-    : variant === "warning"
-    ? "bg-yellow-100 text-yellow-800"
-    : "bg-blue-100 text-blue-800";
-  
+      ? "bg-green-100 text-green-800"
+      : variant === "warning"
+        ? "bg-yellow-100 text-yellow-800"
+        : "bg-blue-100 text-blue-800";
+
   return (
     <span className={`${baseClasses} ${variantClasses} ${className}`}>
       {children}
@@ -146,7 +146,7 @@ const CompanyWalletPage = () => {
       alert('Insufficient points! Please purchase more points.');
       return;
     }
-    
+
     alert(`${action.title} activated! ${action.basePoints} points deducted.`);
   };
 
@@ -168,15 +168,15 @@ const CompanyWalletPage = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => router.back()}
             className="mb-4"
           >
             <FaArrowLeft className="mr-2 h-4 w-4" />
             Back to Wallet Selection
           </Button>
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <div className="bg-gradient-to-r from-green-500 to-green-600 p-3 rounded-lg mr-4">
@@ -206,7 +206,7 @@ const CompanyWalletPage = () => {
               <p className="text-sm text-gray-600">Candidates Accessed</p>
             </CardContent>
           </Card>
-          
+
           <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
             <CardContent className="p-6 text-center">
               <FaDownload className="h-8 w-8 text-green-600 mx-auto mb-2" />
@@ -214,7 +214,7 @@ const CompanyWalletPage = () => {
               <p className="text-sm text-gray-600">Resumes Downloaded</p>
             </CardContent>
           </Card>
-          
+
           <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
             <CardContent className="p-6 text-center">
               <FaChartLine className="h-8 w-8 text-purple-600 mx-auto mb-2" />
@@ -222,7 +222,7 @@ const CompanyWalletPage = () => {
               <p className="text-sm text-gray-600">Points This Month</p>
             </CardContent>
           </Card>
-          
+
           <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
             <CardContent className="p-6 text-center">
               <FaCrown className="h-8 w-8 text-orange-600 mx-auto mb-2" />
@@ -247,62 +247,56 @@ const CompanyWalletPage = () => {
                   {enterpriseActions.map((action) => {
                     const IconComponent = action.icon;
                     const canAfford = companyWallet.balance >= action.basePoints;
-                    
+
                     return (
-                      <Card 
+                      <Card
                         key={action.id}
-                        className={`border-2 transition-all duration-200 hover:shadow-lg ${
-                          canAfford ? 'hover:border-green-300 cursor-pointer' : 'opacity-50'
-                        } ${
-                          action.color === 'blue' ? 'border-blue-200 bg-gradient-to-br from-blue-50 to-white' :
-                          action.color === 'purple' ? 'border-purple-200 bg-gradient-to-br from-purple-50 to-white' :
-                          action.color === 'green' ? 'border-green-200 bg-gradient-to-br from-green-50 to-white' :
-                          'border-orange-200 bg-gradient-to-br from-orange-50 to-white'
-                        }`}
+                        className={`border-2 transition-all duration-200 hover:shadow-lg ${canAfford ? 'hover:border-green-300 cursor-pointer' : 'opacity-50'
+                          } ${action.color === 'blue' ? 'border-blue-200 bg-gradient-to-br from-blue-50 to-white' :
+                            action.color === 'purple' ? 'border-purple-200 bg-gradient-to-br from-purple-50 to-white' :
+                              action.color === 'green' ? 'border-green-200 bg-gradient-to-br from-green-50 to-white' :
+                                'border-orange-200 bg-gradient-to-br from-orange-50 to-white'
+                          }`}
                         onClick={() => canAfford && handleAction(action)}
                       >
                         <CardContent className="p-6">
                           <div className="flex items-start justify-between mb-4">
-                            <div className={`p-3 rounded-lg ${
-                              action.color === 'blue' ? 'bg-blue-500' :
-                              action.color === 'purple' ? 'bg-purple-500' :
-                              action.color === 'green' ? 'bg-green-500' : 'bg-orange-500'
-                            }`}>
+                            <div className={`p-3 rounded-lg ${action.color === 'blue' ? 'bg-blue-500' :
+                                action.color === 'purple' ? 'bg-purple-500' :
+                                  action.color === 'green' ? 'bg-green-500' : 'bg-orange-500'
+                              }`}>
                               <IconComponent className="h-6 w-6 text-white" />
                             </div>
-                            <Badge className={`${
-                              action.color === 'blue' ? 'bg-blue-100 text-blue-800' :
-                              action.color === 'purple' ? 'bg-purple-100 text-purple-800' :
-                              action.color === 'green' ? 'bg-green-100 text-green-800' :
-                              'bg-orange-100 text-orange-800'
-                            }`}>
+                            <Badge className={`${action.color === 'blue' ? 'bg-blue-100 text-blue-800' :
+                                action.color === 'purple' ? 'bg-purple-100 text-purple-800' :
+                                  action.color === 'green' ? 'bg-green-100 text-green-800' :
+                                    'bg-orange-100 text-orange-800'
+                              }`}>
                               {action.basePoints} points
                             </Badge>
                           </div>
-                          
+
                           <h4 className="font-bold text-gray-900 mb-2">{action.title}</h4>
                           <p className="text-sm text-gray-600 mb-4">{action.description}</p>
-                          
+
                           <div className="space-y-2">
                             {action.features.map((feature, index) => (
                               <div key={index} className="flex items-center text-xs text-gray-600">
-                                <FaCoins className={`h-3 w-3 mr-2 ${
-                                  action.color === 'blue' ? 'text-blue-500' :
-                                  action.color === 'purple' ? 'text-purple-500' :
-                                  action.color === 'green' ? 'text-green-500' : 'text-orange-500'
-                                }`} />
+                                <FaCoins className={`h-3 w-3 mr-2 ${action.color === 'blue' ? 'text-blue-500' :
+                                    action.color === 'purple' ? 'text-purple-500' :
+                                      action.color === 'green' ? 'text-green-500' : 'text-orange-500'
+                                  }`} />
                                 {feature}
                               </div>
                             ))}
                           </div>
-                          
-                          <Button 
-                            className={`w-full mt-4 ${
-                              action.color === 'blue' ? 'bg-blue-600 hover:bg-blue-700' :
-                              action.color === 'purple' ? 'bg-purple-600 hover:bg-purple-700' :
-                              action.color === 'green' ? 'bg-green-600 hover:bg-green-700' :
-                              'bg-orange-600 hover:bg-orange-700'
-                            }`}
+
+                          <Button
+                            className={`w-full mt-4 ${action.color === 'blue' ? 'bg-blue-600 hover:bg-blue-700' :
+                                action.color === 'purple' ? 'bg-purple-600 hover:bg-purple-700' :
+                                  action.color === 'green' ? 'bg-green-600 hover:bg-green-700' :
+                                    'bg-orange-600 hover:bg-orange-700'
+                              }`}
                             disabled={!canAfford}
                             onClick={() => canAfford && handleAction(action)}
                           >
@@ -329,9 +323,8 @@ const CompanyWalletPage = () => {
                   {transactions.slice(0, 5).map((transaction, index) => (
                     <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center">
-                        <div className={`p-2 rounded-full mr-3 ${
-                          transaction.type === 'purchase' ? 'bg-green-100' : 'bg-red-100'
-                        }`}>
+                        <div className={`p-2 rounded-full mr-3 ${transaction.type === 'purchase' ? 'bg-green-100' : 'bg-red-100'
+                          }`}>
                           {transaction.type === 'purchase' ? (
                             <FaShoppingCart className="h-4 w-4 text-green-600" />
                           ) : (
@@ -344,9 +337,8 @@ const CompanyWalletPage = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className={`font-bold ${
-                          transaction.type === 'purchase' ? 'text-green-600' : 'text-red-600'
-                        }`}>
+                        <p className={`font-bold ${transaction.type === 'purchase' ? 'text-green-600' : 'text-red-600'
+                          }`}>
                           {transaction.type === 'purchase' ? '+' : '-'}{transaction.points}
                         </p>
                         <p className="text-sm text-gray-500">points</p>
@@ -370,7 +362,7 @@ const CompanyWalletPage = () => {
               <CardContent>
                 <div className="space-y-4">
                   {packages.map((pkg) => (
-                    <Card 
+                    <Card
                       key={pkg.id}
                       className="border-2 border-green-200 hover:border-green-400 transition-all duration-200 cursor-pointer hover:shadow-lg bg-gradient-to-br from-green-50 to-white"
                       onClick={() => handlePurchasePackage(pkg)}
@@ -387,19 +379,19 @@ const CompanyWalletPage = () => {
                             </Badge>
                           )}
                         </div>
-                        
+
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-2xl font-bold text-green-600">{pkg.points}</span>
                           <span className="text-lg font-semibold text-gray-900">{pkg.price}</span>
                         </div>
-                        
+
                         <div className="text-xs text-gray-600 mb-3">
                           <p>• Bulk hiring capabilities</p>
                           <p>• Priority support included</p>
                           <p>• Advanced analytics access</p>
                         </div>
-                        
-                        <Button 
+
+                        <Button
                           className="w-full bg-green-600 hover:bg-green-700"
                           onClick={() => handlePurchasePackage(pkg)}
                         >
@@ -429,14 +421,14 @@ const CompanyWalletPage = () => {
                   </div>
                 </div>
                 <div className="flex space-x-3">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="flex-1"
                     onClick={() => setShowPurchaseModal(false)}
                   >
                     Cancel
                   </Button>
-                  <Button 
+                  <Button
                     className="flex-1 bg-green-600 hover:bg-green-700"
                     onClick={completePurchase}
                   >

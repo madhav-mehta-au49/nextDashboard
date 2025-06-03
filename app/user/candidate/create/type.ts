@@ -7,6 +7,10 @@ export type ProfileData = {
     phone: string;
     website: string;
     resume_url?: File | string | null;
+    desired_job_title?: string;
+    desired_salary?: number;
+    desired_location?: string;
+    work_type_preference?: 'remote' | 'onsite' | 'hybrid' | 'flexible';
   };
   
   export type Experience = {
@@ -35,8 +39,7 @@ export type ProfileData = {
     id: string;
     name: string;
   };
-  
-  export type Certification = {
+    export type Certification = {
     id: string;
     name: string;
     issuer: string;
@@ -45,4 +48,5 @@ export type ProfileData = {
     noExpiration: boolean;
     credentialId: string;
     credentialURL: string;
+    file?: File | null;
   };

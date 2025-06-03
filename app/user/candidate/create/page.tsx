@@ -27,7 +27,6 @@ export default function CreateCandidateProfile() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-
   // Basic profile information
   const [profileData, setProfileData] = useState<ProfileData>({
     name: '',
@@ -37,7 +36,11 @@ export default function CreateCandidateProfile() {
     email: '',
     phone: '',
     website: '',
-    resume_url: null
+    resume_url: null,
+    desired_job_title: '',
+    desired_salary: undefined,
+    desired_location: '',
+    work_type_preference: undefined
   });
 
   // Profile images and files
@@ -105,17 +108,17 @@ export default function CreateCandidateProfile() {
       };      // Import and call the API
       const { createCandidate } = await import('@/app/services/candidate/candidateApi');
       const createdCandidate = await createCandidate(candidateData);
-      
+
       console.log('Created candidate:', createdCandidate);
       setSuccessMessage('Profile created successfully!');
-      
+
       // Redirect to the candidate profile using appropriate slug
       setTimeout(() => {
         // Check if the user object is nested inside the avatar property (based on the API response we saw)
-        const userSlug = createdCandidate?.user?.slug || 
-                         (createdCandidate?.user?.avatar?.slug) || 
-                         null;
-                         
+        const userSlug = createdCandidate?.user?.slug ||
+          (createdCandidate?.user?.avatar?.slug) ||
+          null;
+
         // Use the user's slug from the API response if available
         if (userSlug) {
           console.log('Redirecting to profile using user slug:', userSlug);
@@ -234,18 +237,18 @@ export default function CreateCandidateProfile() {
               <div
                 key={step}
                 className={`flex flex-col items-center ${step < currentStep
+                  ? 'text-teal-600'
+                  : step === currentStep
                     ? 'text-teal-600'
-                    : step === currentStep
-                      ? 'text-teal-600'
-                      : 'text-gray-400'
+                    : 'text-gray-400'
                   }`}
               >
                 <div
                   className={`w-8 h-8 flex items-center justify-center rounded-full ${step < currentStep
-                      ? 'bg-teal-600 text-white'
-                      : step === currentStep
-                        ? 'border-2 border-teal-600 text-teal-600'
-                        : 'border-2 border-gray-300 text-gray-400'
+                    ? 'bg-teal-600 text-white'
+                    : step === currentStep
+                      ? 'border-2 border-teal-600 text-teal-600'
+                      : 'border-2 border-gray-300 text-gray-400'
                     }`}
                 >
                   {step < currentStep ? <FaCheck size={12} /> : step}

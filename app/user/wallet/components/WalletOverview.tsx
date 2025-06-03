@@ -2,10 +2,10 @@
 
 import React from 'react';
 import { Wallet, WalletStats } from '@/app/user/types/wallet';
-import { 
-  FaWallet, 
-  FaArrowUp, 
-  FaArrowDown, 
+import {
+  FaWallet,
+  FaArrowUp,
+  FaArrowDown,
   FaClock,
   FaDollarSign,
   FaSyncAlt

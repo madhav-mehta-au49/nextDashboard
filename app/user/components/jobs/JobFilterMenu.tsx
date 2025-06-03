@@ -1,34 +1,54 @@
 "use client";
 
 import React, { useState } from "react";
-import { FiFilter, FiChevronDown, FiCheck } from "react-icons/fi";
+import { FiFilter, FiChevronDown } from "react-icons/fi";
+import { JobSearchFilters } from "@/app/services/jobs";
 
-export const JobFilterMenu = () => {
+interface JobFilterMenuProps {
+  onFiltersChange?: (filters: JobSearchFilters) => void;
+  currentFilters?: JobSearchFilters;
+}
+
+export const JobFilterMenu = ({ onFiltersChange, currentFilters = {} }: JobFilterMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [filters, setFilters] = useState({
-    jobType: [],
-    experience: [],
-    salary: [],
-    remote: false
-  });
+  const [filters, setFilters] = useState<JobSearchFilters>(currentFilters); const toggleFilter = (category: string, value: string | null) => {
+    setFilters((prev: JobSearchFilters) => {
+      if (category === 'location_type') {
+        const currentArray = prev.location_type || [];
+        const newArray = currentArray.includes(value as string)
+          ? currentArray.filter((v: string) => v !== value)
+          : [...currentArray, value as string];
+        return { ...prev, location_type: newArray.length > 0 ? newArray : undefined };
+      }
 
-  const toggleFilter = (category, value) => {
-    setFilters(prev => {
-      if (category === 'remote') {
-        return { ...prev, remote: !prev.remote };
+      if (category === 'job_type') {
+        const currentArray = prev.job_type || [];
+        const newArray = currentArray.includes(value as string)
+          ? currentArray.filter((v: string) => v !== value)
+          : [...currentArray, value as string];
+        return { ...prev, job_type: newArray.length > 0 ? newArray : undefined };
       }
-      
-      const categoryFilters = [...prev[category]];
-      const index = categoryFilters.indexOf(value);
-      
-      if (index === -1) {
-        categoryFilters.push(value);
-      } else {
-        categoryFilters.splice(index, 1);
+
+      if (category === 'experience_level') {
+        const currentArray = prev.experience_level || [];
+        const newArray = currentArray.includes(value as string)
+          ? currentArray.filter((v: string) => v !== value)
+          : [...currentArray, value as string];
+        return { ...prev, experience_level: newArray.length > 0 ? newArray : undefined };
       }
-      
-      return { ...prev, [category]: categoryFilters };
+
+      return prev;
     });
+  };
+
+  const handleApplyFilters = () => {
+    onFiltersChange?.(filters);
+    setIsOpen(false);
+  };
+
+  const clearFilters = () => {
+    setFilters({});
+    onFiltersChange?.({});
   };
 
   return (
@@ -40,100 +60,85 @@ export const JobFilterMenu = () => {
         <FiFilter className="mr-2 h-4 w-4 text-gray-500" />
         Filters
         <FiChevronDown className="ml-2 h-4 w-4 text-gray-500" />
-      </button>
-
-      {isOpen && (
+      </button>      {isOpen && (
         <div className="origin-top-right absolute right-0 mt-2 w-80 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
           <div className="py-1 divide-y divide-gray-200">
             {/* Job Type */}
             <div className="px-4 py-3">
               <h3 className="text-sm font-medium text-gray-900">Job Type</h3>
-              <div className="mt-2 space-y-2">
-                {['Full-time', 'Part-time', 'Contract', 'Internship'].map((type) => (
-                  <div key={type} className="flex items-center">
-                    <input
-                      id={`job-type-${type}`}
-                      name={`job-type-${type}`}
-                      type="checkbox"
-                      className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
-                      checked={filters.jobType.includes(type)}
-                      onChange={() => toggleFilter('jobType', type)}
-                    />
-                    <label htmlFor={`job-type-${type}`} className="ml-2 text-sm text-gray-700">
-                      {type}
-                    </label>
-                  </div>
-                ))}
+              <div className="mt-2 space-y-2">                {['full-time', 'part-time', 'contract', 'internship', 'freelance'].map((type) => (
+                <div key={type} className="flex items-center">
+                  <input
+                    id={`job-type-${type}`}
+                    name={`job-type-${type}`}
+                    type="checkbox"
+                    className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
+                    checked={filters.job_type?.includes(type) || false}
+                    onChange={() => toggleFilter('job_type', type)}
+                  />
+                  <label htmlFor={`job-type-${type}`} className="ml-2 text-sm text-gray-700 capitalize">
+                    {type.replace('-', ' ')}
+                  </label>
+                </div>
+              ))}
+              </div>
+            </div>
+
+            {/* Location Type */}
+            <div className="px-4 py-3">
+              <h3 className="text-sm font-medium text-gray-900">Location Type</h3>
+              <div className="mt-2 space-y-2">                {['remote', 'hybrid', 'onsite'].map((type) => (
+                <div key={type} className="flex items-center">
+                  <input
+                    id={`location-type-${type}`}
+                    name={`location-type-${type}`}
+                    type="checkbox"
+                    className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
+                    checked={filters.location_type?.includes(type) || false}
+                    onChange={() => toggleFilter('location_type', type)}
+                  />
+                  <label htmlFor={`location-type-${type}`} className="ml-2 text-sm text-gray-700 capitalize">
+                    {type}
+                  </label>
+                </div>
+              ))}
               </div>
             </div>
 
             {/* Experience Level */}
             <div className="px-4 py-3">
               <h3 className="text-sm font-medium text-gray-900">Experience Level</h3>
-              <div className="mt-2 space-y-2">
-                {['Entry Level', 'Mid Level', 'Senior Level', 'Director', 'Executive'].map((level) => (
-                  <div key={level} className="flex items-center">
-                    <input
-                      id={`experience-${level}`}
-                      name={`experience-${level}`}
-                      type="checkbox"
-                      className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
-                      checked={filters.experience.includes(level)}
-                      onChange={() => toggleFilter('experience', level)}
-                    />
-                    <label htmlFor={`experience-${level}`} className="ml-2 text-sm text-gray-700">
-                      {level}
-                    </label>
-                  </div>
-                ))}
+              <div className="mt-2 space-y-2">                {['entry', 'mid', 'senior', 'lead', 'executive'].map((level) => (
+                <div key={level} className="flex items-center">
+                  <input
+                    id={`experience-${level}`}
+                    name={`experience-${level}`}
+                    type="checkbox"
+                    className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
+                    checked={filters.experience_level?.includes(level) || false}
+                    onChange={() => toggleFilter('experience_level', level)}
+                  />
+                  <label htmlFor={`experience-${level}`} className="ml-2 text-sm text-gray-700 capitalize">
+                    {level} Level
+                  </label>
+                </div>
+              ))}
               </div>
             </div>
 
-            {/* Salary Range */}
-            <div className="px-4 py-3">
-              <h3 className="text-sm font-medium text-gray-900">Salary Range</h3>
-              <div className="mt-2 space-y-2">
-                {['$0-$50K', '$50K-$100K', '$100K-$150K', '$150K+'].map((range) => (
-                  <div key={range} className="flex items-center">
-                    <input
-                      id={`salary-${range}`}
-                      name={`salary-${range}`}
-                      type="checkbox"
-                      className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
-                      checked={filters.salary.includes(range)}
-                      onChange={() => toggleFilter('salary', range)}
-                    />
-                    <label htmlFor={`salary-${range}`} className="ml-2 text-sm text-gray-700">
-                      {range}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Remote */}
-            <div className="px-4 py-3">
-              <div className="flex items-center">
-                <input
-                  id="remote"
-                  name="remote"
-                  type="checkbox"
-                  className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
-                  checked={filters.remote}
-                  onChange={() => toggleFilter('remote', null)}
-                />
-                <label htmlFor="remote" className="ml-2 text-sm text-gray-700">
-                  Remote Only
-                </label>
-              </div>
-            </div>
-
-            {/* Apply Filters Button */}
-            <div className="px-4 py-3">
+            {/* Filter Actions */}
+            <div className="px-4 py-3 flex gap-2">
               <button
                 type="button"
-                className="w-full inline-flex justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
-                onClick={() => setIsOpen(false)}
+                className="flex-1 inline-flex justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+                onClick={clearFilters}
+              >
+                Clear
+              </button>
+              <button
+                type="button"
+                className="flex-1 inline-flex justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+                onClick={handleApplyFilters}
               >
                 Apply Filters
               </button>

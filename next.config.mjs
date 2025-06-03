@@ -7,7 +7,7 @@ import { env } from "./env.mjs"
  */
 const config = withPlugins([[withBundleAnalyzer({ enabled: env.ANALYZE })]], {
   images: {
-    domains: ['via.placeholder.com'],
+    domains: ['via.placeholder.com', 'localhost'],
   },
   reactStrictMode: true,
   logging: {

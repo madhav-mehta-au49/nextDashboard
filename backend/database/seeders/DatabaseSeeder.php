@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
         );
         
         $this->call([
+            // Company module seeders
             CompanySeeder::class,
             CompanyLocationSeeder::class,
             CompanySpecialtySeeder::class,
@@ -31,7 +32,14 @@ class DatabaseSeeder extends Seeder
             CompanyFollowerSeeder::class,
             CompanyReviewSeeder::class,
             SavedCompanySeeder::class,
-            CandidateSeeder::class, // Add the CandidateSeeder
+            
+            // Job module seeders
+            SkillSeeder::class,
+            JobCategorySeeder::class,
+            JobListingSeeder::class,
+            
+            // Candidate module seeders
+            CandidateSeeder::class,
         ]);
     }
 }

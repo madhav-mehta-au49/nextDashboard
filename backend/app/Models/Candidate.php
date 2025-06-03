@@ -28,6 +28,14 @@ class Candidate extends Model
         'profile_picture',
         'cover_image',
         'profile_completed_percentage',
+        'availability',
+        'connections',
+        'desired_job_title',
+        'desired_salary',
+        'desired_location',
+        'work_type_preference',
+        'visibility',
+        'portfolio_url',
     ];
 
     /**

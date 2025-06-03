@@ -29,17 +29,26 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [userRole, setUserRoleState] = useState<UserRole | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userPoints, setUserPoints] = useState(0);
-
-  useEffect(() => {
-    // Check if user is authenticated and get their role
+  
+  // Function to check and update authentication state
+  const checkAuthState = () => {
     const savedRole = localStorage.getItem('userRole') as UserRole;
     const savedPoints = localStorage.getItem('userPoints');
-    
-    if (savedRole && ['candidate', 'hr', 'company'].includes(savedRole)) {
+    const isAuthenticatedFlag = localStorage.getItem('isAuthenticated') === 'true';
+
+    console.log('UserContext checking auth state:', { savedRole, isAuthenticatedFlag });
+
+    if (savedRole && ['candidate', 'hr', 'company', 'employer'].includes(savedRole)) {
       setUserRoleState(savedRole);
       setIsAuthenticated(true);
+    } else if (isAuthenticatedFlag) {
+      // If we have authentication flag but no role, still consider authenticated
+      setIsAuthenticated(true);
+    } else {
+      setIsAuthenticated(false);
+      setUserRoleState(null);
     }
-    
+
     if (savedPoints) {
       setUserPoints(parseInt(savedPoints, 10));
     } else {
@@ -51,6 +60,31 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       };
       setUserPoints(defaultPoints[savedRole] || 0);
     }
+  };
+
+  useEffect(() => {
+    // Initial check
+    checkAuthState();
+
+    // Listen for storage changes (when localStorage is updated in the same tab)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'userRole' || e.key === 'isAuthenticated' || e.key === 'userPoints') {
+        checkAuthState();
+      }
+    };
+
+    // Listen for custom storage events (for same-tab updates)
+    const handleCustomStorageChange = () => {
+      checkAuthState();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('auth-updated', handleCustomStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('auth-updated', handleCustomStorageChange);
+    };
   }, []);
 
   const setUserRole = (role: UserRole | null) => {
@@ -58,7 +92,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     if (role) {
       localStorage.setItem('userRole', role);
       setIsAuthenticated(true);
-      
+
       // Set default points for new role
       const defaultPoints = {
         candidate: 42,

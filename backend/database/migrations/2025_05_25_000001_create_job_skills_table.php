@@ -8,16 +8,19 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     */    public function up(): void
+     */
+    public function up(): void
     {
-        Schema::create('candidate_skills', function (Blueprint $table) {
+        Schema::create('job_skills', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('candidate_id')->constrained()->onDelete('cascade');
+            $table->foreignId('job_listing_id')->constrained()->onDelete('cascade');
             $table->foreignId('skill_id')->constrained()->onDelete('cascade');
-            $table->integer('endorsements')->default(0);
+            $table->boolean('is_required')->default(false);
+            $table->integer('years_experience')->nullable();
             $table->timestamps();
             
-            $table->unique(['candidate_id', 'skill_id']);
+            $table->unique(['job_listing_id', 'skill_id']);
+            $table->index(['skill_id', 'is_required']);
         });
     }
 
@@ -26,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('candidate_skills');
+        Schema::dropIfExists('job_skills');
     }
 };

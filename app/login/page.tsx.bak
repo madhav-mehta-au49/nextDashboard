@@ -1,0 +1,208 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { FiEye, FiEyeOff, FiLinkedin } from 'react-icons/fi';
+import { FcGoogle } from 'react-icons/fc';
+import Link from 'next/link';
+import { storeUserAuth, redirectBasedOnRole } from '@/app/utils/auth';
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    rememberMe: false,
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setErrors({});
+
+    try {
+      const response = await fetch('http://localhost:8000/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),      });      if (response.ok) {
+        const data = await response.json();
+        console.log('Login success:', data);
+        
+        if (data.data) {
+          console.log('Storing user data:', data.data.role, data.data.name);
+          
+          // Use the auth utility to store user data consistently
+          storeUserAuth({
+            id: data.data.id,
+            name: data.data.name,
+            role: data.data.role
+          });
+          
+          // Redirect based on user role
+          const redirectUrl = data.data.role === 'employer' ? '/companies/dashboard' : '/user/dashboard';
+          
+          console.log('Will redirect to:', redirectUrl);
+          
+          // Clear any previous redirect attempts
+          if ((window as any).redirectTimeout) {
+            clearTimeout((window as any).redirectTimeout);
+          }
+            clearTimeout(window.redirectTimeout);
+          }
+          
+          // Use a longer timeout to ensure state is fully updated
+          window.redirectTimeout = setTimeout(() => {
+            console.log('Redirecting now to', redirectUrl);
+            // First try using router for better Next.js integration
+            router.push(redirectUrl);
+            
+            // As a fallback, use direct location change after another delay
+            setTimeout(() => {
+              if (window.location.pathname !== redirectUrl) {
+                console.log('Router redirect failed, using window.location');
+                window.location.href = redirectUrl;
+              }
+            }, 500);
+          }, 1500);
+        } else {
+          console.error('Unexpected response format:', data);
+          setErrors({ email: 'Unexpected response format from server' });
+        }
+      } else {
+        const errorData = await response.json();
+        setErrors({ email: errorData.message || 'Invalid credentials' });
+      }    } catch (error) {
+      console.error('Login error:', error);
+      setErrors({ email: 'Login failed. Please check your network connection and try again.' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSocialAuth = (provider: 'google' | 'linkedin') => {
+    // For login, we don't need to specify role as it's already determined
+    window.location.href = `http://localhost:8000/auth/${provider}`;
+  };
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="flex flex-col md:flex-row w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden">
+        {/* Left Side - Branding Section */}
+        <div className="hidden md:flex flex-col justify-center items-center w-1/2 bg-gradient-to-br from-teal-500 to-blue-500 text-white p-10">
+          <h2 className="text-3xl font-bold">Welcome Back!</h2>
+          <p className="mt-4 text-lg">Log in to continue your journey.</p>
+        </div>
+
+        {/* Right Side - Form Section */}
+        <div className="w-full md:w-1/2 p-8">
+          <h2 className="text-2xl font-bold text-teal-600 mb-6">Log In</h2>
+
+          <form onSubmit={handleSubmit} className="space-y-4">            {/* Email Field */}
+            <div>
+              <label className="block font-medium">Email</label>
+              <input
+                type="email"
+                placeholder="your.email@example.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className={`w-full mt-1 p-2 border rounded-lg focus:ring-teal-500 focus:border-teal-500 ${
+                  errors.email ? 'border-red-500' : ''
+                }`}
+                required
+              />
+              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+            </div>
+
+            {/* Password Field */}
+            <div>
+              <label className="block font-medium">Password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full mt-1 p-2 border rounded-lg focus:ring-teal-500 focus:border-teal-500"
+                  required
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-2 flex items-center text-gray-600"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                </button>
+              </div>
+            </div>
+
+            {/* Remember Me + Forgot Password */}
+            <div className="flex justify-between items-center text-sm">
+              <div className="flex items-center">
+                <input 
+                  type="checkbox" 
+                  className="mr-2" 
+                  checked={formData.rememberMe}
+                  onChange={(e) => setFormData({ ...formData, rememberMe: e.target.checked })}
+                />
+                <span>Remember me (24 hours)</span>
+              </div>
+              <Link href="/auth/forgot-password" className="text-teal-600 underline">
+                Forgot password?
+              </Link>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              className="w-full bg-teal-500 text-white p-3 rounded-lg font-bold hover:bg-teal-600 transition"
+              disabled={isLoading}
+            >
+              {isLoading ? "Logging in..." : "Log In"}
+            </button>
+          </form>
+
+          {/* OR Divider */}
+          <div className="flex items-center my-4">
+            <hr className="flex-1 border-gray-300" />
+            <span className="mx-4 text-gray-500">or log in with</span>
+            <hr className="flex-1 border-gray-300" />
+          </div>          {/* Social Login Buttons */}
+          <div className="flex gap-4">
+            <button 
+              onClick={() => handleSocialAuth('google')}
+              className="flex-1 flex items-center justify-center border p-3 rounded-lg hover:bg-gray-50 transition"
+            >
+              <FcGoogle className="mr-2" />
+              Google
+            </button>
+            <button 
+              onClick={() => handleSocialAuth('linkedin')}
+              className="flex-1 flex items-center justify-center border p-3 rounded-lg hover:bg-gray-50 transition"
+            >
+              <FiLinkedin className="mr-2 text-blue-700" />
+              LinkedIn
+            </button>
+          </div>
+
+          {/* Sign Up Link */}
+          <p className="mt-4 text-center text-gray-700">
+            Don't have an account?{" "}
+            <Link href="/signup" className="text-teal-600 font-bold">
+              Sign up
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
