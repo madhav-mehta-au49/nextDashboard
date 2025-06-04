@@ -11,6 +11,7 @@ import { JobSchema } from "../../../components/jobs/JobSchema";
 import SimilarJobs from "../../../components/jobs/SimilarJobs";
 import EmployeeHeader from "@/components/EmployeeHeader";
 import { useJob } from "@/hooks/useJobs";
+import { formatSalary } from "@/app/utils/currency";
 
 interface JobPageProps {
   params: {
@@ -28,8 +29,7 @@ const JobPage = ({ params }: JobPageProps) => {
     if (params.jobId) {
       fetchJob(parseInt(params.jobId));
     }
-  }, [params.jobId, fetchJob]);
-  // Prepare job data for display (moved up to avoid conditional hook calls)
+  }, [params.jobId, fetchJob]);  // Prepare job data for display (moved up to avoid conditional hook calls)
   const jobData = job ? {
     id: job.id.toString(),
     title: job.title,
@@ -38,17 +38,83 @@ const JobPage = ({ params }: JobPageProps) => {
     logoUrl: job.company.logo_url || "https://via.placeholder.com/150",
     jobUrl: `#`,
     description: job.description,
-    salary: job.salary?.display || `$${job.salary?.min ? parseInt(job.salary.min).toLocaleString() : 'N/A'} - $${job.salary?.max ? parseInt(job.salary.max).toLocaleString() : 'N/A'}`,
-    employmentType: job.type || "Not specified",
-    requirements: job.requirements ? (Array.isArray(job.requirements) ? job.requirements : [job.requirements]) : ["Requirements not specified"],
-    benefits: job.benefits ? (Array.isArray(job.benefits) ? job.benefits : [job.benefits]) : ["Benefits not specified"],
+    salary: formatSalary(job.salary_min, job.salary_max, job.currency),
+    employmentType: job.job_type || "Not specified",
+    experienceLevel: job.experience_level || "Not specified",
+    locationType: job.location_type || "Not specified",
+    categoryId: job.category_id,
+    
+    // Debug logging for troubleshooting
+    requirements: (() => {
+      console.log("Job requirements raw:", job.requirements);
+      console.log("Job requirements type:", typeof job.requirements);
+      return job.requirements ? (Array.isArray(job.requirements) ? job.requirements : (() => {
+        try {
+          const parsed = typeof job.requirements === 'string' ? JSON.parse(job.requirements) : job.requirements;
+          console.log("Job requirements parsed:", parsed);
+          return Array.isArray(parsed) ? parsed : [job.requirements];
+        } catch (e) {
+          console.log("Job requirements parse error:", e);
+          return [job.requirements];
+        }
+      })()) : ["Requirements not specified"];
+    })(),
+      benefits: (() => {
+      console.log("Job benefits raw:", job.benefits);
+      console.log("Job benefits type:", typeof job.benefits);
+      return job.benefits ? (Array.isArray(job.benefits) ? job.benefits : (() => {
+        try {
+          const parsed = typeof job.benefits === 'string' ? JSON.parse(job.benefits) : job.benefits;
+          console.log("Job benefits parsed:", parsed);
+          return Array.isArray(parsed) ? parsed : [job.benefits];
+        } catch (e) {
+          console.log("Job benefits parse error:", e);
+          return [job.benefits];
+        }
+      })()) : ["Benefits not specified"];
+    })(),
+    
+    requiredSkills: (() => {
+      console.log("Job required_skills raw:", job.required_skills);
+      console.log("Job required_skills type:", typeof job.required_skills);
+      return job.required_skills ? (Array.isArray(job.required_skills) ? job.required_skills : (() => {
+        try {
+          const parsed = typeof job.required_skills === 'string' ? JSON.parse(job.required_skills) : job.required_skills;
+          console.log("Job required_skills parsed:", parsed);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+          console.log("Job required_skills parse error:", e);
+          return [];
+        }
+      })()) : [];
+    })(),
+      preferredSkills: (() => {
+      console.log("Job preferred_skills raw:", job.preferred_skills);
+      console.log("Job preferred_skills type:", typeof job.preferred_skills);
+      return job.preferred_skills ? (Array.isArray(job.preferred_skills) ? job.preferred_skills : (() => {
+        try {
+          const parsed = typeof job.preferred_skills === 'string' ? JSON.parse(job.preferred_skills) : job.preferred_skills;
+          console.log("Job preferred_skills parsed:", parsed);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+          console.log("Job preferred_skills parse error:", e);
+          return [];
+        }
+      })()) : [];
+    })(),
+    applicationDeadline: job.application_deadline ? new Date(job.application_deadline).toLocaleDateString() : null,
+    startDate: job.start_date ? new Date(job.start_date).toLocaleDateString() : null,
+    isRemoteFriendly: job.is_remote_friendly || false,
+    isUrgent: job.urgent || false,
+    isFeatured: job.featured || false,
+    questions: job.questions || [],
     companyDetails: {
       about: job.company.description || "No company description available.",
       size: job.company.size || "Not specified",
       industry: job.company.industry || "Not specified",
       website: job.company.website || "#"
     },
-    postedDate: job.posted_date ? new Date(job.posted_date).toLocaleDateString() : "Recently posted"
+    postedDate: job.created_at ? new Date(job.created_at).toLocaleDateString() : "Recently posted"
   } : null;
 
   // Add structured data for SEO (moved up before conditional returns)
@@ -83,7 +149,6 @@ const JobPage = ({ params }: JobPageProps) => {
       </div>
     );
   }
-
   // Show error state
   if (error || !job) {
     return (
@@ -102,6 +167,26 @@ const JobPage = ({ params }: JobPageProps) => {
               >
                 Back to Jobs
               </a>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Additional null check for TypeScript
+  if (!jobData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Header />
+        <EmployeeHeader />
+        <SubHeader />
+        <main className="flex-grow py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center py-8">
+              <h1 className="text-2xl font-bold text-gray-900 mb-4">Loading...</h1>
+              <p className="text-gray-600">Preparing job details...</p>
             </div>
           </div>
         </main>
@@ -153,6 +238,31 @@ const JobPage = ({ params }: JobPageProps) => {
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     {jobData.postedDate}
                   </span>
+                  {jobData.locationType && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 capitalize">
+                      {jobData.locationType}
+                    </span>
+                  )}
+                  {jobData.experienceLevel && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 capitalize">
+                      {jobData.experienceLevel} Level
+                    </span>
+                  )}
+                  {jobData.isUrgent && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      🔥 Urgent
+                    </span>
+                  )}
+                  {jobData.isFeatured && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      ⭐ Featured
+                    </span>
+                  )}
+                  {jobData.isRemoteFriendly && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      🏠 Remote OK
+                    </span>
+                  )}
                 </div>
                 <p className="text-teal-600 font-semibold">{jobData.salary}</p>
               </div>
@@ -177,6 +287,16 @@ const JobPage = ({ params }: JobPageProps) => {
                 salary={jobData.salary}
                 employmentType={jobData.employmentType}
                 jobUrl={jobData.jobUrl}
+                experienceLevel={jobData.experienceLevel}
+                locationType={jobData.locationType}
+                requiredSkills={jobData.requiredSkills}
+                preferredSkills={jobData.preferredSkills}
+                applicationDeadline={jobData.applicationDeadline}
+                startDate={jobData.startDate}
+                isRemoteFriendly={jobData.isRemoteFriendly}
+                isUrgent={jobData.isUrgent}
+                isFeatured={jobData.isFeatured}
+                questions={jobData.questions}
               />
             </div>
 

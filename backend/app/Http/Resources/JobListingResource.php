@@ -11,35 +11,34 @@ class JobListingResource extends JsonResource
      * Transform the resource into an array.
      *
      * @return array<string, mixed>
-     */
-    public function toArray(Request $request): array
+     */    public function toArray(Request $request): array
     {
+        // Debug the actual fields present on the model
+        \Log::debug('JobListingResource fields', ['model_attributes' => $this->getAttributes()]);
+        
         return [
             'id' => $this->id,
             'title' => $this->title,
             'description' => $this->description,
             'location' => $this->location,
-            'is_remote' => $this->is_remote,
-            'type' => $this->type,
+            'location_type' => $this->location_type, 
+            'is_remote_friendly' => $this->is_remote_friendly,
+            'job_type' => $this->job_type,
             'experience_level' => $this->experience_level,
-            'salary' => [
-                'min' => $this->salary_min,
-                'max' => $this->salary_max,
-                'currency' => $this->salary_currency,
-                'display' => $this->formatSalaryRange(),
-            ],
+            'salary_min' => $this->salary_min,
+            'salary_max' => $this->salary_max,
+            'currency' => $this->currency,
+            'salary_range' => $this->formatSalaryRange(),
             'requirements' => $this->requirements,
             'benefits' => $this->benefits,
-            'department' => $this->department,
-            'category' => $this->category,
-            'education_level' => $this->education_level,
-            'work_schedule' => $this->work_schedule,
-            'travel_requirement' => $this->travel_requirement,
-            'security_clearance' => $this->security_clearance,
-            'visa_sponsorship' => $this->visa_sponsorship,
+            'category_id' => $this->category_id,
+            'required_skills' => $this->required_skills,
+            'preferred_skills' => $this->preferred_skills,
             'status' => $this->status,
-            'posted_date' => $this->posted_date?->format('Y-m-d'),
+            'featured' => $this->featured,
+            'urgent' => $this->urgent,
             'application_deadline' => $this->application_deadline?->format('Y-m-d'),
+            'start_date' => $this->start_date?->format('Y-m-d'),
             'applicants_count' => $this->applicants_count,
             'views_count' => $this->views_count,
             'company' => new CompanyResource($this->whenLoaded('company')),

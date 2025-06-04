@@ -11,13 +11,14 @@ interface JobCreationFormProps {
   onJobCreated: (job: JobListing) => void;
   onClose: () => void;
   editJob?: JobListing;
+  companyId?: number | null;
 }
 
 interface JobFormData {
   title: string;
   description: string;
-  requirements: string;
-  benefits?: string;
+  requirements: string[];
+  benefits?: string[];
   location: string;
   location_type: 'remote' | 'hybrid' | 'onsite';
   job_type: 'full-time' | 'part-time' | 'contract' | 'internship' | 'freelance';
@@ -43,20 +44,32 @@ interface JobFormData {
 const JobCreationForm: React.FC<JobCreationFormProps> = ({
   onJobCreated,
   onClose,
-  editJob
-}) => {  const { register, handleSubmit, formState: { errors }, watch, setValue, getValues } = useForm<JobFormData>({
+  editJob,
+  companyId
+}) => {const { register, handleSubmit, formState: { errors }, watch, setValue, getValues } = useForm<JobFormData>({
     defaultValues: editJob ? {
       title: editJob.title,
-      description: editJob.description,
-      requirements: editJob.requirements,
-      benefits: editJob.benefits,
+      description: editJob.description,      requirements: (() => {
+        if (Array.isArray(editJob.requirements)) return editJob.requirements as string[];
+        if (typeof editJob.requirements === 'string') {
+          try { return JSON.parse(editJob.requirements); } catch { return []; }
+        }
+        return [];
+      })() as string[],
+      benefits: (() => {
+        if (Array.isArray(editJob.benefits)) return editJob.benefits as string[];
+        if (typeof editJob.benefits === 'string') {
+          try { return JSON.parse(editJob.benefits); } catch { return []; }
+        }
+        return [];
+      })() as string[],
       location: editJob.location,
       location_type: editJob.location_type,
       job_type: editJob.job_type,
       experience_level: editJob.experience_level,
       salary_min: editJob.salary_min,
       salary_max: editJob.salary_max,
-      currency: editJob.currency || 'USD',
+      currency: editJob.currency || 'INR',
       required_skills: editJob.required_skills || [],
       preferred_skills: editJob.preferred_skills || [],
       application_deadline: editJob.application_deadline,
@@ -71,10 +84,11 @@ const JobCreationForm: React.FC<JobCreationFormProps> = ({
       })) || [],} : {
       location_type: 'onsite',
       job_type: 'full-time',
-      experience_level: 'mid',
-      currency: 'USD',
+      experience_level: 'mid',      currency: 'INR',
       required_skills: [],
-      preferred_skills: [],      is_remote_friendly: false,
+      preferred_skills: [],
+      requirements: [],
+      benefits: [],      is_remote_friendly: false,
       urgent: false,
       featured: false,
       status: 'active',
@@ -82,10 +96,11 @@ const JobCreationForm: React.FC<JobCreationFormProps> = ({
     }
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [skillInput, setSkillInput] = useState('');
+  const [categories, setCategories] = useState<any[]>([]);  const [skillInput, setSkillInput] = useState('');
   const [preferredSkillInput, setPreferredSkillInput] = useState('');
   const [questionInput, setQuestionInput] = useState('');
+  const [requirementInput, setRequirementInput] = useState('');
+  const [benefitInput, setBenefitInput] = useState('');
 
   useEffect(() => {
     loadCategories();
@@ -118,10 +133,35 @@ const JobCreationForm: React.FC<JobCreationFormProps> = ({
       setPreferredSkillInput('');
     }
   };
-
   const removePreferredSkill = (index: number) => {
     const currentSkills = getValues('preferred_skills') || [];
     setValue('preferred_skills', currentSkills.filter((_, i) => i !== index));
+  };
+
+  const addRequirement = () => {
+    if (requirementInput.trim()) {
+      const currentRequirements = getValues('requirements') || [];
+      setValue('requirements', [...currentRequirements, requirementInput.trim()]);
+      setRequirementInput('');
+    }
+  };
+
+  const removeRequirement = (index: number) => {
+    const currentRequirements = getValues('requirements') || [];
+    setValue('requirements', currentRequirements.filter((_, i) => i !== index));
+  };
+
+  const addBenefit = () => {
+    if (benefitInput.trim()) {
+      const currentBenefits = getValues('benefits') || [];
+      setValue('benefits', [...currentBenefits, benefitInput.trim()]);
+      setBenefitInput('');
+    }
+  };
+
+  const removeBenefit = (index: number) => {
+    const currentBenefits = getValues('benefits') || [];
+    setValue('benefits', currentBenefits.filter((_, i) => i !== index));
   };
 
   const addQuestion = () => {
@@ -147,9 +187,38 @@ const JobCreationForm: React.FC<JobCreationFormProps> = ({
     try {
       setIsSubmitting(true);
 
+      // Debug logging to see what data we're sending
+      console.log('JobCreationForm - Form data before processing:', data);      // Explicitly map all fields to ensure they're all included and in the correct format
       const jobData = {
-        ...data,
+        title: data.title,
+        description: data.description,
+        requirements: Array.isArray(data.requirements) ? JSON.stringify(data.requirements) : '[]',
+        benefits: Array.isArray(data.benefits) ? JSON.stringify(data.benefits) : '[]',
+        location: data.location,
+        location_type: data.location_type, 
+        job_type: data.job_type,
+        experience_level: data.experience_level, 
+        salary_min: data.salary_min ? Number(data.salary_min) : undefined,
+        salary_max: data.salary_max ? Number(data.salary_max) : undefined,
+        currency: data.currency,
+        required_skills: Array.isArray(data.required_skills) ? data.required_skills : [],
+        preferred_skills: Array.isArray(data.preferred_skills) ? data.preferred_skills : [],
+        application_deadline: data.application_deadline,
+        start_date: data.start_date,
+        is_remote_friendly: Boolean(data.is_remote_friendly),
+        featured: Boolean(data.featured),
+        urgent: Boolean(data.urgent),
+        category_id: data.category_id ? Number(data.category_id) : undefined,
+        status: data.status || 'active',
+        company_id: companyId ? Number(companyId) : undefined,
+        questions: data.questions?.map(q => ({
+          question: q.question,
+          required: Boolean(q.required)
+        }))
       };
+
+      // Debug logging to see what data we're sending to backend
+      console.log('JobCreationForm - Processed job data being sent to backend:', jobData);
 
       let result: JobListing;
       if (editJob) {
@@ -158,16 +227,39 @@ const JobCreationForm: React.FC<JobCreationFormProps> = ({
         result = await JobService.createJob(jobData);
       }
 
+      console.log('JobCreationForm - Backend response:', result);
       onJobCreated(result);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving job:', error);
-      alert('Failed to save job. Please try again.');
+      
+      let errorMessage = 'Failed to save job. Please try again.';
+      
+      // Extract and display validation errors if available
+      if (error.response && error.response.data) {
+        console.error('Error response data:', error.response.data);
+        
+        if (error.response.data.message) {
+          errorMessage = error.response.data.message;
+        }
+        
+        // Display validation errors if available
+        if (error.response.data.errors) {
+          const errorDetails = Object.entries(error.response.data.errors)
+            .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+            .join('\n');
+          
+          errorMessage += '\n\nValidation errors:\n' + errorDetails;
+        }
+      }
+      
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
-  };
-  const watchedSkills = watch('required_skills') || [];
+  };const watchedSkills = watch('required_skills') || [];
   const watchedPreferredSkills = watch('preferred_skills') || [];
+  const watchedRequirements = watch('requirements') || [];
+  const watchedBenefits = watch('benefits') || [];
   const watchedQuestions = watch('questions') || [];
 
   return (
@@ -308,14 +400,16 @@ const JobCreationForm: React.FC<JobCreationFormProps> = ({
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                   placeholder="Max salary"
                 />
-              </div>
-              <div>                <select
+              </div>              <div>                <select
                   {...register('currency')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 >
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                  <option value="GBP">GBP</option>                  <option value="CAD">CAD</option>
+                  <option value="INR">INR (₹)</option>
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR (€)</option>
+                  <option value="GBP">GBP (£)</option>                  <option value="CAD">CAD (C$)</option>
+                  <option value="AUD">AUD (A$)</option>
+                  <option value="SGD">SGD (S$)</option>
                 </select>
               </div>
             </div>
@@ -419,19 +513,44 @@ const JobCreationForm: React.FC<JobCreationFormProps> = ({
             {errors.description && (
               <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
             )}
-          </div>
-
-          {/* Requirements */}
+          </div>          {/* Requirements */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Requirements
             </label>
-            <textarea
-              {...register('requirements')}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-              placeholder="List the required qualifications, experience, and skills..."
-            />
+            <div className="flex gap-2 mb-2">
+              <input
+                type="text"
+                value={requirementInput}
+                onChange={(e) => setRequirementInput(e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                placeholder="Add a requirement (e.g., Bachelor's degree in Computer Science)"
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addRequirement())}
+              />
+              <button
+                type="button"
+                onClick={addRequirement}
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+              >
+                <FiPlus className="w-4 h-4" />
+              </button>
+            </div>
+            {watchedRequirements.length > 0 && (
+              <div className="space-y-2">
+                {watchedRequirements.map((requirement, index) => (
+                  <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                    <span className="flex-1 text-sm">{requirement}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeRequirement(index)}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      <FiTrash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Benefits */}
@@ -439,12 +558,39 @@ const JobCreationForm: React.FC<JobCreationFormProps> = ({
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Benefits & Perks
             </label>
-            <textarea
-              {...register('benefits')}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-              placeholder="Highlight the benefits and perks of working at your company..."
-            />
+            <div className="flex gap-2 mb-2">
+              <input
+                type="text"
+                value={benefitInput}
+                onChange={(e) => setBenefitInput(e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                placeholder="Add a benefit (e.g., Health insurance, Flexible working hours)"
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addBenefit())}
+              />
+              <button
+                type="button"
+                onClick={addBenefit}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                <FiPlus className="w-4 h-4" />
+              </button>
+            </div>
+            {watchedBenefits.length > 0 && (
+              <div className="space-y-2">
+                {watchedBenefits.map((benefit, index) => (
+                  <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                    <span className="flex-1 text-sm">{benefit}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeBenefit(index)}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      <FiTrash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Application Questions */}

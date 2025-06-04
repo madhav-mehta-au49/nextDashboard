@@ -137,26 +137,24 @@ class JobSearchService
                       $skillQuery->where('name', 'like', "%{$search}%");
                   });
             });
-        }
-
-        // Location filter
+        }        // Location filter
         $location = $getValue('location');
         if ($location) {
             $query->where(function ($q) use ($location) {
                 $q->where('location', 'like', "%{$location}%")
-                  ->orWhere('is_remote', true);
+                  ->orWhere('is_remote_friendly', true);
             });
         }
 
         // Remote filter
-        if ($hasValue('is_remote')) {
-            $query->where('is_remote', $getValue('is_remote'));
+        if ($hasValue('is_remote_friendly')) {
+            $query->where('is_remote_friendly', $getValue('is_remote_friendly'));
         }
 
         // Job type filter
-        $type = $getValue('type');
-        if ($type && is_array($type) && count($type) > 0) {
-            $query->whereIn('type', $type);
+        $jobType = $getValue('job_type');
+        if ($jobType && is_array($jobType) && count($jobType) > 0) {
+            $query->whereIn('job_type', $jobType);
         }
 
         // Experience level filter
@@ -180,12 +178,10 @@ class JobSearchService
         $companyId = $getValue('company_id');
         if ($companyId) {
             $query->where('company_id', $companyId);
-        }
-
-        // Category filter
-        $category = $getValue('category');
-        if ($category && is_array($category) && count($category) > 0) {
-            $query->whereIn('category', $category);
+        }        // Category filter
+        $categoryId = $getValue('category_id');
+        if ($categoryId && is_array($categoryId) && count($categoryId) > 0) {
+            $query->whereIn('category_id', $categoryId);
         }
 
         // Skills filter
@@ -287,10 +283,8 @@ class JobSearchService
         // Experience level match
         $candidateExperience = $this->getExperienceYears($candidate);
         $experienceMatch = $this->matchExperienceLevel($job->experience_level, $candidateExperience);
-        $score += $experienceMatch * 15;
-
-        // Location preference
-        if ($job->is_remote || $this->matchesLocation($job->location, $candidate)) {
+        $score += $experienceMatch * 15;        // Location preference
+        if ($job->is_remote_friendly || $this->matchesLocation($job->location, $candidate)) {
             $score += 5;
         }
 
@@ -315,10 +309,8 @@ class JobSearchService
 
         // Similar title
         similar_text(strtolower($job1->title), strtolower($job2->title), $titleSimilarity);
-        $score += $titleSimilarity / 4; // Max 25 points
-
-        // Same job type
-        if ($job1->type === $job2->type) {
+        $score += $titleSimilarity / 4; // Max 25 points        // Same job type
+        if ($job1->job_type === $job2->job_type) {
             $score += 15;
         }
 
@@ -331,10 +323,8 @@ class JobSearchService
         $job1Skills = $job1->skills->pluck('id')->toArray();
         $job2Skills = $job2->skills->pluck('id')->toArray();
         $skillsOverlap = count(array_intersect($job1Skills, $job2Skills));
-        $score += $skillsOverlap * 5;
-
-        // Same category
-        if ($job1->category === $job2->category) {
+        $score += $skillsOverlap * 5;        // Same category
+        if ($job1->category_id === $job2->category_id) {
             $score += 10;
         }
 
@@ -361,10 +351,8 @@ class JobSearchService
         $candidateExperience = $this->getExperienceYears($candidate);
         if ($this->matchExperienceLevel($job->experience_level, $candidateExperience) > 0) {
             $reasons[] = 'Experience level matches your background';
-        }
-
-        // Check location
-        if ($job->is_remote) {
+        }        // Check location
+        if ($job->is_remote_friendly) {
             $reasons[] = 'Remote work available';
         }
 

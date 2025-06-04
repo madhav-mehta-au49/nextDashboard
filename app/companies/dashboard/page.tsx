@@ -81,8 +81,7 @@ export default function CompanyDashboard() {
     if (selectedCompanyId !== null) {
       loadCompanySpecificData();
     }
-  }, [selectedCompanyId]);
-  const loadCompanySpecificData = async () => {
+  }, [selectedCompanyId]);  const loadCompanySpecificData = async () => {
     if (!selectedCompanyId) return;
 
     try {
@@ -96,6 +95,22 @@ export default function CompanyDashboard() {
           'Accept': 'application/json',
         }
       };
+
+      // Load company-specific dashboard data with stats
+      const dashboardUrl = `${API_URL}/company/dashboard?company_id=${selectedCompanyId}`;
+      const dashboardResponse = await fetch(dashboardUrl, fetchOptions);
+      
+      if (dashboardResponse.ok) {
+        const dashboardData = await dashboardResponse.json() as any;
+        if (dashboardData.status === 'success') {
+          // Update stats with company-specific data
+          setStats(dashboardData.data.stats);
+          // Also update active jobs from dashboard data if available
+          if (dashboardData.data.active_jobs && dashboardData.data.active_jobs.length > 0) {
+            setJobs(dashboardData.data.active_jobs);
+          }
+        }
+      }
 
       // Load company-specific jobs using the correct endpoint with company_id parameter
       const jobsResponse = await fetch(`${API_URL}/company/dashboard/jobs?company_id=${selectedCompanyId}`, fetchOptions);
@@ -124,7 +139,6 @@ export default function CompanyDashboard() {
       setLoading(false);
     }
   };
-
   // Get the currently selected company
   const selectedCompany = companies.find(company => company.id === selectedCompanyId) || companies[0];
 
@@ -140,7 +154,12 @@ export default function CompanyDashboard() {
         }
       };
 
-      const dashboardResponse = await fetch(`${API_URL}/company/dashboard`, fetchOptions);
+      // Use company_id parameter if a company is selected
+      const dashboardUrl = selectedCompanyId 
+        ? `${API_URL}/company/dashboard?company_id=${selectedCompanyId}`
+        : `${API_URL}/company/dashboard`;
+      
+      const dashboardResponse = await fetch(dashboardUrl, fetchOptions);
       
       if (dashboardResponse.ok) {
         const dashboardData = await dashboardResponse.json() as any;
@@ -151,13 +170,12 @@ export default function CompanyDashboard() {
     } catch (err) {
       console.error('Error refreshing stats:', err);
     }
-  };  // Filter jobs based on visibility rules 
+  };// Filter jobs based on visibility rules 
   const getVisibleJobs = (jobList: JobListing[]) => {
     // Show all jobs in overview and jobs tabs for management purposes
     // Jobs should remain visible but status indicators will show current state
     return jobList;
   };
-
   const loadDashboardData = async () => {
     try {
       setLoading(true);
@@ -172,7 +190,9 @@ export default function CompanyDashboard() {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         }
-      };      // Load company-specific dashboard data
+      };
+      
+      // Load dashboard data - don't filter by company initially to get all companies list
       const dashboardResponse = await fetch(`${API_URL}/company/dashboard`, fetchOptions);
       
       if (!dashboardResponse.ok) {
@@ -193,29 +213,18 @@ export default function CompanyDashboard() {
         throw new Error('Failed to load company dashboard data');
       }
 
-      const dashboardData = await dashboardResponse.json() as any;      if (dashboardData.status === 'success') {
-        setStats(dashboardData.data.stats);
+      const dashboardData = await dashboardResponse.json() as any;
+      
+      if (dashboardData.status === 'success') {
         setCompanies(dashboardData.data.companies || []);
         
-        // Only set jobs from dashboard if no specific company is selected yet
+        // Only set stats and jobs if this is the initial load and no company is selected
         if (!selectedCompanyId) {
+          setStats(dashboardData.data.stats);
           setJobs(dashboardData.data.active_jobs || []);
         }
       } else {
         throw new Error(dashboardData.message || 'Failed to load dashboard data');
-      }
-
-      // Don't load all jobs again if we're already loading company-specific jobs
-      if (!selectedCompanyId) {
-        // Load all jobs only if no specific company is selected
-        const jobsResponse = await fetch(`${API_URL}/company/dashboard/jobs`, fetchOptions);
-        
-        if (jobsResponse.ok) {
-          const jobsData = await jobsResponse.json() as any;
-          if (jobsData.status === 'success') {
-            setJobs(jobsData.data);
-          }
-        }
       }
 
     } catch (err) {
@@ -224,7 +233,7 @@ export default function CompanyDashboard() {
     } finally {
       setLoading(false);
     }
-  };  const handleJobCreated = (newJob: JobListing) => {
+  };const handleJobCreated = (newJob: JobListing) => {
     setJobs(prevJobs => [newJob, ...prevJobs]);
     setIsCreatingJob(false);
     toast.success('Job created successfully!');
@@ -549,6 +558,7 @@ export default function CompanyDashboard() {
                 jobs={jobs}
                 onJobUpdated={handleJobUpdated}
                 onJobDeleted={handleJobDeleted}
+                companyId={selectedCompanyId}
                 onJobsUpdated={(updatedJobs) => {
                   if (updatedJobs.length === 0) {
                     // Jobs were deleted, reload to get fresh data
@@ -570,22 +580,22 @@ export default function CompanyDashboard() {
                   }
                 }}
               />
-            )}
-
-            {activeTab === 'analytics' && stats && (
-              <CompanyAnalytics stats={stats} />
+            )}{activeTab === 'analytics' && stats && (
+              <CompanyAnalytics 
+                stats={stats} 
+                companyId={selectedCompanyId} 
+              />
             )}
           </div>
         </div>
       </main>
 
-      <Footer />
-
-      {/* Job Creation Modal */}
+      <Footer />      {/* Job Creation Modal */}
       {isCreatingJob && (
         <JobCreationForm
           onJobCreated={handleJobCreated}
           onClose={() => setIsCreatingJob(false)}
+          companyId={selectedCompanyId}
         />
       )}
     </div>

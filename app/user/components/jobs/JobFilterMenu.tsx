@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { FiFilter, FiChevronDown } from "react-icons/fi";
 import { JobSearchFilters } from "@/app/services/jobs";
+import { PRIORITY_CURRENCIES, CURRENCY_SYMBOLS } from "@/app/utils/currency";
 
 interface JobFilterMenuProps {
   onFiltersChange?: (filters: JobSearchFilters) => void;
@@ -103,9 +104,7 @@ export const JobFilterMenu = ({ onFiltersChange, currentFilters = {} }: JobFilte
                 </div>
               ))}
               </div>
-            </div>
-
-            {/* Experience Level */}
+            </div>            {/* Experience Level */}
             <div className="px-4 py-3">
               <h3 className="text-sm font-medium text-gray-900">Experience Level</h3>
               <div className="mt-2 space-y-2">                {['entry', 'mid', 'senior', 'lead', 'executive'].map((level) => (
@@ -123,6 +122,60 @@ export const JobFilterMenu = ({ onFiltersChange, currentFilters = {} }: JobFilte
                   </label>
                 </div>
               ))}
+              </div>
+            </div>
+
+            {/* Salary Range */}
+            <div className="px-4 py-3 border-t border-gray-200">
+              <h3 className="text-sm font-medium text-gray-900">Salary Range</h3>
+              <div className="mt-2 space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">Min Salary</label>
+                    <input
+                      type="number"
+                      placeholder="Min"
+                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-teal-500 focus:border-teal-500"                      value={filters.salary_min || ''}
+                      onChange={(e) => setFilters((prev: JobSearchFilters) => ({ 
+                        ...prev, 
+                        salary_min: e.target.value ? parseInt(e.target.value) : undefined 
+                      }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">Max Salary</label>
+                    <input
+                      type="number"
+                      placeholder="Max"
+                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+                      value={filters.salary_max || ''}
+                      onChange={(e) => setFilters((prev: JobSearchFilters) => ({ 
+                        ...prev, 
+                        salary_max: e.target.value ? parseInt(e.target.value) : undefined 
+                      }))}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Currency</label>
+                  <select
+                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+                    value={filters.currency || 'INR'}
+                    onChange={(e) => setFilters((prev: JobSearchFilters) => ({ 
+                      ...prev, 
+                      currency: e.target.value 
+                    }))}
+                  >                    {PRIORITY_CURRENCIES.map((currency) => {
+                      const currencyInfo = CURRENCY_SYMBOLS[currency];
+                      if (!currencyInfo) return null;
+                      return (
+                        <option key={currency} value={currency}>
+                          {currencyInfo.symbol} {currencyInfo.name}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
               </div>
             </div>
 

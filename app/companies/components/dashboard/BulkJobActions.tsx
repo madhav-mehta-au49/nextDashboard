@@ -9,12 +9,14 @@ interface BulkJobActionsProps {
   selectedJobs: JobListing[];
   onJobsUpdated: (jobs: JobListing[]) => void;
   onSelectionCleared: () => void;
+  companyId?: number | null;
 }
 
 const BulkJobActions: React.FC<BulkJobActionsProps> = ({
   selectedJobs,
   onJobsUpdated,
   onSelectionCleared,
+  companyId
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingAction, setProcessingAction] = useState<string>('');

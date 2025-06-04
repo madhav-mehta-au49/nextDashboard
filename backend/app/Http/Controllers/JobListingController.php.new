@@ -24,10 +24,13 @@ class JobListingController extends Controller
         $this->jobAnalyticsService = $jobAnalyticsService;
     }
 
+    /**
+     * Display a listing of the resource with advanced search.
+     */
     public function index(JobSearchRequest $request): JsonResponse
     {
         $results = $this->jobSearchService->searchJobs($request->validated());
-
+        
         return response()->json([
             'status' => 'success',
             'data' => JobListingResource::collection($results['jobs']),
@@ -41,10 +44,13 @@ class JobListingController extends Controller
         ]);
     }
 
+    /**
+     * Search job listings with advanced filters.
+     */
     public function search(JobSearchRequest $request): JsonResponse
     {
         $results = $this->jobSearchService->search($request);
-
+        
         return response()->json([
             'status' => 'success',
             'data' => JobListingResource::collection($results->items()),
@@ -59,10 +65,13 @@ class JobListingController extends Controller
         ]);
     }
 
+    /**
+     * Get job recommendations for a candidate.
+     */
     public function recommendations(Request $request): JsonResponse
     {
         $user = $request->user();
-
+        
         if (!$user->isCandidate()) {
             return response()->json([
                 'status' => 'error',
@@ -85,6 +94,9 @@ class JobListingController extends Controller
         ]);
     }
 
+    /**
+     * Get similar jobs for a specific job listing.
+     */
     public function similar(JobListing $jobListing, Request $request): JsonResponse
     {
         $similarJobs = $this->jobSearchService->getSimilarJobs(
@@ -102,17 +114,22 @@ class JobListingController extends Controller
         ]);
     }
 
+    /**
+     * Store a newly created resource in storage.
+     */
     public function store(StoreJobListingRequest $request): JsonResponse
     {
+        // Debug what data we're receiving
         \Log::debug('JobListingController::store - Request data', [
             'all' => $request->all(),
             'validated' => $request->validated()
         ]);
-
+        
         try {
             $user = auth()->user();
             $validatedData = $request->validated();
-
+            
+            // Log critical fields before processing
             \Log::debug('JobListingController::store - Critical fields', [
                 'experience_level' => $validatedData['experience_level'] ?? 'not set',
                 'location_type' => $validatedData['location_type'] ?? 'not set',
@@ -121,7 +138,8 @@ class JobListingController extends Controller
                 'salary_max' => $validatedData['salary_max'] ?? 'not set',
                 'required_skills' => $validatedData['required_skills'] ?? 'not set',
             ]);
-
+        
+            // If company_id is not provided, try to get user's primary company
             if (!isset($validatedData['company_id'])) {
                 $userCompany = $user->administeredCompanies()->first();
                 if (!$userCompany) {
@@ -132,44 +150,62 @@ class JobListingController extends Controller
                 }
                 $validatedData['company_id'] = $userCompany->id;
             }
-
+            
+            // Check if user can create jobs for this company
             if (!$user->isAdmin() && !$user->administeredCompanies()->where('companies.id', $validatedData['company_id'])->exists()) {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Unauthorized to create jobs for this company'
                 ], 403);
             }
-
+            
             $validatedData['posted_date'] = now();
-            \Log::debug('JobListingController::store - Set posted_date', [
-                'posted_date' => $validatedData['posted_date'],
-                'format' => $validatedData['posted_date']->format('Y-m-d H:i:s')
-            ]);
-
-            foreach (['required_skills', 'preferred_skills'] as $key) {
-                if (isset($validatedData[$key]) && is_string($validatedData[$key])) {
-                    $parsed = json_decode($validatedData[$key], true);
-                    if (json_last_error() === JSON_ERROR_NONE) {
-                        $validatedData[$key] = $parsed;
-                    } else {
-                        \Log::error("Failed to parse $key as JSON during creation", [
-                            'value' => $validatedData[$key]
+            
+            // Process required_skills and preferred_skills before creating
+            if (isset($validatedData['required_skills'])) {
+                if (is_string($validatedData['required_skills']) && !empty($validatedData['required_skills'])) {
+                    try {
+                        $parsed = json_decode($validatedData['required_skills'], true);
+                        if (json_last_error() === JSON_ERROR_NONE) {
+                            $validatedData['required_skills'] = $parsed;
+                        }
+                    } catch (\Exception $e) {
+                        \Log::error('Failed to parse required_skills as JSON during creation', [
+                            'error' => $e->getMessage(),
+                            'value' => $validatedData['required_skills']
                         ]);
                     }
                 }
             }
-
+            
+            if (isset($validatedData['preferred_skills'])) {
+                if (is_string($validatedData['preferred_skills']) && !empty($validatedData['preferred_skills'])) {
+                    try {
+                        $parsed = json_decode($validatedData['preferred_skills'], true);
+                        if (json_last_error() === JSON_ERROR_NONE) {
+                            $validatedData['preferred_skills'] = $parsed;
+                        }
+                    } catch (\Exception $e) {
+                        \Log::error('Failed to parse preferred_skills as JSON during creation', [
+                            'error' => $e->getMessage(),
+                            'value' => $validatedData['preferred_skills']
+                        ]);
+                    }
+                }
+            }
+            
             $jobListing = JobListing::create($validatedData);
-
+            
+            // Log the newly created job to verify all fields were saved
             \Log::debug('JobListingController::store - New job created', [
                 'job' => $jobListing->toArray(),
-                'posted_date' => $jobListing->posted_date,
                 'experience_level' => $jobListing->experience_level,
                 'location_type' => $jobListing->location_type,
                 'required_skills' => $jobListing->required_skills,
                 'category_id' => $jobListing->category_id
             ]);
-
+            
+            // Attach skills if provided
             if ($request->has('skills')) {
                 foreach ($request->skills as $skill) {
                     $jobListing->skills()->attach($skill['id'], [
@@ -178,7 +214,7 @@ class JobListingController extends Controller
                     ]);
                 }
             }
-
+            
             return response()->json([
                 'status' => 'success',
                 'message' => 'Job listing created successfully',
@@ -188,8 +224,9 @@ class JobListingController extends Controller
             \Log::error('Error creating job listing', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
+                'data' => $validatedData ?? []
             ]);
-
+            
             return response()->json([
                 'status' => 'error',
                 'message' => 'Failed to create job listing: ' . $e->getMessage(),

@@ -16,64 +16,100 @@ interface JobEditFormProps {
 interface JobFormData {
   title: string;
   description: string;
-  requirements: string;
-  benefits: string;
-  job_type: string;
+  requirements: string[];
+  benefits: string[];
   location: string;
-  location_type: string;
-  experience_level: string;
+  location_type: 'remote' | 'hybrid' | 'onsite';
+  job_type: 'full-time' | 'part-time' | 'contract' | 'internship' | 'freelance';
+  experience_level: 'entry' | 'mid' | 'senior' | 'lead' | 'executive';
   salary_min?: number;
   salary_max?: number;
-  salary_currency: string;
-  salary_period: string;
-  category_id: number;
-  skills: string[];
-  questions: { question_text: string; is_required: boolean; question_type: string }[];
+  currency?: string;
+  required_skills: string[];
+  preferred_skills?: string[];
   application_deadline?: string;
+  start_date?: string;
   is_remote_friendly: boolean;
-  urgent: boolean;
   featured: boolean;
-  status: string;
+  urgent: boolean;
+  category_id?: number;
+  status: 'draft' | 'active' | 'published' | 'paused' | 'closed' | 'expired';
+  questions?: Array<{
+    question: string;
+    required: boolean;
+  }>;
 }
 
 const JobEditForm: React.FC<JobEditFormProps> = ({
   job,
   onJobUpdated,
   onClose
-}) => {
+}) => {  // Debug logging to see what data we're receiving from the backend
+  console.log('JobEditForm - Original job data:', job);
+  console.log('JobEditForm - job.required_skills:', job.required_skills, typeof job.required_skills);
+  console.log('JobEditForm - job.experience_level:', job.experience_level);
+  console.log('JobEditForm - job.location_type:', job.location_type);
+  console.log('JobEditForm - job.salary_min/max:', job.salary_min, job.salary_max);
+  console.log('JobEditForm - job.category_id:', job.category_id);
+  
   const { register, handleSubmit, formState: { errors }, watch, setValue, getValues } = useForm<JobFormData>({
-    defaultValues: {
-      title: job.title,
+    defaultValues: {      title: job.title,
       description: job.description,
-      requirements: job.requirements,
-      benefits: job.benefits,
+      requirements: (() => {
+        if (Array.isArray(job.requirements)) return job.requirements as string[];
+        if (typeof job.requirements === 'string') {
+          try { return JSON.parse(job.requirements); } catch { return []; }
+        }
+        return [];
+      })() as string[],
+      benefits: (() => {
+        if (Array.isArray(job.benefits)) return job.benefits as string[];
+        if (typeof job.benefits === 'string') {
+          try { return JSON.parse(job.benefits); } catch { return []; }
+        }
+        return [];
+      })() as string[],
       job_type: job.job_type,
       location: job.location,
       location_type: job.location_type,
       experience_level: job.experience_level,
       salary_min: job.salary_min,
       salary_max: job.salary_max,
-      salary_currency: job.currency || 'USD',
-      salary_period: 'year',
-      category_id: job.category_id,
-      skills: job.required_skills || [],
-      questions: job.questions?.map(q => ({
-        question_text: q.question_text,
-        is_required: q.is_required,
-        question_type: q.question_type
-      })) || [],
+      currency: job.currency || 'INR',
+      required_skills: (() => {
+        console.log('JobEditForm - required_skills parsing - original:', job.required_skills);
+        if (Array.isArray(job.required_skills)) return job.required_skills;
+        if (typeof job.required_skills === 'string') {
+          try { 
+            const parsed = JSON.parse(job.required_skills);
+            console.log('JobEditForm - required_skills parsing - parsed:', parsed);
+            return parsed;
+          } catch (e) { 
+            console.log('JobEditForm - required_skills parsing - error:', e);
+            return []; 
+          }
+        }
+        return [];
+      })() as string[],      preferred_skills: job.preferred_skills || [],
       application_deadline: job.application_deadline,
+      start_date: job.start_date,
       is_remote_friendly: job.is_remote_friendly || false,
       urgent: job.urgent || false,
       featured: job.featured || false,
-      status: job.status,
-    }
-  });
-
+      category_id: job.category_id,
+      status: job.status || 'active',
+      questions: job.questions?.map(q => ({
+        question: q.question_text || '',
+        required: q.is_required || false,
+      })) || [],
+    }  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [skillInput, setSkillInput] = useState('');
   const [questionInput, setQuestionInput] = useState('');
+  const [requirementInput, setRequirementInput] = useState('');
+  const [benefitInput, setBenefitInput] = useState('');
 
   useEffect(() => {
     loadCategories();
@@ -86,24 +122,23 @@ const JobEditForm: React.FC<JobEditFormProps> = ({
     } catch (error) {
       console.error('Error loading categories:', error);
     }
-  };
-
-  const addSkill = () => {
+  };  const addSkill = () => {
     if (skillInput.trim()) {
-      const currentSkills = getValues('skills') || [];
-      setValue('skills', [...currentSkills, skillInput.trim()]);
+      const currentSkills = getValues('required_skills') || [];
+      setValue('required_skills', [...currentSkills, skillInput.trim()]);
       setSkillInput('');
     }
   };
 
   const removeSkill = (index: number) => {
-    const currentSkills = getValues('skills') || [];
-    setValue('skills', currentSkills.filter((_, i) => i !== index));
+    const currentSkills = getValues('required_skills') || [];
+    setValue('required_skills', currentSkills.filter((_, i) => i !== index));
   };
+  
   const addQuestion = () => {
     if (questionInput.trim()) {
       const currentQuestions = getValues('questions') || [];
-      setValue('questions', [...currentQuestions, { question_text: questionInput.trim(), is_required: false, question_type: 'text' }]);
+      setValue('questions', [...currentQuestions, { question: questionInput.trim(), required: false }]);
       setQuestionInput('');
     }
   };
@@ -112,42 +147,112 @@ const JobEditForm: React.FC<JobEditFormProps> = ({
     const currentQuestions = getValues('questions') || [];
     setValue('questions', currentQuestions.filter((_, i) => i !== index));
   };
-
+  
   const toggleQuestionRequired = (index: number) => {
     const currentQuestions = getValues('questions') || [];
     const updatedQuestions = currentQuestions.map((q, i) =>
-      i === index ? { ...q, is_required: !q.is_required } : q
+      i === index ? { ...q, required: !q.required } : q
     );
     setValue('questions', updatedQuestions);
   };
-  const onSubmit = async (data: JobFormData) => {
+
+  const addRequirement = () => {
+    if (requirementInput.trim()) {
+      const currentRequirements = getValues('requirements') || [];
+      setValue('requirements', [...currentRequirements, requirementInput.trim()]);
+      setRequirementInput('');
+    }
+  };
+
+  const removeRequirement = (index: number) => {
+    const currentRequirements = getValues('requirements') || [];
+    setValue('requirements', currentRequirements.filter((_, i) => i !== index));
+  };
+
+  const addBenefit = () => {
+    if (benefitInput.trim()) {
+      const currentBenefits = getValues('benefits') || [];
+      setValue('benefits', [...currentBenefits, benefitInput.trim()]);
+      setBenefitInput('');
+    }
+  };
+  const removeBenefit = (index: number) => {
+    const currentBenefits = getValues('benefits') || [];
+    setValue('benefits', currentBenefits.filter((_, i) => i !== index));
+  };
+
+const onSubmit = async (data: JobFormData) => {
     try {
       setIsSubmitting(true);
-
+      
+      // Debug logging to see what data we're submitting
+      console.log('JobEditForm - onSubmit - Form data before processing:', data);
+      
+      // Only include fields expected by the backend API, with proper type handling
       const jobData = {
-        ...data,
-        salary_range: data.salary_min || data.salary_max ?
-          `${data.salary_min || 0}-${data.salary_max || 0}` : undefined,
-        required_skills: data.skills,
+        title: data.title,
+        description: data.description,
+        // Convert requirements and benefits to JSON strings if they're not already strings
+        requirements: Array.isArray(data.requirements) ? JSON.stringify(data.requirements) : '[]',
+        benefits: Array.isArray(data.benefits) ? JSON.stringify(data.benefits) : '[]',
+        location: data.location,
+        location_type: data.location_type, 
+        job_type: data.job_type,
+        experience_level: data.experience_level, 
+        salary_min: data.salary_min ? Number(data.salary_min) : undefined,
+        salary_max: data.salary_max ? Number(data.salary_max) : undefined,
+        currency: data.currency,
+        required_skills: Array.isArray(data.required_skills) ? data.required_skills : [],
+        preferred_skills: Array.isArray(data.preferred_skills) ? data.preferred_skills : [],
+        application_deadline: data.application_deadline,
+        start_date: data.start_date,
+        is_remote_friendly: Boolean(data.is_remote_friendly),
+        featured: Boolean(data.featured),
+        urgent: Boolean(data.urgent),
+        category_id: data.category_id ? Number(data.category_id) : undefined,
+        status: data.status || 'active',
         questions: data.questions?.map(q => ({
-          question_text: q.question_text,
-          is_required: q.is_required,
-          question_type: q.question_type || 'text'
+          question: q.question,
+          required: Boolean(q.required)
         }))
       };
+      
+      console.log('JobEditForm - onSubmit - Processed job data being sent to backend:', jobData);
+      
       const updatedJob = await JobService.updateJob(job.id, jobData);
       onJobUpdated(updatedJob);
-      onClose();
-    } catch (error) {
+      onClose();    
+    } catch (error: any) {
       console.error('Error updating job:', error);
-      alert('Failed to update job. Please try again.');
+      let errorMessage = 'Failed to update job. Please try again.';
+      
+      // Extract and display validation errors if available
+      if (error.response && error.response.data) {
+        console.error('Error response data:', error.response.data);
+        
+        if (error.response.data.message) {
+          errorMessage = error.response.data.message;
+        }
+        
+        // Display validation errors if available
+        if (error.response.data.errors) {
+          const errorDetails = Object.entries(error.response.data.errors)
+            .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+            .join('\n');
+          
+          errorMessage += '\n\nValidation errors:\n' + errorDetails;
+        }
+      }
+      
+      setErrorMessage(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const skills = watch('skills') || [];
+  const skills = watch('required_skills') || [];
   const questions = watch('questions') || [];
+  const watchedRequirements = watch('requirements') || [];
+  const watchedBenefits = watch('benefits') || [];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -245,14 +350,14 @@ const JobEditForm: React.FC<JobEditFormProps> = ({
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Experience Level *
-              </label>
-              <select
+              </label>              <select
                 {...register('experience_level', { required: 'Experience level is required' })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="entry-level">Entry Level</option>
-                <option value="mid-level">Mid Level</option>
-                <option value="senior-level">Senior Level</option>
+                <option value="entry">Entry Level</option>
+                <option value="mid">Mid Level</option>
+                <option value="senior">Senior Level</option>
+                <option value="lead">Lead Level</option>
                 <option value="executive">Executive</option>
               </select>
             </div>
@@ -260,12 +365,11 @@ const JobEditForm: React.FC<JobEditFormProps> = ({
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Location Type *
-              </label>
-              <select
+              </label>              <select
                 {...register('location_type', { required: 'Location type is required' })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="on-site">On-site</option>
+                <option value="onsite">On-site</option>
                 <option value="remote">Remote</option>
                 <option value="hybrid">Hybrid</option>
               </select>
@@ -309,27 +413,15 @@ const JobEditForm: React.FC<JobEditFormProps> = ({
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Max salary"
                 />
-              </div>
-              <div>
+              </div>              <div>
                 <select
-                  {...register('salary_currency')}
+                  {...register('currency')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="USD">USD</option>
                   <option value="EUR">EUR</option>
                   <option value="GBP">GBP</option>
-                  <option value="INR">INR</option>
-                </select>
-              </div>
-              <div>
-                <select
-                  {...register('salary_period')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="year">Per Year</option>
-                  <option value="month">Per Month</option>
-                  <option value="hour">Per Hour</option>
-                </select>
+                  <option value="INR">INR</option>                </select>
               </div>
             </div>
           </div>
@@ -348,35 +440,85 @@ const JobEditForm: React.FC<JobEditFormProps> = ({
             {errors.description && (
               <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
             )}
-          </div>
-
-          {/* Requirements */}
+          </div>          {/* Requirements */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Requirements *
             </label>
-            <textarea
-              {...register('requirements', { required: 'Requirements are required' })}
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="List the required qualifications, skills, and experience..."
-            />
-            {errors.requirements && (
-              <p className="mt-1 text-sm text-red-600">{errors.requirements.message}</p>
+            <div className="flex gap-2 mb-2">
+              <input
+                type="text"
+                value={requirementInput}
+                onChange={(e) => setRequirementInput(e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Add a requirement (e.g., Bachelor's degree in Computer Science)"
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addRequirement())}
+              />
+              <button
+                type="button"
+                onClick={addRequirement}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                <FiPlus className="w-4 h-4" />
+              </button>
+            </div>
+            {watchedRequirements.length > 0 && (
+              <div className="space-y-2">
+                {watchedRequirements.map((requirement, index) => (
+                  <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                    <span className="flex-1 text-sm">{requirement}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeRequirement(index)}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      <FiTrash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             )}
-          </div>
-
-          {/* Benefits */}
+            {watchedRequirements.length === 0 && (
+              <p className="text-sm text-red-600">At least one requirement is required</p>
+            )}
+          </div>          {/* Benefits */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Benefits & Perks
             </label>
-            <textarea
-              {...register('benefits')}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Health insurance, flexible hours, remote work, etc..."
-            />
+            <div className="flex gap-2 mb-2">
+              <input
+                type="text"
+                value={benefitInput}
+                onChange={(e) => setBenefitInput(e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Add a benefit (e.g., Health insurance, Flexible working hours)"
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addBenefit())}
+              />
+              <button
+                type="button"
+                onClick={addBenefit}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                <FiPlus className="w-4 h-4" />
+              </button>
+            </div>
+            {watchedBenefits.length > 0 && (
+              <div className="space-y-2">
+                {watchedBenefits.map((benefit, index) => (
+                  <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                    <span className="flex-1 text-sm">{benefit}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeBenefit(index)}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      <FiTrash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Skills */}
@@ -442,14 +584,13 @@ const JobEditForm: React.FC<JobEditFormProps> = ({
                 <FiPlus className="w-4 h-4" />
               </button>
             </div>
-            <div className="space-y-2">
-              {questions.map((question, index) => (
+            <div className="space-y-2">              {questions.map((question, index) => (
                 <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                  <span className="flex-1">{question.question_text}</span>
+                  <span className="flex-1">{question.question}</span>
                   <label className="flex items-center">
                     <input
                       type="checkbox"
-                      checked={question.is_required}
+                      checked={question.required}
                       onChange={() => toggleQuestionRequired(index)}
                       className="mr-2"
                     />

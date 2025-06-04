@@ -12,9 +12,10 @@ interface CompanyAnalyticsProps {
     views_this_month: number;
     applications_this_month: number;
   };
+  companyId?: number | null;
 }
 
-const CompanyAnalytics: React.FC<CompanyAnalyticsProps> = ({ stats }) => {  const metrics = [
+const CompanyAnalytics: React.FC<CompanyAnalyticsProps> = ({ stats, companyId }) => {  const metrics = [
     {
       title: 'Total Applications',
       value: stats.total_applications,

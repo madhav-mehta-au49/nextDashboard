@@ -5,6 +5,7 @@ use App\Http\Controllers\CompanyAdminController;
 use App\Http\Controllers\CompanyFollowerController;
 use App\Http\Controllers\CompanyReviewController;
 use App\Http\Controllers\JobListingController;
+use App\Http\Controllers\JobCategoryController;
 use App\Http\Controllers\JobApplicationController;
 use App\Http\Controllers\CompanyDashboardController;
 use App\Http\Controllers\CandidateController;
@@ -50,6 +51,9 @@ Route::get('/job-listings/analytics', [JobListingController::class, 'analytics']
 Route::get('/job-listings/{jobListing}', [JobListingController::class, 'show']);
 Route::get('/job-listings/{jobListing}/similar', [JobListingController::class, 'similar']);
 
+// Job categories (public)
+Route::get('/job-categories', [JobCategoryController::class, 'index']);
+
 // Authentication required routes
 Route::middleware('auth')->group(function () {
     // Company interactions (candidates and general users)
@@ -89,8 +93,7 @@ Route::middleware(['auth', 'company.auth'])->group(function () {
     // Job listing management for companies
     Route::post('/job-listings', [JobListingController::class, 'store']);
     Route::put('/job-listings/{jobListing}', [JobListingController::class, 'update']);
-    Route::delete('/job-listings/{jobListing}', [JobListingController::class, 'destroy']);
-    
+    Route::delete('/job-listings/{jobListing}', [JobListingController::class, 'destroy']);    
     // Company-specific job application management
     Route::get('/job-applications', [JobApplicationController::class, 'index']);
     Route::get('/job-applications/analytics', [JobApplicationController::class, 'analytics']);

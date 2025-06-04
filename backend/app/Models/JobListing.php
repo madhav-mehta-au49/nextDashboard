@@ -17,31 +17,31 @@ class JobListing extends Model
      */
     protected $fillable = [
         'company_id',
+        'category_id',
         'title',
         'description',
+        'requirements',
+        'benefits',
         'location',
-        'is_remote',
-        'type',
+        'location_type',
+        'job_type',
         'experience_level',
         'salary_min',
         'salary_max',
-        'salary_currency',
-        'posted_date',
+        'currency',
+        'required_skills',
+        'preferred_skills',
         'application_deadline',
+        'start_date',
+        'is_remote_friendly',
         'status',
+        'featured',
+        'urgent',
         'applicants_count',
         'views_count',
-        'requirements',
-        'benefits',
-        'department',
-        'category',
-        'education_level',
-        'work_schedule',
-        'travel_requirement',
-        'security_clearance',
-        'visa_sponsorship',
-        'urgency_level',
-        'job_category_id',
+        'published_at',
+        'expires_at',
+        'posted_date',
     ];
 
     /**
@@ -50,14 +50,20 @@ class JobListing extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'is_remote' => 'boolean',
-        'visa_sponsorship' => 'boolean',
+        'is_remote_friendly' => 'boolean',
+        'featured' => 'boolean',
+        'urgent' => 'boolean',
         'posted_date' => 'date',
         'application_deadline' => 'date',
+        'start_date' => 'date',
+        'published_at' => 'datetime',
+        'expires_at' => 'datetime',
         'salary_min' => 'decimal:2',
         'salary_max' => 'decimal:2',
         'requirements' => 'array',
         'benefits' => 'array',
+        'required_skills' => 'array',
+        'preferred_skills' => 'array',
     ];
 
     /**
@@ -67,7 +73,6 @@ class JobListing extends Model
      */
     protected $appends = [
         'days_since_posted',
-        'is_urgent',
         'salary_range',
         'slug',
     ];
@@ -122,7 +127,15 @@ class JobListing extends Model
      */
     public function jobCategory()
     {
-        return $this->belongsTo(JobCategory::class);
+        return $this->belongsTo(JobCategory::class, 'category_id');
+    }
+
+    /**
+     * Get the category for backward compatibility.
+     */
+    public function category()
+    {
+        return $this->jobCategory();
     }
 
     /**
@@ -164,7 +177,7 @@ class JobListing extends Model
      */
     public function scopeRemote($query)
     {
-        return $query->where('is_remote', true);
+        return $query->where('is_remote_friendly', true);
     }
 
     /**
@@ -172,7 +185,7 @@ class JobListing extends Model
      */
     public function scopeOfType($query, $type)
     {
-        return $query->where('type', $type);
+        return $query->where('job_type', $type);
     }
 
     /**
@@ -202,7 +215,7 @@ class JobListing extends Model
      */
     public function scopePostedWithin($query, $days)
     {
-        return $query->where('posted_date', '>=', now()->subDays($days));
+        return $query->where('created_at', '>=', now()->subDays($days));
     }
 
     /**
@@ -235,16 +248,7 @@ class JobListing extends Model
      */
     public function getDaysSincePostedAttribute()
     {
-        return $this->posted_date ? now()->diffInDays($this->posted_date) : null;
-    }
-
-    /**
-     * Get is urgent accessor.
-     */
-    public function getIsUrgentAttribute()
-    {
-        return $this->urgency_level === 'high' || 
-               ($this->application_deadline && now()->diffInDays($this->application_deadline) <= 3);
+        return $this->created_at ? now()->diffInDays($this->created_at) : null;
     }
 
     /**
@@ -256,7 +260,7 @@ class JobListing extends Model
             return null;
         }
 
-        $currency = $this->salary_currency ?? 'USD';
+        $currency = $this->currency ?? 'INR';
         $symbol = $this->getCurrencySymbol($currency);
 
         if ($this->salary_min && $this->salary_max) {
@@ -282,13 +286,14 @@ class JobListing extends Model
     private function getCurrencySymbol($currency)
     {
         $symbols = [
+            'INR' => '₹',
             'USD' => '$',
             'EUR' => '€',
             'GBP' => '£',
             'JPY' => '¥',
             'CAD' => 'C$',
             'AUD' => 'A$',
-            'INR' => '₹',
+            'SGD' => 'S$',
         ];
 
         return $symbols[$currency] ?? $currency . ' ';

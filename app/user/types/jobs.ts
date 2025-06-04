@@ -131,6 +131,7 @@ export interface JobSearchFilters {
   experience_level?: string[];
   salary_min?: number;
   salary_max?: number;
+  currency?: string;
   skills?: string[];
   company_id?: number;
   category_id?: number;

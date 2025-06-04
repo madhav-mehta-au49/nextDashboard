@@ -13,6 +13,7 @@ import EmployeeHeader from "@/components/EmployeeHeader";
 import Link from "next/link";
 import { useJobSearch } from "@/hooks/useJobs";
 import { JobSearchFilters } from "@/app/services/jobs";
+import { formatSalary } from "@/app/utils/currency";
 
 // Add this utility function for creating SEO-friendly URLs
 const createJobUrl = (jobId: string, jobTitle: string): string => {
@@ -194,11 +195,10 @@ export default function JobsPage() {
                       description={job.description}
                       jobType={job.job_type}
                       locationType={job.location_type}
-                      experienceLevel={job.experience_level}
-                      skills={job.required_skills}
+                      experienceLevel={job.experience_level}                      skills={job.required_skills}
                       featured={job.featured}
                       urgent={job.urgent}
-                      salaryRange={job.salary_range}
+                      salaryRange={formatSalary(job.salary_min, job.salary_max, job.currency)}
                     />
                   </Link>
                 </div>

@@ -14,6 +14,7 @@ interface CompanyJobListProps {
     onJobDeleted: (jobId: number) => void;
     onJobsUpdated?: (jobs: JobListing[]) => void;
     compact?: boolean;
+    companyId?: number | null;
 }
 
 const CompanyJobList: React.FC<CompanyJobListProps> = ({
@@ -21,7 +22,8 @@ const CompanyJobList: React.FC<CompanyJobListProps> = ({
     onJobUpdated,
     onJobDeleted,
     onJobsUpdated,
-    compact = false
+    compact = false,
+    companyId
 }) => {
     const [loadingActions, setLoadingActions] = useState<{ [key: number]: string }>({});
     const [showMenu, setShowMenu] = useState<number | null>(null);
@@ -300,12 +302,11 @@ const CompanyJobList: React.FC<CompanyJobListProps> = ({
                     }}
                     onClose={() => setEditingJob(null)}
                 />
-            )}
-
-            <BulkJobActions
+            )}            <BulkJobActions
                 selectedJobs={selectedJobObjects}
                 onJobsUpdated={handleBulkJobsUpdated}
                 onSelectionCleared={handleBulkSelectionCleared}
+                companyId={companyId}
             />
         </>
     );

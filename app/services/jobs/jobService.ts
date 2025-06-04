@@ -50,12 +50,12 @@ export class JobService {
     const response = await api.get('/job-listings/search', { params: filters });
     return response.data;
   }
-
   /**
    * Get a specific job listing by ID
    */
   static async getJob(id: number): Promise<JobListing> {
     const response = await api.get(`/job-listings/${id}`);
+    console.log('JobService.getJob - Raw response:', response.data.data);
     return response.data.data;
   }
 
@@ -77,22 +77,53 @@ export class JobService {
       params: { limit }
     });
     return response.data.data;
-  }
-
-  /**
+  }  /**
    * Create a new job listing
    */
   static async createJob(jobData: Partial<JobListing>): Promise<JobListing> {
-    const response = await api.post('/job-listings', jobData);
-    return response.data.data;
+    console.log('JobService.createJob - Data being sent:', jobData);
+    console.log('JobService.createJob - experience_level:', jobData.experience_level);
+    console.log('JobService.createJob - location_type:', jobData.location_type);
+    console.log('JobService.createJob - required_skills:', jobData.required_skills);
+    console.log('JobService.createJob - category_id:', jobData.category_id);
+    
+    try {
+      const response = await api.post('/job-listings', jobData);
+      console.log('JobService.createJob - Response:', response.data);
+      return response.data.data;
+    } catch (error: any) {
+      console.error('JobService.createJob - Error:', error);
+      if (error.response) {
+        console.error('JobService.createJob - Error Response:', error.response.data);
+        console.error('JobService.createJob - Error Status:', error.response.status);
+        console.error('JobService.createJob - Error Headers:', error.response.headers);
+      }
+      throw error;
+    }
   }
-
   /**
    * Update an existing job listing
    */
   static async updateJob(id: number, jobData: Partial<JobListing>): Promise<JobListing> {
-    const response = await api.put(`/job-listings/${id}`, jobData);
-    return response.data.data;
+    console.log('JobService.updateJob - Data being sent:', jobData);
+    console.log('JobService.updateJob - experience_level:', jobData.experience_level);
+    console.log('JobService.updateJob - location_type:', jobData.location_type);
+    console.log('JobService.updateJob - required_skills:', jobData.required_skills);
+    console.log('JobService.updateJob - category_id:', jobData.category_id);
+    
+    try {
+      const response = await api.put(`/job-listings/${id}`, jobData);
+      console.log('JobService.updateJob - Response:', response.data);
+      return response.data.data;
+    } catch (error: any) {
+      console.error('JobService.updateJob - Error:', error);
+      if (error.response) {
+        console.error('JobService.updateJob - Error Response:', error.response.data);
+        console.error('JobService.updateJob - Error Status:', error.response.status);
+        console.error('JobService.updateJob - Error Headers:', error.response.headers);
+      }
+      throw error;
+    }
   }
 
   /**

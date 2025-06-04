@@ -20,15 +20,14 @@ class CompanyDashboardController extends Controller
     public function __construct(JobAnalyticsService $jobAnalyticsService)
     {
         $this->jobAnalyticsService = $jobAnalyticsService;
-    }
-
-    /**
+    }    /**
      * Get company dashboard data - only for authenticated company users
      */
     public function dashboard(Request $request): JsonResponse
     {
         $user = Auth::user();
         $companyIds = $request->get('user_company_ids', []);
+        $companyId = $request->get('company_id');
 
         // Admin users can see all data
         if ($user->isAdmin()) {
@@ -40,6 +39,18 @@ class CompanyDashboardController extends Controller
                 'status' => 'error',
                 'message' => 'No companies associated with your account'
             ], 403);
+        }
+
+        // If a specific company ID is provided, check access and use only that company
+        if ($companyId) {
+            if (!in_array($companyId, $companyIds)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'You do not have access to this company'
+                ], 403);
+            }
+            // Use only the specified company
+            $companyIds = [$companyId];
         }
 
         // Get dashboard statistics
@@ -133,15 +144,14 @@ class CompanyDashboardController extends Controller
                 'total' => $jobs->total(),
             ]
         ]);
-    }
-
-    /**
+    }    /**
      * Get company-specific job applications
      */
     public function applications(Request $request): JsonResponse
     {
         $user = Auth::user();
         $companyIds = $request->get('user_company_ids', []);
+        $companyId = $request->get('company_id');
 
         if ($user->isAdmin()) {
             $companyIds = Company::pluck('id')->toArray();
@@ -152,6 +162,18 @@ class CompanyDashboardController extends Controller
                 'status' => 'error',
                 'message' => 'No companies associated with your account'
             ], 403);
+        }
+
+        // If a specific company ID is provided, check access and use only that company
+        if ($companyId) {
+            if (!in_array($companyId, $companyIds)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'You do not have access to this company'
+                ], 403);
+            }
+            // Use only the specified company
+            $companyIds = [$companyId];
         }
 
         $perPage = $request->get('per_page', 15);
@@ -184,15 +206,14 @@ class CompanyDashboardController extends Controller
                 'total' => $applications->total(),
             ]
         ]);
-    }
-
-    /**
+    }    /**
      * Get analytics for company jobs
      */
     public function analytics(Request $request): JsonResponse
     {
         $user = Auth::user();
         $companyIds = $request->get('user_company_ids', []);
+        $companyId = $request->get('company_id');
 
         if ($user->isAdmin()) {
             $companyIds = Company::pluck('id')->toArray();
@@ -205,10 +226,22 @@ class CompanyDashboardController extends Controller
             ], 403);
         }
 
+        // If a specific company ID is provided, check access and use only that company
+        if ($companyId) {
+            if (!in_array($companyId, $companyIds)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'You do not have access to this company'
+                ], 403);
+            }
+            // Use only the specified company
+            $companyIds = [$companyId];
+        }
+
         $analytics = [];
 
-        foreach ($companyIds as $companyId) {
-            $company = Company::find($companyId);
+        foreach ($companyIds as $id) {
+            $company = Company::find($id);
             if ($company) {
                 $analytics[$company->name] = $this->jobAnalyticsService->getCompanyJobAnalytics($company);
             }
