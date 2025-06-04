@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useJobSearch } from "@/hooks/useJobs";
 import { JobSearchFilters } from "@/app/services/jobs";
 import { formatSalary } from "@/app/utils/currency";
+import Pagination from "@/app/components/ui/Pagination";
 
 // Add this utility function for creating SEO-friendly URLs
 const createJobUrl = (jobId: string, jobTitle: string): string => {
@@ -25,8 +26,10 @@ const createJobUrl = (jobId: string, jobTitle: string): string => {
 };
 
 export default function JobsPage() {
-  const [searchKeyword, setSearchKeyword] = useState("");
-  const [filters, setFilters] = useState<JobSearchFilters>({});
+  const [searchKeyword, setSearchKeyword] = useState("");  const [filters, setFilters] = useState<JobSearchFilters>({
+    per_page: 5,
+    page: 1
+  });
 
   const {
     jobs,
@@ -34,25 +37,31 @@ export default function JobsPage() {
     error,
     meta,
     searchJobs,
-    loadMore,
-    hasMore
+    clearResults
   } = useJobSearch();
 
-  // Load jobs on component mount
+  // Load jobs on component mount and when filters change
   useEffect(() => {
-    searchJobs({});
-  }, []);
+    searchJobs(filters);
+  }, [filters]);
+
   // Handle search
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    searchJobs({ ...filters, keyword: searchKeyword });
+    const updatedFilters = { ...filters, keyword: searchKeyword, page: 1 };
+    setFilters(updatedFilters);
   };
-
   // Handle filter changes
   const handleFilterChange = (newFilters: JobSearchFilters) => {
-    const updatedFilters = { ...filters, ...newFilters };
+    const updatedFilters = { ...filters, ...newFilters, page: 1 };
     setFilters(updatedFilters);
-    searchJobs(updatedFilters);
+  };
+
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    setFilters((prev: JobSearchFilters) => ({ ...prev, page }));
+    // Scroll to top when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Get featured jobs from loaded jobs (featured ones)
@@ -203,27 +212,21 @@ export default function JobsPage() {
                   </Link>
                 </div>
               </div>
-            ))}
-
-            {/* Load More Button */}
-            {hasMore && (
-              <div className="flex justify-center py-6">
-                <button
-                  onClick={loadMore}
-                  disabled={loading}
-                  className="px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {loading ? 'Loading...' : 'Load More Jobs'}
-                </button>
+            ))}            {/* Pagination */}
+            {meta && meta.total > 0 && (
+              <div className="mt-8">
+                <Pagination
+                  currentPage={meta.current_page}
+                  totalPages={meta.last_page}
+                  onPageChange={handlePageChange}
+                />
               </div>
-            )}
-
-            {/* Results Summary */}
+            )}            {/* Results Summary */}
             {meta && (
-              <div className="bg-white px-4 py-3 flex items-center justify-center border border-gray-200 rounded-lg">
+              <div className="bg-white px-4 py-3 flex items-center justify-center border border-gray-200 rounded-lg mt-4">
                 <p className="text-sm text-gray-700">
-                  Showing {jobs.length} of {meta.total} jobs
-                  {meta.current_page > 1 && ` (Page ${meta.current_page} of ${meta.last_page})`}
+                  Showing {((meta.current_page - 1) * meta.per_page) + 1} to {Math.min(meta.current_page * meta.per_page, meta.total)} of {meta.total} jobs
+                  (Page {meta.current_page} of {meta.last_page})
                 </p>
               </div>
             )}

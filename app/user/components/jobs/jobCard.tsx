@@ -112,16 +112,15 @@ const JobListingCard = ({
         </span>
         <span className="px-2 py-1 bg-green-50 text-green-700 text-xs font-medium rounded-full capitalize">
           {locationType}
-        </span>
-        <span className="px-2 py-1 bg-purple-50 text-purple-700 text-xs font-medium rounded-full capitalize">
+        </span>        <span className="px-2 py-1 bg-purple-50 text-purple-700 text-xs font-medium rounded-full capitalize">
           {experienceLevel} Level
         </span>
-        {skills.slice(0, 3).map((skill, index) => (
+        {skills && skills.slice(0, 3).map((skill, index) => (
           <span key={index} className="px-2 py-1 bg-teal-50 text-teal-700 text-xs font-medium rounded-full">
             {skill}
           </span>
         ))}
-        {skills.length > 3 && (
+        {skills && skills.length > 3 && (
           <span className="px-2 py-1 bg-gray-50 text-gray-700 text-xs font-medium rounded-full">
             +{skills.length - 3} more
           </span>

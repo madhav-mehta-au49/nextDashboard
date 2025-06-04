@@ -28,20 +28,16 @@ export const useJobSearch = (initialFilters?: JobSearchFilters): UseJobSearchRet
   const [error, setError] = useState<string | null>(null);
   const [meta, setMeta] = useState<UseJobSearchReturn['meta']>(null);
   const [currentFilters, setCurrentFilters] = useState<JobSearchFilters>(initialFilters || {});
-
   const searchJobs = useCallback(async (filters: JobSearchFilters) => {
     setLoading(true);
     setError(null);
     
     try {
-      const result: JobSearchResult = await JobService.searchJobs({
-        ...filters,
-        page: 1 // Reset to first page for new search
-      });
+      const result: JobSearchResult = await JobService.searchJobs(filters);
       
       setJobs(result.data);
       setMeta(result.meta);
-      setCurrentFilters({ ...filters, page: 1 });
+      setCurrentFilters(filters);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to search jobs');
       setJobs([]);

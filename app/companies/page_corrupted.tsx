@@ -22,86 +22,69 @@ export interface CompanyFilter {
   size?: string;
   location?: string;
   search?: string;
+  searchTerm?: string;
   page?: number;
   per_page?: number;
 }
 
-// Define Company interface for the API response
-interface Company {
-  id: string;
-  name: string;
-  description: string;
-  industry: string;
-  size: string;
-  headquarters: string;
-  logo_url: string;
-  rating: number;
-  specialties: Array<{specialty: string}>;
-  is_following: boolean;
-  is_saved: boolean;
-  slug?: string;
-}
-
-// Define pagination metadata interface
-interface PaginationMeta {
+interface CompanyMeta {
   current_page: number;
   last_page: number;
   per_page: number;
   total: number;
+  from: number;
+  to: number;
 }
 
 export default function CompaniesPage() {
   const router = useRouter();
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [meta, setMeta] = useState<PaginationMeta | null>(null);
+  const [meta, setMeta] = useState<CompanyMeta | null>(null);
   const [filters, setFilters] = useState<CompanyFilter>({
     sort_by: 'name_asc',
     page: 1,
-    per_page: 5
+    per_page: 10,
+    searchTerm: ''
   });
 
   // Fetch companies when filters change
   useEffect(() => {
     fetchCompanies();
-  }, [filters]);  const fetchCompanies = async () => {
+  }, [filters]);
+
+  const fetchCompanies = async () => {
     try {
       setLoading(true);
-      // Convert our local filter to the service's expected format
-      const serviceFilters = {
-        ...filters,
-        searchTerm: filters.search || ''
-      };
-      
-      const response = await companyService.getCompanies(serviceFilters as any);
-      console.log('API Response:', response); // Log the response for debugging
-
-      if (response && response.status === 'success') {
-        // Laravel pagination structure: response.data contains the paginated data
-        if (response.data && response.data.data && Array.isArray(response.data.data)) {
+      const response = await companyService.getCompanies(filters);
+      console.log('API Response:', response); // Log the response for debugging      if (response && response.status === 'success') {
+        // Check the structure of the data
+        if (response.data && Array.isArray(response.data.data)) {
+          // If the data is nested in data.data (pagination structure)
           setCompanies(response.data.data);
-          // Set pagination metadata
           setMeta({
             current_page: response.data.current_page,
             last_page: response.data.last_page,
             per_page: response.data.per_page,
-            total: response.data.total
+            total: response.data.total,
+            from: response.data.from,
+            to: response.data.to
           });
+        } else if (Array.isArray(response.data)) {
+          // If data is directly in data array
+          setCompanies(response.data);
+          setMeta(null);
         } else {
           console.error('Unexpected data structure:', response);
           setCompanies([]);
           setMeta(null);
           setError('Unexpected data structure received from API');
-        }
-      } else {
+        }      } else {
         setError(response?.message || 'An error occurred while fetching companies');
-        setCompanies([]);
-        setMeta(null);
-      }    } catch (err: any) {
+      }
+    } catch (err: any) {
       setError(err.message || 'An error occurred while fetching companies');
-      setCompanies([]);
-      setMeta(null);
       console.error('Error fetching companies:', err);
     } finally {
       setLoading(false);
@@ -115,10 +98,9 @@ export default function CompaniesPage() {
   const handleFilterChange = (newFilters: Partial<CompanyFilter>) => {
     setFilters(prev => ({ ...prev, ...newFilters, page: 1 }));
   };
+
   const handlePageChange = (page: number) => {
     setFilters(prev => ({ ...prev, page }));
-    // Scroll to top when page changes
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCompanyAction = async (action: string, companyId: string) => {
@@ -264,7 +246,8 @@ export default function CompaniesPage() {
                         rating={company.rating || 0}
                         industry={company.industry}
                         logoUrl={company.logo_url || '/images/placeholder-logo.png'}
-                        location={company.headquarters}                        hashtags={company.specialties?.map(s => s.specialty) || []}
+                        location={company.headquarters}
+                        hashtags={company.specialties || []}
                         isFollowing={company.is_following}
                         isSaved={company.is_saved}
                         onBookmark={() => handleCompanyAction(company.is_saved ? 'unsave' : 'save', company.id)}
@@ -273,10 +256,13 @@ export default function CompaniesPage() {
                         onViewProfile={() => router.push(`/companies/${company.slug || company.id}`)}
                         onFollow={() => handleCompanyAction(company.is_following ? 'unfollow' : 'follow', company.id)}
                       />
-                    </div>                    <div className="hidden md:block">
+                    </div>
+                    <div className="hidden md:block">
                       <CompanyActions
                         companyId={company.id}
+                        isFollowing={company.is_following}
                         isSaved={company.is_saved}
+                        onFollow={() => handleCompanyAction(company.is_following ? 'unfollow' : 'follow', company.id)}
                         onSave={() => handleCompanyAction(company.is_saved ? 'unsave' : 'save', company.id)}
                         onShare={() => console.log(`Share ${company.name}`)}
                         onContact={() => console.log(`Contact ${company.name}`)}
@@ -285,8 +271,8 @@ export default function CompaniesPage() {
                   </div>
                 ))
               )}              {/* Pagination */}
-              {meta && meta.total > 0 && (
-                <div className="mt-8">
+              {companies.length > 0 && meta && meta.last_page > 1 && (
+                <div className="flex justify-center mt-8">
                   <Pagination
                     currentPage={meta.current_page}
                     totalPages={meta.last_page}
@@ -299,8 +285,8 @@ export default function CompaniesPage() {
               {meta && (
                 <div className="bg-white px-4 py-3 flex items-center justify-center border border-gray-200 rounded-lg mt-4">
                   <p className="text-sm text-gray-700">
-                    Showing {((meta.current_page - 1) * meta.per_page) + 1} to {Math.min(meta.current_page * meta.per_page, meta.total)} of {meta.total} companies
-                    (Page {meta.current_page} of {meta.last_page})
+                    Showing {meta.from || 1} to {meta.to || companies.length} of {meta.total} companies
+                    {meta.current_page > 1 && ` (Page ${meta.current_page} of ${meta.last_page})`}
                   </p>
                 </div>
               )}
