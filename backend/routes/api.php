@@ -32,7 +32,7 @@ Route::get('/auth/{provider}', [AuthController::class, 'redirectToProvider']);
 Route::get('/auth/{provider}/callback', [AuthController::class, 'handleProviderCallback']);
 
 // Authenticated user routes
-Route::middleware('auth')->group(function () {
+Route::middleware('auth:api')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
 });
@@ -55,7 +55,7 @@ Route::get('/job-listings/{jobListing}/similar', [JobListingController::class, '
 Route::get('/job-categories', [JobCategoryController::class, 'index']);
 
 // Authentication required routes
-Route::middleware('auth')->group(function () {
+Route::middleware('auth:api')->group(function () {
     // Company interactions (candidates and general users)
     Route::post('/companies/{company}/follow', [CompanyController::class, 'followCompany']);
     Route::delete('/companies/{company}/follow', [CompanyController::class, 'unfollowCompany']);
@@ -78,7 +78,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // Company dashboard and management routes (require company authentication)
-Route::middleware(['auth', 'company.auth'])->group(function () {
+Route::middleware(['auth:api', 'company.auth'])->group(function () {
     // Company dashboard routes
     Route::get('/company/dashboard', [CompanyDashboardController::class, 'dashboard']);
     Route::get('/company/dashboard/jobs', [CompanyDashboardController::class, 'jobs']);
@@ -153,3 +153,16 @@ Route::post('interviews/{interview}/feedback', [InterviewController::class, 'add
 Route::post('interviews/{interview}/reschedule', [InterviewController::class, 'reschedule']);
 Route::post('interviews/{interview}/cancel', [InterviewController::class, 'cancel']);
 Route::get('interviews-calendar', [InterviewController::class, 'calendar']);
+
+// TEMPORARY: Test route to verify JobApplicationResource fix
+Route::get('/test/recent-applications', function() {
+    $recentApplications = \App\Models\JobApplication::with(['candidate', 'candidate.user', 'jobListing'])
+        ->orderBy('applied_at', 'desc')
+        ->limit(5)
+        ->get();
+    
+    return response()->json([
+        'status' => 'success',
+        'data' => \App\Http\Resources\JobApplicationResource::collection($recentApplications)
+    ]);
+});

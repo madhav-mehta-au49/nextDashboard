@@ -17,25 +17,64 @@ const api = axios.create({
   },
 });
 
+// Add auth token to requests if available
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 export interface JobApplicationData {
   job_listing_id: number;
+  
+  // Personal Information
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  current_location: string;
+  linkedin_url?: string;
+  portfolio_url?: string;
+  
+  // Professional Information
+  current_job_title: string;
+  current_company: string;
+  total_experience?: string;
+  relevant_experience?: string;
+  current_salary?: number;
+  notice_period?: string;
+  work_type_preference?: string;
+  willing_to_relocate?: string;
+  
+  // Application Details
   cover_letter?: string;
-  resume_url?: string;
   salary_expectation?: number;
   availability_date?: string;
+  motivation_letter?: string;
+  key_strengths?: string[];
+  career_goals?: string;
+  
+  // Files
+  resume_file?: File;
+  cover_letter_file?: File;
+  additional_files?: File[];
+  
+  // Company Questions
   answers?: Array<{
     question_id: number;
     answer: string;
   }>;
-  additional_files?: string[];
 }
 
 export interface ApplicationFilters {
   status?: string;
   job_id?: number;
-  company_id?: number;
+  company_id?: number | null;
   per_page?: number;
   page?: number;
+  search?: string;
 }
 
 export interface BulkStatusUpdate {
@@ -72,8 +111,114 @@ export class JobApplicationService {
    * Submit a job application
    */
   static async submitApplication(applicationData: JobApplicationData): Promise<JobApplication> {
-    const response = await api.post('/job-applications', applicationData);
-    return response.data.data;
+    try {
+      console.log('Submitting application with data:', {
+        ...applicationData,
+        resume_file: applicationData.resume_file ? {
+          name: applicationData.resume_file.name,
+          type: applicationData.resume_file.type,
+          size: applicationData.resume_file.size
+        } : null
+      });
+
+      // Create FormData instance
+      const formData = new FormData();      // Add all non-file fields
+      Object.entries(applicationData).forEach(([key, value]) => {
+        if (!value) return; // Skip null/undefined values
+
+        // Skip file fields - handle them separately
+        if (key === 'resume_file' || key === 'cover_letter_file' || key === 'additional_files') {
+          return;
+        }        // Special handling for willing_to_relocate field to ensure Laravel compatibility
+        if (key === 'willing_to_relocate') {
+          const val = value?.toString().toLowerCase();
+          if (val === 'yes') {
+            formData.append('willing_to_relocate', '1');
+          } else if (val === 'no') {
+            formData.append('willing_to_relocate', '0');
+          } else {
+            formData.append('willing_to_relocate', '');
+          }
+          return;
+        }
+
+        // Special handling for key_strengths array
+        if (key === 'key_strengths' && Array.isArray(value)) {
+          // If it's empty, skip it
+          if (value.length === 0) return;          // Send each value as a separate item in the array for proper FormData handling
+          value.forEach((strength, index) => {
+            formData.append(`key_strengths[${index}]`, String(strength));
+          });
+        }
+        // Handle other arrays and objects by converting to JSON string
+        else if (Array.isArray(value) || (typeof value === 'object' && value !== null)) {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          formData.append(key, String(value));
+        }
+      });
+
+      // Handle resume file
+      if (applicationData.resume_file instanceof File) {
+        console.log('Adding resume:', applicationData.resume_file.name, applicationData.resume_file.type);
+        formData.append('resume_file', applicationData.resume_file, applicationData.resume_file.name);
+      }
+
+      // Handle cover letter file
+      if (applicationData.cover_letter_file instanceof File) {
+        console.log('Adding cover letter:', applicationData.cover_letter_file.name);
+        formData.append('cover_letter_file', applicationData.cover_letter_file, applicationData.cover_letter_file.name);
+      }
+
+      // Handle additional files
+      if (Array.isArray(applicationData.additional_files)) {
+        applicationData.additional_files.forEach((file, index) => {
+          if (file instanceof File) {
+            console.log(`Adding additional file ${index}:`, file.name);
+            formData.append(`additional_files[]`, file, file.name);
+          }
+        });
+      }
+
+      // Log FormData entries for debugging
+      console.log('FormData entries:');
+      for (const entry of formData.entries()) {
+        const [key, value] = entry;
+        console.log(`${key}:`, value instanceof File ? `File: ${value.name}` : value);
+      }
+
+      // Create a new axios instance for this request to avoid header conflicts
+      const response = await axios.post(`${API_BASE}/job-applications`, formData, {
+        withCredentials: true,
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+
+      console.log('Application submitted successfully:', response.data);
+      return response.data.data;
+    } catch (error: any) {
+      const errorDetails = {
+        message: error.message,
+        response: {
+          status: error.response?.status,
+          data: error.response?.data,
+          headers: error.response?.headers
+        }
+      };
+      console.error('Job application submission failed:', errorDetails);
+      
+      // Throw a more descriptive error
+      if (error.response?.status === 500) {
+        throw new Error('Server error occurred while submitting the application. Please try again.');
+      } else if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      } else if (error.code === 'NETWORK_ERROR') {
+        throw new Error('Network error occurred. Please check your internet connection and try again.');
+      } else {
+        throw error;
+      }
+    }
   }
 
   /**

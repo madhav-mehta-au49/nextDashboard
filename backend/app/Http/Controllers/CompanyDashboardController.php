@@ -294,7 +294,7 @@ class CompanyDashboardController extends Controller
      */
     private function getRecentApplications(array $companyIds, int $limit = 10)
     {
-        return JobApplication::with(['candidate.user', 'jobListing'])
+        return JobApplication::with(['candidate', 'candidate.user', 'jobListing'])
             ->whereHas('jobListing', function($q) use ($companyIds) {
                 $q->whereIn('company_id', $companyIds);
             })

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\JobApplication;
 use App\Models\JobListing;
 use App\Http\Requests\JobApplicationRequest;
+use App\Http\Requests\JobApplicationStatusUpdateRequest;
 use App\Http\Resources\JobApplicationResource;
 use App\Services\JobApplicationService;
 use Illuminate\Http\JsonResponse;
@@ -24,7 +25,7 @@ class JobApplicationController extends Controller
     {
         $applications = $this->jobApplicationService->getApplicationsForUser(
             $request->user(),
-            $request->only(['status', 'per_page', 'page'])
+            $request->only(['status', 'per_page', 'page', 'company_id', 'search', 'job_id'])
         );
         
         return response()->json([
@@ -45,10 +46,42 @@ class JobApplicationController extends Controller
     public function store(JobApplicationRequest $request): JsonResponse
     {
         try {
-            $application = $this->jobApplicationService->submitApplication(
-                $request->user(),
-                $request->validated()
-            );
+            // Debug logging for request data
+            \Log::debug('Job Application Request Data', [
+                'all_data' => $request->all(),
+                'validated_data' => $request->validated(),
+                'headers' => $request->headers->all(),
+                'method' => $request->method(),
+                'url' => $request->fullUrl()
+            ]);
+            
+            // Get the user's candidate record
+            $user = $request->user();
+            $candidate = $user->candidate;
+            
+            if (!$candidate) {
+                // Use firstOrCreate to handle the case where a candidate with the same email exists
+                $candidate = \App\Models\Candidate::firstOrCreate(
+                    ['email' => $user->email], // Check if a candidate with this email already exists
+                    [
+                        'user_id' => $user->id,
+                        'name' => $user->name ?? 'User',
+                        'slug' => \Illuminate\Support\Str::slug($user->name ?? 'user-' . $user->id) . '-' . uniqid(),
+                        'phone' => null,
+                        'location' => null,
+                        'headline' => 'Job Seeker',
+                        'about' => null,
+                        'availability' => 'Actively looking',
+                        'visibility' => 'public',
+                    ]
+                );
+            }
+            
+            // Add candidate_id to validated data
+            $validatedData = $request->validated();
+            $validatedData['candidate_id'] = $candidate->id;
+            
+            $application = $this->jobApplicationService->submitApplication($validatedData);
             
             return response()->json([
                 'status' => 'success',
@@ -56,9 +89,18 @@ class JobApplicationController extends Controller
                 'data' => new JobApplicationResource($application)
             ], 201);
         } catch (\Exception $e) {
+            // Log the error with detailed information
+            \Log::error('Job Application Submission Error', [
+                'error_message' => $e->getMessage(),
+                'error_trace' => $e->getTraceAsString(),
+                'error_code' => $e->getCode(),
+                'validation_data' => $request->validated()
+            ]);
+            
             return response()->json([
                 'status' => 'error',
-                'message' => $e->getMessage()
+                'message' => 'Application submission failed: ' . $e->getMessage(),
+                'error_details' => config('app.debug') ? $e->getTrace() : null
             ], 400);
         }
     }
@@ -94,20 +136,39 @@ class JobApplicationController extends Controller
                 'message' => $e->getMessage()
             ], 403);
         }
-    }
-
-    /**
+    }    /**
      * Update the specified resource in storage.
      */
-    public function update(JobApplicationRequest $request, JobApplication $jobApplication): JsonResponse
+    public function update(Request $request, JobApplication $jobApplication): JsonResponse
     {
         try {
+            // Check if this is a status update (only contains status-related fields)
+            $isStatusUpdate = $this->isStatusUpdate($request);
+            
+            if ($isStatusUpdate) {
+                // Validate using status update rules directly
+                $validatedData = $request->validate([
+                    'status' => 'required|string|in:pending,reviewing,interview_scheduled,interviewed,rejected,offered,hired,withdrawn',
+                    'notes' => 'nullable|string|max:2000',
+                    'interviewer_notes' => 'nullable|string|max:2000',
+                    'rejection_reason' => 'nullable|string|max:1000',
+                    'interview_date' => 'nullable|date|after_or_equal:today',
+                ]);
+            } else {
+                // For full application updates, use the JobApplicationRequest
+                $applicationRequest = new JobApplicationRequest();
+                $applicationRequest->replace($request->all());
+                $applicationRequest->setContainer(app());
+                $applicationRequest->setRedirector(app()->make('redirect'));
+                $validatedData = $applicationRequest->validated();
+            }
+            
             $updatedApplication = $this->jobApplicationService->updateApplication(
                 $request->user(),
                 $jobApplication,
-                $request->validated()
+                $validatedData
             );
-            
+
             return response()->json([
                 'status' => 'success',
                 'message' => 'Application updated successfully',
@@ -119,6 +180,21 @@ class JobApplicationController extends Controller
                 'message' => $e->getMessage()
             ], 403);
         }
+    }
+
+    /**
+     * Determine if the request is a status update or full application update
+     */
+    private function isStatusUpdate(Request $request): bool
+    {
+        $statusFields = ['status', 'notes', 'interviewer_notes', 'rejection_reason', 'interview_date'];
+        $middlewareFields = ['user_company_ids']; // Fields added by middleware that should be ignored
+        $allowedFields = array_merge($statusFields, $middlewareFields);
+        $requestFields = array_keys($request->all());
+        
+        // If only status-related fields and middleware fields are present, it's a status update
+        $nonStatusFields = array_diff($requestFields, $allowedFields);
+        return empty($nonStatusFields);
     }
 
     /**

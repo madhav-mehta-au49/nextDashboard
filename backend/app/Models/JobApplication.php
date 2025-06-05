@@ -17,19 +17,47 @@ class JobApplication extends Model
     protected $fillable = [
         'job_listing_id',
         'candidate_id',
+        
+        // Personal Information
+        'first_name',
+        'last_name',
+        'email',
+        'phone',
+        'current_location',
+        'linkedin_url',
+        'portfolio_url',
+        
+        // Professional Information
+        'current_job_title',
+        'current_company',
+        'total_experience',
+        'relevant_experience',
+        'current_salary',
+        'work_type_preference',
+        
+        // Application Content
         'cover_letter',
+        'motivation_letter',
+        'key_strengths',
+        'career_goals',
         'resume_url',
-        'status',
-        'applied_at',
-        'status_updated_at',
-        'status_notes',
-        'withdrawal_reason',
+        'cover_letter_file_url',
+        'additional_files_urls',
+        
+        // Salary & Availability
         'expected_salary',
         'salary_currency',
         'availability_date',
         'notice_period',
         'willing_to_relocate',
         'visa_status',
+        
+        // Status & Metadata
+        'status',
+        'applied_at',
+        'status_updated_at',
+        'status_notes',
+        'withdrawal_reason',
         'additional_notes',
         'referral_source',
     ];
@@ -45,7 +73,29 @@ class JobApplication extends Model
         'availability_date' => 'date',
         'willing_to_relocate' => 'boolean',
         'expected_salary' => 'decimal:2',
+        'current_salary' => 'decimal:2',
+        'key_strengths' => 'array',
+        'additional_files_urls' => 'array',
     ];
+    
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = [
+        'full_name'
+    ];
+
+    /**
+     * Get the full name attribute.
+     *
+     * @return string
+     */
+    public function getFullNameAttribute()
+    {
+        return "{$this->first_name} {$this->last_name}";
+    }
 
     /**
      * Get the job listing that the application is for.

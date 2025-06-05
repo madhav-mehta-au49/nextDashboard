@@ -13,22 +13,43 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class JobApplicationService
-{
-    /**
+{    /**
      * Submit a job application
-     */
-    public function submitApplication(JobApplicationRequest $request): JobApplication
+     */    public function submitApplication(array $data): JobApplication
     {
-        return DB::transaction(function () use ($request) {
-            $data = $request->validated();
-
-            // Handle resume file upload
-            if ($request->hasFile('resume_file')) {
-                $data['resume_url'] = $this->uploadResume($request->file('resume_file'), $data['candidate_id']);
+        return DB::transaction(function () use ($data) {
+            // Process notice period - Keep as string
+            // No conversion needed as we've updated the migration to accept string values
+            
+            // Handle resume file upload if present
+            if (isset($data['resume_file'])) {
+                $data['resume_url'] = $this->uploadResume($data['resume_file'], $data['candidate_id']);
                 unset($data['resume_file']);
+            }            // Create the application            // Handle key_strengths - ensure it's an array
+            if (isset($data['key_strengths'])) {
+                if (is_string($data['key_strengths'])) {
+                    // If it's a JSON string, decode it
+                    $decoded = json_decode($data['key_strengths'], true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        $data['key_strengths'] = $decoded;
+                    } else {
+                        // If not valid JSON, treat as a single item array
+                        $data['key_strengths'] = [$data['key_strengths']];
+                    }
+                } elseif (!is_array($data['key_strengths'])) {
+                    // If not an array or string, make it an array
+                    $data['key_strengths'] = [$data['key_strengths']];
+                }
+                // Encode array to JSON for storage
+                $data['key_strengths'] = json_encode($data['key_strengths']);
             }
-
-            // Create the application
+            
+            // Add debug logging for the data being saved
+            \Log::debug('Creating job application with data', [
+                'application_data' => $data
+            ]);
+            
+            // Create the application record
             $application = JobApplication::create([
                 ...$data,
                 'status' => 'pending',
@@ -163,21 +184,33 @@ class JobApplicationService
         $path = $file->storeAs('resumes', $filename, 'public');
         
         return Storage::url($path);
-    }
-
-    /**
+    }    /**
      * Store application answers
      */
     private function storeApplicationAnswers(JobApplication $application, array $questions): void
     {
+        // Add debug logging
+        \Log::debug('Storing application answers', [
+            'application_id' => $application->id,
+            'questions' => $questions
+        ]);
+        
         foreach ($questions as $question) {
-            DB::table('job_application_answers')->insert([
-                'job_application_id' => $application->id,
-                'question_id' => $question['question_id'],
-                'answer' => $question['answer'],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            try {
+                DB::table('job_application_answers')->insert([
+                    'job_application_id' => $application->id,
+                    'question_id' => $question['question_id'] ?? null,
+                    'question_text' => $question['question_text'] ?? 'Question ' . ($question['question_id'] ?? 'unknown'),
+                    'answer' => $question['answer'] ?? '',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Error storing application answer', [
+                    'error' => $e->getMessage(),
+                    'question' => $question
+                ]);
+            }
         }
     }
 
@@ -373,10 +406,14 @@ class JobApplicationService
 
     /**
      * Get applications for user with proper filtering
-     */
-    public function getApplicationsForUser(User $user, array $filters = []): LengthAwarePaginator
+     */    public function getApplicationsForUser(User $user, array $filters = []): LengthAwarePaginator
     {
-        $query = JobApplication::with(['jobListing.company', 'candidate'])
+        $query = JobApplication::with([
+                'jobListing' => function ($query) {
+                    $query->with('company');
+                },
+                'candidate.user'
+            ])
             ->when($user->role === 'candidate', function ($q) use ($user) {
                 // Candidates can only see their own applications
                 $q->whereHas('candidate', function ($candidateQuery) use ($user) {
@@ -398,15 +435,16 @@ class JobApplicationService
 
         if (isset($filters['job_id'])) {
             $query->where('job_listing_id', $filters['job_id']);
-        }
-
-        if (isset($filters['company_id']) && $user->role === 'employer') {
+        }        if (isset($filters['company_id']) && $user->role === 'employer') {
             // Verify user has access to this company
             $administeredCompanyIds = $user->administeredCompanies()->pluck('companies.id');
             if ($administeredCompanyIds->contains($filters['company_id'])) {
                 $query->whereHas('jobListing', function ($jobQuery) use ($filters) {
                     $jobQuery->where('company_id', $filters['company_id']);
                 });
+            } else {
+                // User doesn't have access to the requested company - return empty result
+                $query->whereRaw('1 = 0'); // This will return no results
             }
         }
 
@@ -685,12 +723,73 @@ class JobApplicationService
      * Get top positions from applications
      */
     private function getTopPositionsFromApplications($applications): array
-    {
-        return $applications
+    {        return $applications
             ->groupBy('jobListing.title')
             ->map->count()
             ->sortDesc()
             ->take(5)
             ->toArray();
+    }
+
+    /**
+     * Convert notice period string to integer (days)
+     */    /**
+     * Convert notice period string to integer (days)
+     * Note: This is kept for backward compatibility but not used in new applications
+     */    private function convertNoticePeriodToInteger($noticePeriod): string
+    {
+        if (!$noticePeriod) {
+            return '0';
+        }
+
+        // If exact number of days is provided, return it
+        if (is_numeric($noticePeriod)) {
+            return (string) $noticePeriod;
+        }
+
+        // Convert words to days
+        $noticePeriod = strtolower(trim($noticePeriod));
+        
+        switch ($noticePeriod) {
+            case 'immediate':
+            case 'immediately':
+                return '0';
+            case 'one week':
+            case 'week':
+                return '7';
+            case 'two weeks':
+            case '2 weeks':
+                return '14';
+            case 'one month':
+            case 'month':
+                return '30';
+            case '2 months':
+            case 'two months':
+                return '60';
+            case '3 months':
+            case 'three months':
+                return '90';
+            default:
+                // Try to extract number from string like "30 days", "2 weeks", etc.
+                if (preg_match('/(\d+)\s*(day|days|week|weeks|month|months)/', $noticePeriod, $matches)) {
+                    $number = (int) $matches[1];
+                    $unit = $matches[2];
+                    
+                    switch ($unit) {
+                        case 'day':
+                        case 'days':
+                            return (string) $number;
+                        case 'week':
+                        case 'weeks':
+                            return (string) ($number * 7);
+                        case 'month':
+                        case 'months':
+                            return (string) ($number * 30);
+                        default:
+                            return (string) $number;
+                    }
+                }
+                return '0';
+        }
     }
 }

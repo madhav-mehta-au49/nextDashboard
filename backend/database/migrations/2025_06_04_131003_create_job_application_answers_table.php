@@ -13,18 +13,15 @@ return new class extends Migration
     {
         Schema::create('job_application_answers', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('job_application_id')->constrained()->onDelete('cascade');
-            $table->integer('question_id');
-            $table->string('question_text');
-            $table->text('answer');
-            $table->enum('question_type', ['text', 'textarea', 'select', 'radio', 'checkbox', 'file', 'number', 'date'])->default('text');
+            $table->foreignId('job_application_id')->constrained('job_applications')->onDelete('cascade');
+            $table->unsignedBigInteger('question_id')->nullable(); // Just store the ID without a foreign key constraint
+            $table->text('question_text');
+            $table->text('answer')->nullable();
+            $table->string('question_type')->default('text');
             $table->json('question_options')->nullable();
             $table->boolean('is_required')->default(false);
             $table->string('file_url')->nullable();
             $table->timestamps();
-            
-            $table->index(['job_application_id', 'question_id']);
-            $table->index('question_type');
         });
     }
 

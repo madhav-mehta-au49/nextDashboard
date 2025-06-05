@@ -9,7 +9,7 @@ import Footer from '@/components/footer';
 import EmployeeHeader from '@/components/EmployeeHeader';
 import { JobService } from '@/app/services/jobs';
 import { JobApplicationService } from '@/app/services/jobs';
-import { CompanyJobList, JobCreationForm, CompanyAnalytics } from '../components/dashboard';
+import { CompanyJobList, JobCreationForm, CompanyAnalytics, CompanyApplicationsManager } from '../components/dashboard';
 import { JobListing } from '@/app/user/types/jobs';
 import { FiPlus, FiBriefcase, FiUsers, FiTrendingUp, FiSettings } from 'react-icons/fi';
 
@@ -458,6 +458,14 @@ export default function CompanyDashboard() {
                   }`}
               >
                 Job Listings ({activeTab === 'jobs' ? jobs.length : getVisibleJobs(jobs).length})
+              </button>              <button
+                onClick={() => setActiveTab('applications')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'applications'
+                    ? 'border-teal-500 text-teal-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+              >
+                Applications ({stats?.total_applications || 0})
               </button>
               <button
                 onClick={() => setActiveTab('analytics')}
@@ -469,7 +477,7 @@ export default function CompanyDashboard() {
                 Analytics
               </button>
             </nav>
-          </div>          {/* Tab Content */}
+          </div>{/* Tab Content */}
           <div className="space-y-8">
             {activeTab === 'overview' && (
               <div className="space-y-8">                {/* Companies Section - only show if managing multiple companies */}
@@ -578,9 +586,17 @@ export default function CompanyDashboard() {
                     // Refresh stats after bulk updates
                     refreshStats();
                   }
-                }}
+                }}              />
+            )}
+
+            {activeTab === 'applications' && (
+              <CompanyApplicationsManager
+                companyId={selectedCompanyId}
+                onStatsUpdate={refreshStats}
               />
-            )}{activeTab === 'analytics' && stats && (
+            )}
+
+            {activeTab === 'analytics' && stats && (
               <CompanyAnalytics 
                 stats={stats} 
                 companyId={selectedCompanyId} 

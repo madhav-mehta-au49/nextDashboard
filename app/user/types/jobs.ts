@@ -82,6 +82,17 @@ export interface JobApplication {
   interviews?: Interview[];
   created_at: string;
   updated_at: string;
+  // Additional properties from backend
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  current_location?: string;
+  current_job_title?: string;
+  current_company?: string;
+  total_experience?: number;
+  status_updated_at?: string;
+  cover_letter_file_url?: string;
 }
 
 export interface Candidate {
@@ -94,6 +105,11 @@ export interface Candidate {
   skills?: string[];
   location?: string;
   profile_image?: string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+  };
 }
 
 export interface ApplicationQuestion {

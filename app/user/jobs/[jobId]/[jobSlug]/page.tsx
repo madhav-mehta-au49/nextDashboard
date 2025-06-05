@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Footer from "@/components/footer";
 import Header from "@/app/web/components/header";
@@ -10,6 +10,7 @@ import JobDescription from "../../../components/jobs/JobDescription";
 import { JobSchema } from "../../../components/jobs/JobSchema";
 import SimilarJobs from "../../../components/jobs/SimilarJobs";
 import EmployeeHeader from "@/components/EmployeeHeader";
+import JobApplicationModal from "@/app/components/jobs/JobApplicationModal";
 import { useJob } from "@/hooks/useJobs";
 import { formatSalary } from "@/app/utils/currency";
 
@@ -23,19 +24,31 @@ interface JobPageProps {
 const JobPage = ({ params }: JobPageProps) => {
   // Fetch real job data using the useJob hook
   const { job, loading, error, fetchJob } = useJob();
+  const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
 
   // Fetch job data when component mounts or jobId changes
   useEffect(() => {
     if (params.jobId) {
       fetchJob(parseInt(params.jobId));
     }
-  }, [params.jobId, fetchJob]);  // Prepare job data for display (moved up to avoid conditional hook calls)
+  }, [params.jobId, fetchJob]);
+
+  const handleApplyNow = () => {
+    setIsApplicationModalOpen(true);
+  };
+
+  const handleApplicationSubmitted = () => {
+    // Refresh job data to update application status
+    if (params.jobId) {
+      fetchJob(parseInt(params.jobId));
+    }
+  };  // Prepare job data for display (moved up to avoid conditional hook calls)
   const jobData = job ? {
     id: job.id.toString(),
     title: job.title,
     company: job.company.name,
     location: job.location,
-    logoUrl: job.company.logo_url || "https://via.placeholder.com/150",
+    logoUrl: job.company.logo || "https://via.placeholder.com/150",
     jobUrl: `#`,
     description: job.description,
     salary: formatSalary(job.salary_min, job.salary_max, job.currency),
@@ -264,10 +277,12 @@ const JobPage = ({ params }: JobPageProps) => {
                     </span>
                   )}
                 </div>
-                <p className="text-teal-600 font-semibold">{jobData.salary}</p>
-              </div>
+                <p className="text-teal-600 font-semibold">{jobData.salary}</p>              </div>
               <div className="mt-4 md:mt-0">
-                <button className="w-full md:w-auto px-6 py-3 bg-teal-600 text-white font-medium rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-colors">
+                <button 
+                  onClick={handleApplyNow}
+                  className="w-full md:w-auto px-6 py-3 bg-teal-600 text-white font-medium rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-colors"
+                >
                   Apply Now
                 </button>
               </div>
@@ -313,10 +328,12 @@ const JobPage = ({ params }: JobPageProps) => {
 
               {/* Quick Apply Card */}
               <div className="bg-gradient-to-r from-teal-500 to-blue-500 rounded-lg shadow-md overflow-hidden">
-                <div className="p-6 text-center">
-                  <h3 className="text-lg font-semibold text-white mb-2">Ready to Apply?</h3>
+                <div className="p-6 text-center">                  <h3 className="text-lg font-semibold text-white mb-2">Ready to Apply?</h3>
                   <p className="text-white opacity-90 mb-4">Submit your application in just a few clicks</p>
-                  <button className="w-full bg-white text-teal-600 font-medium py-2 px-4 rounded-md hover:bg-teal-50 transition-colors">
+                  <button 
+                    onClick={handleApplyNow}
+                    className="w-full bg-white text-teal-600 font-medium py-2 px-4 rounded-md hover:bg-teal-50 transition-colors"
+                  >
                     Quick Apply
                   </button>
                 </div>
@@ -343,10 +360,17 @@ const JobPage = ({ params }: JobPageProps) => {
           <div className="mt-12">
             <SimilarJobs jobs={similarJobs} />
           </div>
-        </div>
-      </main>
+        </div>      </main>
 
-      <Footer />
+      <Footer />      {/* Job Application Modal */}
+      {job && (
+        <JobApplicationModal
+          isOpen={isApplicationModalOpen}
+          onClose={() => setIsApplicationModalOpen(false)}
+          job={job}
+          onApplicationSubmitted={handleApplicationSubmitted}
+        />
+      )}
     </div>
   );
 };

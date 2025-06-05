@@ -13,9 +13,6 @@ class JobListingResource extends JsonResource
      * @return array<string, mixed>
      */    public function toArray(Request $request): array
     {
-        // Debug the actual fields present on the model
-        \Log::debug('JobListingResource fields', ['model_attributes' => $this->getAttributes()]);
-        
         return [
             'id' => $this->id,
             'title' => $this->title,
@@ -37,18 +34,17 @@ class JobListingResource extends JsonResource
             'status' => $this->status,
             'featured' => $this->featured,
             'urgent' => $this->urgent,
-            'application_deadline' => $this->application_deadline?->format('Y-m-d'),
-            'start_date' => $this->start_date?->format('Y-m-d'),
+            'application_deadline' => $this->application_deadline ? (is_string($this->application_deadline) ? $this->application_deadline : $this->application_deadline->format('Y-m-d')) : null,
+            'start_date' => $this->start_date ? (is_string($this->start_date) ? $this->start_date : $this->start_date->format('Y-m-d')) : null,
             'applicants_count' => $this->applicants_count,
             'views_count' => $this->views_count,
             'company' => new CompanyResource($this->whenLoaded('company')),
             'skills' => SkillResource::collection($this->whenLoaded('skills')),
-            'applications' => JobApplicationResource::collection($this->whenLoaded('applications')),
-            'created_at' => $this->created_at?->toISOString(),
+            'applications' => JobApplicationResource::collection($this->whenLoaded('applications')),            'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
-              // Computed fields
-            'days_since_posted' => $this->posted_date?->diffInDays(now()),
-            'is_expired' => $this->application_deadline && $this->application_deadline->isPast(),
+            // Computed fields
+            'days_since_posted' => $this->posted_date ? (is_string($this->posted_date) ? null : $this->posted_date->diffInDays(now())) : null,
+            'is_expired' => $this->application_deadline && (!is_string($this->application_deadline) ? $this->application_deadline->isPast() : false),
             'urgency_level' => $this->getUrgencyLevel(),
             'application_url' => url("/api/job-applications?job_listing_id={$this->id}"),
             'share_url' => url("/jobs/{$this->id}"),

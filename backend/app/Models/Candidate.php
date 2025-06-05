@@ -16,6 +16,7 @@ class Candidate extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'user_id',
         'name',
         'slug',
         'headline',
@@ -46,6 +47,14 @@ class Candidate extends Model
     protected $casts = [
         'profile_completed_percentage' => 'integer',
     ];
+
+    /**
+     * Get the user that owns the candidate profile.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     /**
      * Get the experiences for the candidate.
