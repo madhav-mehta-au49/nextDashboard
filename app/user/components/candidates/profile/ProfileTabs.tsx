@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FaBriefcase, FaGraduationCap, FaLightbulb, FaCertificate, FaQuoteLeft, FaExternalLinkAlt, FaChevronDown, FaChevronUp, FaCheck } from 'react-icons/fa';
+import ApplicationStatusSection from '../../applications/ApplicationStatusSection';
 
 interface ProfileTabsProps {
   candidateData: any;
@@ -43,11 +44,10 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({ candidateData }) => {
             <p className="text-gray-700">
               {candidateData.about}
             </p>
-          </div>
-        ) : (
+          </div>        ) : (
           <div>
-            <h3 className="text-lg font-semibold mb-6">Recent Activity</h3>
-            <p>Activity content here</p>
+            <h3 className="text-lg font-semibold mb-6">Application Status & Activity</h3>
+            <ApplicationStatusSection showSimilarJobs={false} />
           </div>
         )}
       </div>

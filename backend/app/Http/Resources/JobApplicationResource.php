@@ -121,8 +121,7 @@ class JobApplicationResource extends JsonResource
                     ];
                 });
             }),
-            
-            // Interviews
+              // Interviews
             'interviews' => $this->whenLoaded('interviews', function() {
                 return $this->interviews->map(function($interview) {
                     return [
@@ -132,6 +131,24 @@ class JobApplicationResource extends JsonResource
                         'status' => $interview->status,
                         'feedback' => $interview->feedback,
                         'rating' => $interview->rating,
+                    ];
+                });
+            }),
+            
+            // Status Timeline
+            'timeline' => $this->whenLoaded('statusHistory', function() {
+                return $this->statusHistory->map(function($history) {
+                    return [
+                        'id' => $history->id,
+                        'old_status' => $history->old_status,
+                        'new_status' => $history->new_status,
+                        'status' => $history->new_status, // For compatibility
+                        'notes' => $history->notes,
+                        'changed_by' => $history->changedBy ? [
+                            'id' => $history->changedBy->id,
+                            'name' => $history->changedBy->name,
+                        ] : null,
+                        'created_at' => $history->created_at,
                     ];
                 });
             }),

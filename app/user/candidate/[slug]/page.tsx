@@ -20,22 +20,23 @@ import {
   FaCertificate,
   FaClock,
   FaEye,
-  FaFileAlt
+  FaFileAlt,
+  FaCalendarAlt,
+  FaBell,
+  FaHistory,
+  FaTimesCircle,
+  FaUserCheck
 } from 'react-icons/fa';
 import Header from '@/app/web/components/header';
 import SubHeader from '@/components/subheader';
 import Footer from '@/components/footer';
 import { getCandidateBySlug } from '@/app/services/candidate/candidateApi';
+import ApplicationStatusSection from '@/app/user/components/applications/ApplicationStatusSection';
 
-interface Application {
-  id: string;
-  job_id: string;
-  job_title: string;
-  company_name: string;
-  company_logo: string;
-  status: string;
-  applied_at: string;
-  updated_at: string;
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
 }
 
 export default function CandidateProfile() {
@@ -45,24 +46,7 @@ export default function CandidateProfile() {
   const [candidateData, setCandidateData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile'); const [applications, setApplications] = useState<Application[]>([]);
-  const [applicationsLoading, setApplicationsLoading] = useState(false);
-
-  const fetchApplications = async (candidateId: string) => {
-    try {
-      setApplicationsLoading(true);
-      const response = await fetch(`/api/candidates/${candidateId}/applications`);
-      if (response.ok) {
-        const data = await response.json();
-        setApplications(data.data || []);
-      }
-    } catch (err) {
-      console.error('Error fetching applications:', err);
-    } finally {
-      setApplicationsLoading(false);
-    }
-  };
-
+  const [activeTab, setActiveTab] = useState('profile');
   useEffect(() => {
     const fetchData = async () => {
       if (!slug) {
@@ -79,10 +63,6 @@ export default function CandidateProfile() {
           if (data) {
             console.log('Successfully loaded candidate by slug:', data.id);
             setCandidateData(data);
-            // Fetch applications for this candidate
-            if (data.id) {
-              fetchApplications(data.id.toString());
-            }
             setIsLoading(false);
             return;
           }
@@ -109,10 +89,6 @@ export default function CandidateProfile() {
             if (data) {
               console.log('Successfully loaded candidate by ID');
               setCandidateData(data);
-              // Fetch applications for this candidate
-              if (data.id) {
-                fetchApplications(data.id.toString());
-              }
               setIsLoading(false);
               return;
             }
@@ -133,6 +109,13 @@ export default function CandidateProfile() {
 
     fetchData();
   }, [slug]);
+
+  // Store candidate ID in localStorage for ApplicationStatusSection
+  useEffect(() => {
+    if (candidateData?.id) {
+      localStorage.setItem('candidateId', candidateData.id.toString());
+    }
+  }, [candidateData]);
 
   if (isLoading) {
     return (
@@ -180,21 +163,23 @@ export default function CandidateProfile() {
         <div className="mt-[-50px] md:mt-[-70px] relative z-10">
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-lg p-6">
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-              <div className="border border-gray-200 dark:border-gray-700 rounded-full p-1 bg-white shadow-md">                <div className="relative h-24 w-24 md:h-28 md:w-28 rounded-full overflow-hidden">
-                <Image
-                  src={candidateData.profile_picture || 'https://via.placeholder.com/150x150?text=Profile'}
-                  alt={candidateData.name}
-                  fill
-                  className="object-cover"
-                />
-              </div>
+              <div className="border border-gray-200 dark:border-gray-700 rounded-full p-1 bg-white shadow-md">
+                <div className="relative h-24 w-24 md:h-28 md:w-28 rounded-full overflow-hidden">
+                  <Image
+                    src={candidateData.profile_picture || 'https://via.placeholder.com/150x150?text=Profile'}
+                    alt={candidateData.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
               </div>
 
               <div className="flex flex-col flex-1">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{candidateData.name}</h2>
                 <p className="text-gray-600 dark:text-gray-400 text-md">
                   {candidateData.headline}
-                </p>                <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mt-1">
+                </p>
+                <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mt-1">
                   <FaMapMarkerAlt className="mr-1" />
                   <span>{candidateData.location}</span>
                   <span className="mx-2">•</span>
@@ -205,7 +190,8 @@ export default function CandidateProfile() {
                 <div className="flex flex-wrap gap-3 mt-4">
                   <button className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors">
                     Connect
-                  </button>                  <button className="px-4 py-2 border border-teal-600 text-teal-600 rounded-md hover:bg-teal-50 transition-colors">
+                  </button>
+                  <button className="px-4 py-2 border border-teal-600 text-teal-600 rounded-md hover:bg-teal-50 transition-colors">
                     Message
                   </button>
                   <Link
@@ -232,7 +218,7 @@ export default function CandidateProfile() {
                     className={`px-6 py-3 text-sm font-medium ${activeTab === 'profile'
                       ? 'text-teal-600 border-b-2 border-teal-600'
                       : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                      }`}
+                    }`}
                     onClick={() => setActiveTab('profile')}
                   >
                     Profile
@@ -241,7 +227,7 @@ export default function CandidateProfile() {
                     className={`px-6 py-3 text-sm font-medium ${activeTab === 'activity'
                       ? 'text-teal-600 border-b-2 border-teal-600'
                       : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                      }`}
+                    }`}
                     onClick={() => setActiveTab('activity')}
                   >
                     Activity
@@ -251,7 +237,8 @@ export default function CandidateProfile() {
 
               <div className="p-6">
                 {activeTab === 'profile' ? (
-                  <div>                    {/* About Section */}
+                  <div>
+                    {/* About Section */}
                     <div className="mb-8">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">About</h3>
@@ -277,10 +264,9 @@ export default function CandidateProfile() {
 
                     {/* Featured Section */}
                     <div className="mb-8">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Featured</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Featured</h3>                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {Array.isArray(candidateData.featured) && candidateData.featured.length > 0 ? (
-                          candidateData.featured.map((item, idx) => (
+                          candidateData.featured.map((item: any, idx: number) => (
                             <div
                               key={idx}
                               className="border border-gray-200 dark:border-gray-700 rounded-md p-4 bg-gray-50 dark:bg-gray-700"
@@ -301,7 +287,8 @@ export default function CandidateProfile() {
                           <div className="text-gray-500 dark:text-gray-400">No featured items.</div>
                         )}
                       </div>
-                    </div>                    {/* Experience Section */}
+                    </div>
+                    {/* Experience Section */}
                     <div className="mb-8">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
@@ -316,9 +303,10 @@ export default function CandidateProfile() {
                           Edit
                         </Link>
                       </div>
-                      <hr className="mb-4 border-gray-200 dark:border-gray-700" />                      <div className="space-y-6">
+                      <hr className="mb-4 border-gray-200 dark:border-gray-700" />
+                      <div className="space-y-6">
                         {Array.isArray(candidateData.experiences) && candidateData.experiences.length > 0 ? (
-                          candidateData.experiences.map((exp, idx) => (
+                          candidateData.experiences.map((exp: any, idx: number) => (
                             <div key={idx}>
                               <h4 className="font-medium text-gray-900 dark:text-white mb-1">{exp.position}</h4>
                               <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
@@ -336,7 +324,8 @@ export default function CandidateProfile() {
                           <div className="text-gray-500 dark:text-gray-400">No experience listed.</div>
                         )}
                       </div>
-                    </div>                    {/* Education Section */}
+                    </div>
+                    {/* Education Section */}
                     <div className="mb-8">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
@@ -351,9 +340,10 @@ export default function CandidateProfile() {
                           Edit
                         </Link>
                       </div>
-                      <hr className="mb-4 border-gray-200 dark:border-gray-700" />                      <div className="space-y-6">
+                      <hr className="mb-4 border-gray-200 dark:border-gray-700" />
+                      <div className="space-y-6">
                         {Array.isArray(candidateData.educations) && candidateData.educations.length > 0 ? (
-                          candidateData.educations.map((edu, idx) => (
+                          candidateData.educations.map((edu: any, idx: number) => (
                             <div key={idx}>
                               <h4 className="font-medium text-gray-900 dark:text-white mb-1">{edu.institution}</h4>
                               <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
@@ -372,7 +362,8 @@ export default function CandidateProfile() {
                           <div className="text-gray-500 dark:text-gray-400">No education listed.</div>
                         )}
                       </div>
-                    </div>                    {/* Certifications Section */}
+                    </div>
+                    {/* Certifications Section */}
                     <div className="mb-8">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
@@ -390,7 +381,7 @@ export default function CandidateProfile() {
                       <hr className="mb-4 border-gray-200 dark:border-gray-700" />
                       <div className="space-y-6">
                         {Array.isArray(candidateData.certifications) && candidateData.certifications.length > 0 ? (
-                          candidateData.certifications.map((cert, idx) => (
+                          candidateData.certifications.map((cert: any, idx: number) => (
                             <div key={idx}>
                               <h4 className="font-medium text-gray-900 dark:text-white mb-1">{cert.name}</h4>
                               <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
@@ -404,7 +395,8 @@ export default function CandidateProfile() {
                                 <p className="text-sm text-gray-600 dark:text-gray-400">
                                   Credential ID: {cert.credential_id}
                                 </p>
-                              )}                              {cert.credential_url && (
+                              )}
+                              {cert.credential_url && (
                                 <a
                                   href={cert.credential_url}
                                   target="_blank"
@@ -430,7 +422,8 @@ export default function CandidateProfile() {
                           <div className="text-gray-500 dark:text-gray-400">No certifications listed.</div>
                         )}
                       </div>
-                    </div>                    {/* Career Preferences Section */}
+                    </div>
+                    {/* Career Preferences Section */}
                     <div className="mb-8">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
@@ -569,7 +562,8 @@ export default function CandidateProfile() {
                           </div>
                         )}
                       </div>
-                    </div>                    {/* Skills Section */}
+                    </div>
+                    {/* Skills Section */}
                     <div className="mb-8">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Skills & Endorsements</h3>
@@ -583,7 +577,7 @@ export default function CandidateProfile() {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {Array.isArray(candidateData.skills) && candidateData.skills.length > 0 ? (
-                          candidateData.skills.map((skillItem, idx) => (
+                          candidateData.skills.map((skillItem: any, idx: number) => (
                             <div
                               key={idx}
                               className="border border-gray-200 dark:border-gray-700 rounded-md p-3 hover:border-blue-300 hover:shadow-sm transition-all"
@@ -615,7 +609,7 @@ export default function CandidateProfile() {
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recommendations</h3>
                       <div className="space-y-4">
                         {Array.isArray(candidateData.recommendations) && candidateData.recommendations.length > 0 ? (
-                          candidateData.recommendations.map((rec, idx) => (
+                          candidateData.recommendations.map((rec: any, idx: number) => (
                             <div
                               key={idx}
                               className="border border-gray-200 dark:border-gray-700 rounded-md p-4 bg-white dark:bg-gray-800"
@@ -636,119 +630,13 @@ export default function CandidateProfile() {
                         )}
                       </div>
                     </div>
-                  </div>) : (
+                  </div>                ) : (
                   <div>
-                    {/* Application Status Section */}
-                    <div className="mb-8">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Application Status</h3>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          {applications.length} applications
-                        </span>
-                      </div>
-
-                      {applicationsLoading ? (
-                        <div className="flex justify-center items-center py-8">
-                          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal-500"></div>
-                          <span className="ml-2 text-gray-600 dark:text-gray-400">Loading applications...</span>
-                        </div>
-                      ) : applications.length > 0 ? (
-                        <div className="space-y-4">
-                          {applications.map((application, idx) => (
-                            <div key={idx} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800">
-                              <div className="flex items-start space-x-4">
-                                <div className="flex-shrink-0">
-                                  <div className="h-12 w-12 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-700">
-                                    {application.company_logo ? (
-                                      <Image
-                                        src={application.company_logo}
-                                        alt={application.company_name}
-                                        width={48}
-                                        height={48}
-                                        className="object-cover"
-                                      />
-                                    ) : (
-                                      <div className="h-full w-full flex items-center justify-center text-gray-400">
-                                        <FaBriefcase />
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-start justify-between">
-                                    <div>
-                                      <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                                        {application.job_title}
-                                      </h4>
-                                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                                        {application.company_name}
-                                      </p>
-                                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                                        Applied on {new Date(application.applied_at).toLocaleDateString()}
-                                      </p>
-                                    </div>
-
-                                    <div className="flex flex-col items-end space-y-2">
-                                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${application.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' :
-                                          application.status === 'reviewed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
-                                            application.status === 'shortlisted' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
-                                              application.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
-                                                'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
-                                        }`}>
-                                        {application.status === 'pending' && <FaClock className="mr-1" />}
-                                        {application.status === 'reviewed' && <FaEye className="mr-1" />}
-                                        {application.status === 'shortlisted' && <FaCheckCircle className="mr-1" />}
-                                        {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
-                                      </span>
-
-                                      <a
-                                        href={`/user/jobs/${application.job_id}`}
-                                        className="text-xs text-teal-600 hover:text-teal-800 flex items-center"
-                                      >
-                                        View Job <FaExternalLinkAlt className="ml-1" />
-                                      </a>
-                                    </div>
-                                  </div>
-
-                                  {application.updated_at !== application.applied_at && (
-                                    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                                      <p className="text-xs text-gray-500 dark:text-gray-500">
-                                        Last updated: {new Date(application.updated_at).toLocaleDateString()}
-                                      </p>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-center py-8">
-                          <FaFileAlt className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                          <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">No applications yet</h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                            Start applying to jobs to track your application status here.
-                          </p>
-                          <a
-                            href="/user/jobs"
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700"
-                          >
-                            Browse Jobs
-                          </a>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Recent Activity Section */}
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Activity</h3>
-                      <div className="text-center py-8">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Activities such as posts, articles, and comments will appear here.
-                        </p>
-                      </div>
-                    </div>
+                    {/* Use the reusable ApplicationStatusSection component */}
+                    <ApplicationStatusSection 
+                      className=""
+                      showSimilarJobs={false}
+                    />
                   </div>
                 )}
               </div>
@@ -763,16 +651,18 @@ export default function CandidateProfile() {
                   Profile Actions
                 </p>
 
-                <div className="space-y-2">                  <Link
-                  href={`/user/candidate/${slug}/edit`}
-                  className="w-full text-left text-sm px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md flex items-center"
-                >
-                  <FaEdit className="mr-2" />
-                  Edit Profile
-                </Link>                  <Link
-                  href={`/user/candidate/${slug}/edit?step=2`}
-                  className="w-full text-left text-sm px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md flex items-center"
-                >
+                <div className="space-y-2">
+                  <Link
+                    href={`/user/candidate/${slug}/edit`}
+                    className="w-full text-left text-sm px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md flex items-center"
+                  >
+                    <FaEdit className="mr-2" />
+                    Edit Profile
+                  </Link>
+                  <Link
+                    href={`/user/candidate/${slug}/edit?step=2`}
+                    className="w-full text-left text-sm px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md flex items-center"
+                  >
                     <FaBriefcase className="mr-2" />
                     Add Experience
                   </Link>
@@ -859,11 +749,10 @@ export default function CandidateProfile() {
                 </p>
 
                 <div className="space-y-4">
-                  {[
-                    { name: "Alex Johnson", title: "Product Designer", image: "/images/avatar.jpg" },
-                    { name: "Sarah Miller", title: "UX Researcher", image: "/images/avatar.jpg" },
-                    { name: "David Chen", title: "UI Developer", image: "/images/avatar.jpg" }
-                  ].map((person, idx) => (
+                  {[                    { name: "Alex Johnson", title: "Product Designer", image: "https://via.placeholder.com/40" },
+                    { name: "Sarah Miller", title: "UX Researcher", image: "https://via.placeholder.com/40" },
+                    { name: "David Chen", title: "UI Developer", image: "https://via.placeholder.com/40" }
+                  ].map((person: any, idx: number) => (
                     <div key={idx} className="flex items-center gap-3">
                       <div className="relative h-8 w-8 rounded-full overflow-hidden">
                         <Image

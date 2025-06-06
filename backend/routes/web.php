@@ -25,6 +25,11 @@ Route::get('/test-web', function() {
     return response()->json(['message' => 'Web route is working']);
 });
 
+// Test route for bulk status update
+Route::get('/test-bulk', function() {
+    return view('test_bulk');
+});
+
 // 🔓 Public Routes (Accessible without login)
 Route::get('/jobs', [JobListingController::class, 'index']);
 Route::get('/jobs/{job}', [JobListingController::class, 'show']);

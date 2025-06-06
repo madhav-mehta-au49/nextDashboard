@@ -7,26 +7,25 @@ use Illuminate\Database\Eloquent\Model;
 
 class Interview extends Model
 {
-    use HasFactory;
-
-    /**
+    use HasFactory;    /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
      */
     protected $fillable = [
         'job_application_id',
+        'interview_type',
         'scheduled_at',
         'duration_minutes',
-        'type',  // 'phone', 'video', 'in-person', 'technical', 'hr'
-        'status', // 'scheduled', 'completed', 'cancelled', 'rescheduled'
-        'notes',
         'location',
         'meeting_link',
-        'interviewer_id',
-        'interviewer_name',
-        'feedback',
-        'outcome',  // 'passed', 'failed', 'pending'
+        'interviewer_ids',
+        'interview_notes',
+        'status',
+        'candidate_notes',
+        'internal_notes',
+        'timezone',
+        'reminded_at',
     ];
 
     /**
@@ -37,6 +36,8 @@ class Interview extends Model
     protected $casts = [
         'scheduled_at' => 'datetime',
         'duration_minutes' => 'integer',
+        'interviewer_ids' => 'array',
+        'reminded_at' => 'datetime',
     ];
 
     /**
@@ -54,14 +55,24 @@ class Interview extends Model
     {
         return $this->belongsTo(Candidate::class, 'id', 'candidate_id')
                     ->withDefault();
+    }    /**
+     * Get the interviewer users if available.
+     */
+    public function interviewers()
+    {
+        return $this->belongsToMany(User::class, 'interview_interviewers', 'interview_id', 'user_id');
     }
 
     /**
-     * Get the interviewer user if available.
+     * Get the primary interviewer (first in the list).
      */
-    public function interviewer()
+    public function primaryInterviewer()
     {
-        return $this->belongsTo(User::class, 'interviewer_id');
+        if (empty($this->interviewer_ids)) {
+            return null;
+        }
+        
+        return User::find($this->interviewer_ids[0]);
     }
 
     /**

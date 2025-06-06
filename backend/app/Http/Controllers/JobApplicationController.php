@@ -267,14 +267,16 @@ class JobApplicationController extends Controller
         $request->validate([
             'application_ids' => 'required|array',
             'application_ids.*' => 'required|integer|exists:job_applications,id',
-            'status' => 'required|string|in:pending,reviewing,interviewed,offered,hired,rejected'
+            'status' => 'required|string|in:pending,reviewing,interviewed,offered,hired,rejected',
+            'notes' => 'nullable|string|max:1000'
         ]);
 
         try {
             $updatedCount = $this->jobApplicationService->bulkUpdateApplicationStatus(
                 $request->user(),
                 $request->application_ids,
-                $request->status
+                $request->status,
+                $request->notes
             );
             
             return response()->json([
@@ -287,6 +289,56 @@ class JobApplicationController extends Controller
                 'status' => 'error',
                 'message' => $e->getMessage()
             ], 403);
+        }
+    }
+
+    /**
+     * Get status history for a specific job application
+     */
+    public function statusHistory(JobApplication $jobApplication): JsonResponse
+    {
+        try {
+            // Check if user can view this application
+            if (!$this->jobApplicationService->checkUserCanViewApplication(
+                request()->user(), 
+                $jobApplication
+            )) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Unauthorized to view this application'
+                ], 403);
+            }
+
+            // Get status history with user information
+            $statusHistory = $jobApplication->statusHistory()
+                ->with(['changedBy:id,name,email,role'])
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function ($history) {
+                    return [
+                        'id' => $history->id,
+                        'old_status' => $history->old_status,
+                        'new_status' => $history->new_status,
+                        'notes' => $history->notes,
+                        'changed_by' => $history->changed_by,
+                        'created_at' => $history->created_at,
+                        'changed_by_user' => $history->changedBy ? [
+                            'id' => $history->changedBy->id,
+                            'name' => $history->changedBy->name,
+                            'role' => $history->changedBy->role,
+                        ] : null,
+                    ];
+                });
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $statusHistory
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 }

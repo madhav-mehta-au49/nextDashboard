@@ -48,11 +48,11 @@ export default function CompanyApplicationsPage({ jobId }: ApplicationsPageProps
       setLoading(false);
     }
   };
-
   const handleStatusUpdate = async (applicationId: number, newStatus: string) => {
     try {
       setLoadingActions(prev => ({ ...prev, [applicationId]: true }));
-      await JobApplicationService.updateApplicationStatus(applicationId, newStatus);
+      const notes = `Status updated to ${newStatus} by employer via company applications page`;
+      await JobApplicationService.updateApplicationStatus(applicationId, newStatus, notes);
 
       // Update local state
       setApplications(prev =>

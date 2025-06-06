@@ -17,12 +17,27 @@ const api = axios.create({
   },
 });
 
-// Add auth token to requests if available
+// Add auth token and cookies to requests if available
 api.interceptors.request.use((config) => {
+  // Try to get token from localStorage first
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  
+  // Also ensure cookies are sent for session-based auth
+  if (typeof window !== 'undefined') {
+    // Get CSRF token from cookies if available
+    const csrfToken = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('XSRF-TOKEN='))
+      ?.split('=')[1];
+    
+    if (csrfToken) {
+      config.headers['X-XSRF-TOKEN'] = decodeURIComponent(csrfToken);
+    }
+  }
+  
   return config;
 });
 
@@ -80,13 +95,12 @@ export interface ApplicationFilters {
 export interface BulkStatusUpdate {
   application_ids: number[];
   status: 'pending' | 'reviewing' | 'interviewed' | 'offered' | 'hired' | 'rejected';
+  notes?: string;
 }
 
-export class JobApplicationService {
-  /**
+export class JobApplicationService {  /**
    * Get all job applications for the current user
-   */
-  static async getApplications(filters?: ApplicationFilters): Promise<{
+   */  static async getApplications(filters?: ApplicationFilters): Promise<{
     data: JobApplication[];
     meta: {
       current_page: number;
@@ -95,8 +109,86 @@ export class JobApplicationService {
       total: number;
     };
   }> {
-    const response = await api.get('/job-applications', { params: filters });
-    return response.data;
+    try {
+      // First, try to get candidate-specific applications (for candidates)
+      try {
+        // Try to get the current user's candidate profile first
+        const candidateResponse = await api.get('/candidates/me');
+        if (candidateResponse?.data?.data?.id) {
+          const candidateId = candidateResponse.data.data.id;
+          console.log(`Using candidate ID: ${candidateId} from /candidates/me`);
+          
+          // Store for future use
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('candidateId', candidateId.toString());
+          }
+          
+          // Fetch applications for this candidate
+          const response = await api.get(`/candidates/${candidateId}/applications`, { 
+            params: {
+              ...filters,
+              include_timeline: true
+            }
+          });
+          return {
+            data: response.data.data || [],
+            meta: response.data.meta || {
+              current_page: 1,
+              last_page: 1,
+              per_page: 10,
+              total: response.data.data?.length || 0
+            }
+          };
+        }
+      } catch (candidateError) {
+        console.log('Could not fetch candidate profile:', candidateError);
+      }
+      
+      // Second, try using a stored candidate ID from localStorage
+      if (typeof window !== 'undefined') {
+        const storedCandidateId = localStorage.getItem('candidateId');
+        if (storedCandidateId) {
+          try {
+            console.log(`Using stored candidate ID: ${storedCandidateId}`);
+            const response = await api.get(`/candidates/${storedCandidateId}/applications`, { 
+              params: {
+                ...filters,
+                include_timeline: true
+              }
+            });
+            return {
+              data: response.data.data || [],
+              meta: response.data.meta || {
+                current_page: 1,
+                last_page: 1,
+                per_page: 10,
+                total: response.data.data?.length || 0
+              }
+            };
+          } catch (err) {
+            console.log('Failed to use stored candidate ID:', err);
+          }
+        }
+      }
+      
+      // Last resort - try to use the job applications endpoint (for employers/admins)
+      console.log('Fallback to /job-applications (employer endpoint)');
+      const response = await api.get('/job-applications', { params: filters });
+      return response.data;
+    } catch (error) {
+      console.error('All application fetch methods failed:', error);
+      
+      // Return empty data instead of throwing to avoid breaking the UI
+      return {
+        data: [],
+        meta: {
+          current_page: 1,
+          last_page: 1,
+          per_page: 10,
+          total: 0
+        }
+      };
+    }
   }
 
   /**
@@ -395,6 +487,14 @@ export class JobApplicationService {
    */
   static async getApplicationHistory(id: number): Promise<any[]> {
     const response = await api.get(`/job-applications/${id}/history`);
+    return response.data.data;
+  }
+
+  /**
+   * Get application status history
+   */
+  static async getApplicationStatusHistory(id: number): Promise<any[]> {
+    const response = await api.get(`/job-applications/${id}/status-history`);
     return response.data.data;
   }
 

@@ -6,9 +6,12 @@ use App\Models\Interview;
 use App\Models\JobApplication;
 use App\Models\Candidate;
 use App\Http\Resources\InterviewResource;
+use App\Mail\InterviewScheduled;
+use App\Mail\InterviewUpdated;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
 
 class InterviewController extends Controller
@@ -29,10 +32,9 @@ class InterviewController extends Controller
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
-        
-        // Filter by type
+          // Filter by type
         if ($request->has('type')) {
-            $query->where('type', $request->type);
+            $query->where('interview_type', $request->type);
         }
         
         // Filter by date range
@@ -43,10 +45,14 @@ class InterviewController extends Controller
         if ($request->has('end_date')) {
             $query->where('scheduled_at', '<=', $request->end_date);
         }
-        
-        // Filter by interviewer
+          // Filter by interviewer
         if ($request->has('interviewer_id')) {
             $query->where('interviewer_id', $request->interviewer_id);
+        }
+        
+        // Filter by job application
+        if ($request->has('job_application_id')) {
+            $query->where('job_application_id', $request->job_application_id);
         }
         
         // Sort options
@@ -67,38 +73,45 @@ class InterviewController extends Controller
         } else {
             $query->orderBy('scheduled_at', 'asc');
         }
-        
-        $interviews = $query->paginate($request->per_page ?? 10);
+          $interviews = $query->paginate($request->per_page ?? 10);
         
         return response()->json([
             'status' => 'success',
-            'data' => InterviewResource::collection($interviews)
+            'data' => InterviewResource::collection($interviews),
+            'meta' => [
+                'current_page' => $interviews->currentPage(),
+                'last_page' => $interviews->lastPage(),
+                'per_page' => $interviews->perPage(),
+                'total' => $interviews->total(),
+            ]
         ]);
     }
-    
-    /**
+      /**
      * Store a newly created interview.
-     */
-    public function store(Request $request): JsonResponse
+     */    public function store(Request $request): JsonResponse
     {
-        $request->validate([
+        $validatedData = $request->validate([
             'job_application_id' => 'required|exists:job_applications,id',
+            'interview_type' => 'required|string|in:phone,video,in-person,panel',
             'scheduled_at' => 'required|date|after:now',
             'duration_minutes' => 'required|integer|min:15|max:240',
-            'type' => 'required|string|in:phone,video,in-person,technical,hr',
-            'status' => 'nullable|string|in:scheduled,completed,cancelled,rescheduled',
-            'notes' => 'nullable|string',
             'location' => 'nullable|string|max:255',
-            'meeting_link' => 'nullable|string|max:255',
-            'interviewer_id' => 'nullable|exists:users,id',
-            'interviewer_name' => 'nullable|string|max:255',
+            'meeting_link' => 'nullable|url|max:500',
+            'interviewer_ids' => 'nullable|array',
+            'interviewer_ids.*' => 'exists:users,id',
+            'interview_notes' => 'nullable|string|max:2000',
+            'candidate_notes' => 'nullable|string|max:1000',
+            'internal_notes' => 'nullable|string|max:2000',
+            'timezone' => 'nullable|string|max:50',
         ]);
-        
-        $interview = Interview::create($request->all());
+          $interview = Interview::create(array_merge($validatedData, [
+            'status' => 'scheduled',
+            'timezone' => $request->timezone ?? 'UTC',
+        ]));
         
         // Load relationships
         $interview->load([
-            'jobApplication', 
+            'jobApplication',
             'jobApplication.candidate',
             'jobApplication.jobListing',
             'jobApplication.jobListing.company',
@@ -106,8 +119,22 @@ class InterviewController extends Controller
         
         // Update job application status
         $jobApplication = JobApplication::find($request->job_application_id);
-        if ($jobApplication && $jobApplication->status === 'applied') {
+        if ($jobApplication && $jobApplication->status === 'reviewing') {
             $jobApplication->update(['status' => 'interview_scheduled']);
+        }
+        
+        // Send interview scheduled notification
+        try {
+            if ($interview->jobApplication && $interview->jobApplication->candidate && 
+                $interview->jobApplication->candidate->user && $interview->jobApplication->candidate->user->email) {
+                Mail::to($interview->jobApplication->candidate->user->email)
+                    ->send(new InterviewScheduled($interview));
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to send interview scheduled notification', [
+                'interview_id' => $interview->id,
+                'error' => $e->getMessage()
+            ]);
         }
         
         return response()->json([
@@ -135,62 +162,70 @@ class InterviewController extends Controller
             'data' => new InterviewResource($interview)
         ]);
     }
-    
-    /**
+      /**
      * Update the specified interview.
-     */
-    public function update(Request $request, Interview $interview): JsonResponse
+     */    public function update(Request $request, Interview $interview): JsonResponse
     {
-        $request->validate([
+        $validatedData = $request->validate([
+            'interview_type' => 'sometimes|string|in:phone,video,in-person,panel',
             'scheduled_at' => 'sometimes|date|after:now',
             'duration_minutes' => 'sometimes|integer|min:15|max:240',
-            'type' => 'sometimes|string|in:phone,video,in-person,technical,hr',
-            'status' => 'sometimes|string|in:scheduled,completed,cancelled,rescheduled',
-            'notes' => 'nullable|string',
             'location' => 'nullable|string|max:255',
-            'meeting_link' => 'nullable|string|max:255',
-            'interviewer_id' => 'nullable|exists:users,id',
-            'interviewer_name' => 'nullable|string|max:255',
-            'feedback' => 'nullable|string',
-            'outcome' => 'nullable|string|in:passed,failed,pending',
+            'meeting_link' => 'nullable|url|max:500',
+            'interviewer_ids' => 'nullable|array',
+            'interviewer_ids.*' => 'exists:users,id',
+            'interview_notes' => 'nullable|string|max:2000',
+            'candidate_notes' => 'nullable|string|max:1000',
+            'internal_notes' => 'nullable|string|max:2000',
+            'status' => 'sometimes|string|in:scheduled,confirmed,completed,cancelled,rescheduled',
+            'timezone' => 'nullable|string|max:50',
         ]);
+          // Capture original values for change detection
+        $originalScheduledAt = $interview->scheduled_at;
+        $originalStatus = $interview->status;
         
-        $interview->update($request->all());
+        $interview->update($validatedData);
         
-        // If status changed to completed, update the interview info
-        if ($request->has('status') && $request->status === 'completed' && $interview->status !== 'completed') {
-            $interview->update([
-                'feedback' => $request->feedback ?? $interview->feedback,
-                'outcome' => $request->outcome ?? 'pending',
+        // Determine change type for email notification
+        $changeType = 'updated';
+        if ($request->has('status')) {
+            if ($request->status === 'cancelled') {
+                $changeType = 'cancelled';
+            } elseif ($request->status === 'rescheduled' || 
+                     ($request->has('scheduled_at') && $originalScheduledAt !== $request->scheduled_at)) {
+                $changeType = 'rescheduled';
+            }
+        } elseif ($request->has('scheduled_at') && $originalScheduledAt !== $request->scheduled_at) {
+            $changeType = 'rescheduled';
+        }
+        
+        // Send interview update notification
+        try {
+            if ($interview->jobApplication && $interview->jobApplication->candidate && 
+                $interview->jobApplication->candidate->user && $interview->jobApplication->candidate->user->email) {
+                Mail::to($interview->jobApplication->candidate->user->email)
+                    ->send(new InterviewUpdated($interview, $changeType));
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to send interview update notification', [
+                'interview_id' => $interview->id,
+                'error' => $e->getMessage()
             ]);
-            
-            // Update job application status based on outcome
-            if ($request->has('outcome')) {
-                $jobApplication = $interview->jobApplication;
-                if ($jobApplication) {
-                    if ($request->outcome === 'passed') {
-                        $jobApplication->update(['status' => 'interview_passed']);
-                    } elseif ($request->outcome === 'failed') {
-                        $jobApplication->update(['status' => 'rejected']);
-                    }
-                }
+        }
+        
+        // If status changed to completed, update the job application
+        if ($request->has('status') && $request->status === 'completed') {
+            $jobApplication = $interview->jobApplication;
+            if ($jobApplication) {
+                $jobApplication->update(['status' => 'interviewed']);
             }
         }
         
-        // If status changed to cancelled, add cancellation reason
+        // If status changed to cancelled, revert job application status
         if ($request->has('status') && $request->status === 'cancelled') {
-            $interview->update([
-                'notes' => $request->notes ?? $interview->notes,
-            ]);
-        }
-        
-        // If status changed to rescheduled, update the scheduled_at time
-        if ($request->has('status') && $request->status === 'rescheduled') {
-            if (!$request->has('scheduled_at')) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'New scheduled date is required when rescheduling an interview'
-                ], 422);
+            $jobApplication = $interview->jobApplication;
+            if ($jobApplication && $jobApplication->status === 'interview_scheduled') {
+                $jobApplication->update(['status' => 'reviewing']);
             }
         }
         

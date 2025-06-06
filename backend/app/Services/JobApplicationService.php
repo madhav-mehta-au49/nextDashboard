@@ -6,9 +6,16 @@ use App\Models\JobApplication;
 use App\Models\JobListing;
 use App\Models\Candidate;
 use App\Models\User;
+use App\Models\ApplicationStatusHistory;
 use App\Http\Requests\JobApplicationRequest;
+use App\Mail\ApplicationReceived;
+use App\Mail\ApplicationStatusChanged;
+use App\Mail\InterviewScheduled;
+use App\Mail\InterviewUpdated;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -69,21 +76,33 @@ class JobApplicationService
 
             return $application->load(['jobListing', 'candidate']);
         });
-    }
-
-    /**
+    }    /**
      * Update application status
      */
-    public function updateApplicationStatus(JobApplication $application, string $status, ?string $notes = null): JobApplication
+    public function updateApplicationStatus(JobApplication $application, string $status, ?string $notes = null, ?User $changedBy = null): JobApplication
     {
-        $application->update([
-            'status' => $status,
-            'status_updated_at' => now(),
-            'status_notes' => $notes,
-        ]);
+        $oldStatus = $application->status;
+        
+        // Only update and create history if status actually changed
+        if ($oldStatus !== $status) {
+            $application->update([
+                'status' => $status,
+                'status_updated_at' => now(),
+                'status_notes' => $notes,
+            ]);
 
-        // Send status update notification
-        $this->sendStatusUpdateNotification($application);
+            // Create status history record
+            ApplicationStatusHistory::create([
+                'job_application_id' => $application->id,
+                'old_status' => $oldStatus,
+                'new_status' => $status,
+                'notes' => $notes,
+                'changed_by' => $changedBy ? $changedBy->id : Auth::id(),
+            ]);
+
+            // Send status update notification
+            $this->sendStatusUpdateNotification($application);
+        }
 
         return $application;
     }
@@ -228,17 +247,27 @@ class JobApplicationService
     private function decrementApplicantsCount(int $jobListingId): void
     {
         JobListing::where('id', $jobListingId)->decrement('applicants_count');
-    }
-
-    /**
+    }    /**
      * Send application notifications
      */
-    private function sendApplicationNotifications(JobApplication $application): void
+    public function sendApplicationNotifications(JobApplication $application): void
     {
-        // Implement notification logic
-        // - Email to HR/Company
-        // - Email confirmation to candidate
-        // - Slack/Teams notification if configured
+        try {
+            // Send confirmation email to candidate
+            if ($application->candidate && $application->candidate->user && $application->candidate->user->email) {
+                Mail::to($application->candidate->user->email)
+                    ->send(new ApplicationReceived($application));
+            }
+            
+            // Send notification to company/HR (optional)
+            // This could be implemented later if needed
+            
+        } catch (\Exception $e) {
+            \Log::error('Failed to send application notifications', [
+                'application_id' => $application->id,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     /**
@@ -246,7 +275,26 @@ class JobApplicationService
      */
     private function sendStatusUpdateNotification(JobApplication $application): void
     {
-        // Implement status update notification logic
+        try {
+            // Get the previous status from the database
+            $originalApplication = JobApplication::find($application->id);
+            $oldStatus = $originalApplication?->getOriginal('status') ?? 'pending';
+            
+            // Only send if status actually changed
+            if ($oldStatus !== $application->status) {
+                // Send email to candidate
+                if ($application->candidate && $application->candidate->user && $application->candidate->user->email) {
+                    Mail::to($application->candidate->user->email)
+                        ->send(new ApplicationStatusChanged($application, $oldStatus, $application->status));
+                }
+            }
+            
+        } catch (\Exception $e) {
+            \Log::error('Failed to send status update notification', [
+                'application_id' => $application->id,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     /**
@@ -494,14 +542,15 @@ class JobApplicationService
             }
             
             $allowedFields = ['cover_letter', 'salary_expectation', 'availability_date'];
-            $updateData = array_intersect_key($data, array_flip($allowedFields));
-        } else {
+            $updateData = array_intersect_key($data, array_flip($allowedFields));        } else {
             // Employers can update status and notes
-            $allowedFields = ['status', 'status_notes'];
+            $allowedFields = ['status', 'status_notes', 'notes'];
             $updateData = array_intersect_key($data, array_flip($allowedFields));
             
+            // If status is being updated, use the dedicated updateApplicationStatus method
             if (isset($updateData['status'])) {
-                $updateData['status_updated_at'] = now();
+                $notes = $updateData['notes'] ?? $updateData['status_notes'] ?? null;
+                return $this->updateApplicationStatus($application, $updateData['status'], $notes, $user);
             }
         }
 
@@ -621,12 +670,10 @@ class JobApplicationService
             ->take($limit)
             ->values()
             ->toArray();
-    }
-
-    /**
+    }    /**
      * Bulk update application status
      */
-    public function bulkUpdateApplicationStatus(User $user, array $applicationIds, string $status): int
+    public function bulkUpdateApplicationStatus(User $user, array $applicationIds, string $status, ?string $notes = null): int
     {
         // Get applications and verify access
         $applications = JobApplication::with('jobListing')
@@ -634,10 +681,12 @@ class JobApplicationService
             ->get();
 
         $accessibleApplicationIds = [];
+        $accessibleApplications = [];
 
         foreach ($applications as $application) {
             if ($this->checkUserCanViewApplication($user, $application)) {
                 $accessibleApplicationIds[] = $application->id;
+                $accessibleApplications[] = $application;
             }
         }
 
@@ -645,17 +694,36 @@ class JobApplicationService
             throw new \Exception('No accessible applications found');
         }
 
-        // Update applications
-        $updatedCount = JobApplication::whereIn('id', $accessibleApplicationIds)
-            ->update([
-                'status' => $status,
-                'status_updated_at' => now(),
-            ]);
+        $updatedCount = 0;
 
-        // Send notifications for updated applications
-        $updatedApplications = JobApplication::whereIn('id', $accessibleApplicationIds)->get();
-        foreach ($updatedApplications as $application) {
-            $this->sendStatusUpdateNotification($application);
+        // Update each application individually to create proper status history
+        foreach ($accessibleApplications as $application) {
+            $oldStatus = $application->status;
+            
+            // Only update if status is actually changing
+            if ($oldStatus !== $status) {
+                // Update the application
+                $application->update([
+                    'status' => $status,
+                    'status_updated_at' => now(),
+                ]);
+
+                // Create status history record with proper notes
+                $historyNotes = $notes ?: "Status updated to {$status} by employer via bulk action";
+                
+                ApplicationStatusHistory::create([
+                    'job_application_id' => $application->id,
+                    'old_status' => $oldStatus,
+                    'new_status' => $status,
+                    'changed_by' => $user->id,
+                    'notes' => $historyNotes,
+                ]);
+
+                // Send notification
+                $this->sendStatusUpdateNotification($application);
+                
+                $updatedCount++;
+            }
         }
 
         return $updatedCount;

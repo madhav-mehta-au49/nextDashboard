@@ -31,6 +31,9 @@ import {
   FiInfo
 } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
+import InterviewSchedulingModal from './InterviewSchedulingModal';
+import InterviewManagement from './InterviewManagement';
+import BulkApplicationActions from './BulkApplicationActions';
 
 interface CompanyApplicationsManagerProps {
   companyId?: number | null;
@@ -42,10 +45,13 @@ const CompanyApplicationsManager: React.FC<CompanyApplicationsManagerProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [searchTerm, setSearchTerm] = useState('');  const [selectedApplication, setSelectedApplication] = useState<JobApplication | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedApplications, setSelectedApplications] = useState<JobApplication[]>([]);  const [selectedApplication, setSelectedApplication] = useState<JobApplication | null>(null);
   const [loadingActions, setLoadingActions] = useState<{ [key: number]: boolean }>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [isInterviewModalOpen, setIsInterviewModalOpen] = useState(false);
+  const [applicationToSchedule, setApplicationToSchedule] = useState<JobApplication | null>(null);
 
   useEffect(() => {
     loadApplications();
@@ -76,7 +82,8 @@ const CompanyApplicationsManager: React.FC<CompanyApplicationsManagerProps> = ({
   };  const handleStatusUpdate = async (applicationId: number, newStatus: string) => {
     try {
       setLoadingActions(prev => ({ ...prev, [applicationId]: true }));
-      await JobApplicationService.updateApplicationStatus(applicationId, newStatus);
+      const notes = `Status updated to ${newStatus} by employer via company dashboard`;
+      await JobApplicationService.updateApplicationStatus(applicationId, newStatus, notes);
 
       // Cast newStatus to the proper type
       const validStatus = newStatus as 'pending' | 'reviewing' | 'interviewed' | 'offered' | 'hired' | 'rejected';
@@ -106,12 +113,78 @@ const CompanyApplicationsManager: React.FC<CompanyApplicationsManagerProps> = ({
       toast.error('Failed to update application status');
     } finally {
       setLoadingActions(prev => ({ ...prev, [applicationId]: false }));
-    }
+    }  };
+  
+  const handleScheduleInterview = (application: JobApplication) => {
+    setApplicationToSchedule(application);
+    setIsInterviewModalOpen(true);
   };
+
+  const handleInterviewScheduled = async () => {
+    // Refresh applications list to show updated status
+    await loadApplications();
+    
+    // Update dashboard stats
+    if (onStatsUpdate) {
+      await onStatsUpdate();
+    }
+    
+    // Close modal
+    setIsInterviewModalOpen(false);
+    setApplicationToSchedule(null);
+  };
+  
   const handleSearch = () => {
     setCurrentPage(1);
     loadApplications();
-  };  const handleResumeDownload = (resumeUrl: string, filename: string) => {
+  };
+
+  // Bulk operations handlers
+  const handleSelectApplication = (application: JobApplication, checked: boolean) => {
+    if (checked) {
+      setSelectedApplications(prev => [...prev, application]);
+    } else {
+      setSelectedApplications(prev => prev.filter(app => app.id !== application.id));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedApplications([...filteredApplications]);
+    } else {
+      setSelectedApplications([]);
+    }
+  };
+
+  const handleBulkApplicationsUpdated = (updatedApplications: JobApplication[]) => {
+    // Update the main applications state with the updated applications
+    setApplications(prev => 
+      prev.map(app => {
+        const updated = updatedApplications.find(updatedApp => updatedApp.id === app.id);
+        return updated || app;
+      })
+    );
+
+    // Update dashboard stats
+    if (onStatsUpdate) {
+      onStatsUpdate();
+    }
+  };
+
+  const handleBulkSelectionCleared = () => {
+    setSelectedApplications([]);
+  };  const handleBulkScheduleInterview = (applications: JobApplication[]) => {
+    // For bulk interview scheduling, we'll open the modal for the first application
+    // and provide a way to apply to all selected applications
+    if (applications.length > 0 && applications[0]) {
+      setApplicationToSchedule(applications[0]);
+      setIsInterviewModalOpen(true);
+      // Store the bulk applications for potential batch scheduling
+      // This can be enhanced later to handle true bulk scheduling
+    }
+  };
+
+  const handleResumeDownload = (resumeUrl: string, filename: string) => {
     try {
       const fullUrl = `${process.env.NEXT_PUBLIC_BASE_URL}${resumeUrl}`;
       console.log('Downloading from:', fullUrl); // Debug log
@@ -209,14 +282,18 @@ const CompanyApplicationsManager: React.FC<CompanyApplicationsManagerProps> = ({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header with search and filters */}
+    <div className="space-y-6">      {/* Header with search and filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Applications Management</h2>
             <p className="text-sm text-gray-600 mt-1">
               {applications.length} total applications
+              {selectedApplications.length > 0 && (
+                <span className="ml-2 text-teal-600 font-medium">
+                  • {selectedApplications.length} selected
+                </span>
+              )}
             </p>
           </div>
           
@@ -240,36 +317,60 @@ const CompanyApplicationsManager: React.FC<CompanyApplicationsManagerProps> = ({
               Search
             </button>
           </div>
-        </div>
-
-        {/* Status Filter Tabs */}
+        </div>        {/* Status Filter Tabs */}
         <div className="mt-6 border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
-            {[
-              { key: 'all', label: 'All', count: statusCounts.all },
-              { key: 'pending', label: 'Pending', count: statusCounts.pending },
-              { key: 'reviewing', label: 'Reviewing', count: statusCounts.reviewing },
-              { key: 'interviewed', label: 'Interviewed', count: statusCounts.interviewed },
-              { key: 'offered', label: 'Offered', count: statusCounts.offered },
-              { key: 'hired', label: 'Hired', count: statusCounts.hired },
-              { key: 'rejected', label: 'Rejected', count: statusCounts.rejected },
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => {
-                  setStatusFilter(tab.key);
-                  setCurrentPage(1);
-                }}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  statusFilter === tab.key
-                    ? 'border-teal-500 text-teal-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                {tab.label} ({tab.count})
-              </button>
-            ))}
-          </nav>
+          <div className="flex items-center justify-between mb-4">
+            <nav className="-mb-px flex flex-wrap space-x-8">
+              {[
+                { key: 'all', label: 'All', count: statusCounts.all },
+                { key: 'pending', label: 'Pending', count: statusCounts.pending },
+                { key: 'reviewing', label: 'Reviewing', count: statusCounts.reviewing },
+                { key: 'interviewed', label: 'Interviewed', count: statusCounts.interviewed },
+                { key: 'offered', label: 'Offered', count: statusCounts.offered },
+                { key: 'hired', label: 'Hired', count: statusCounts.hired },
+                { key: 'rejected', label: 'Rejected', count: statusCounts.rejected },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => {
+                    setStatusFilter(tab.key);
+                    setCurrentPage(1);
+                    setSelectedApplications([]); // Clear selection when changing filters
+                  }}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    statusFilter === tab.key
+                      ? 'border-teal-500 text-teal-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {tab.label} ({tab.count})
+                </button>
+              ))}
+            </nav>
+            
+            {/* Bulk Selection Controls */}
+            {filteredApplications.length > 0 && (
+              <div className="flex items-center space-x-3">
+                <label className="flex items-center space-x-2 text-sm text-gray-600">
+                  <input
+                    type="checkbox"
+                    checked={selectedApplications.length === filteredApplications.length && filteredApplications.length > 0}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                  />
+                  <span>Select All</span>
+                </label>
+                {selectedApplications.length > 0 && (
+                  <button
+                    onClick={() => setSelectedApplications([])}
+                    className="text-sm text-gray-500 hover:text-gray-700"
+                  >
+                    Clear Selection
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>      {/* Applications List */}
       <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
@@ -294,24 +395,41 @@ const CompanyApplicationsManager: React.FC<CompanyApplicationsManagerProps> = ({
               </div>
             ) : (
               <div className="divide-y divide-gray-200 max-h-[calc(100vh-12rem)] overflow-y-auto">{/* Applications List with scrolling */}
-                {filteredApplications.map((application) => (
-                  <div
+                {filteredApplications.map((application) => (                  <div
                     key={application.id}
-                    className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
+                    className={`p-4 hover:bg-gray-50 transition-colors ${
                       selectedApplication?.id === application.id ? 'bg-teal-50 border-l-4 border-teal-500' : ''
                     }`}
-                    onClick={() => setSelectedApplication(application)}
                   >
                     <div className="flex items-start space-x-4">
+                      {/* Selection Checkbox */}
+                      <div className="flex-shrink-0 pt-1">
+                        <input
+                          type="checkbox"
+                          checked={selectedApplications.some(app => app.id === application.id)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleSelectApplication(application, e.target.checked);
+                          }}
+                          className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                        />
+                      </div>
+
                       {/* Candidate Avatar */}
-                      <div className="flex-shrink-0">
+                      <div 
+                        className="flex-shrink-0 cursor-pointer"
+                        onClick={() => setSelectedApplication(application)}
+                      >
                         <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
                           <FiUser className="w-6 h-6 text-gray-600" />
                         </div>
                       </div>
 
                       {/* Application Details */}
-                      <div className="flex-1 min-w-0">
+                      <div 
+                        className="flex-1 min-w-0 cursor-pointer"
+                        onClick={() => setSelectedApplication(application)}
+                      >
                         <div className="flex items-center justify-between">                          <h4 className="text-sm font-medium text-gray-900 truncate">
                             {application.candidate?.name || application.first_name + ' ' + application.last_name}
                           </h4>
@@ -366,17 +484,16 @@ const CompanyApplicationsManager: React.FC<CompanyApplicationsManagerProps> = ({
                         )}
                         
                         {application.status === 'reviewing' && (
-                          <>
-                            <button
+                          <>                            <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleStatusUpdate(application.id, 'interviewed');
+                                handleScheduleInterview(application);
                               }}
                               disabled={loadingActions[application.id]}
                               className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-purple-700 bg-purple-100 hover:bg-purple-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50"
                             >
                               <FiCalendar className="w-3 h-3 mr-1" />
-                              Interview
+                              Schedule Interview
                             </button>
                             <button
                               onClick={(e) => {
@@ -390,10 +507,18 @@ const CompanyApplicationsManager: React.FC<CompanyApplicationsManagerProps> = ({
                               Reject
                             </button>
                           </>
-                        )}
-
-                        {application.status === 'interviewed' && (
+                        )}                        {application.status === 'interviewed' && (
                           <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedApplication(application);
+                              }}
+                              className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            >
+                              <FiCalendar className="w-3 h-3 mr-1" />
+                              View Interviews
+                            </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -931,12 +1056,10 @@ const CompanyApplicationsManager: React.FC<CompanyApplicationsManagerProps> = ({
                             Reject
                           </button>
                         </div>
-                      )}
-
-                      {selectedApplication.status === 'reviewing' && (
+                      )}                      {selectedApplication.status === 'reviewing' && (
                         <div className="flex space-x-2">
                           <button
-                            onClick={() => handleStatusUpdate(selectedApplication.id, 'interviewed')}
+                            onClick={() => handleScheduleInterview(selectedApplication)}
                             disabled={loadingActions[selectedApplication.id]}
                             className="flex-1 inline-flex justify-center items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50"
                           >
@@ -984,11 +1107,19 @@ const CompanyApplicationsManager: React.FC<CompanyApplicationsManagerProps> = ({
                           <FiCheck className="w-4 h-4 mr-2" />
                           Mark as Hired
                         </button>
-                      )}
-                    </div>
+                      )}                    </div>
                   </div>
+
+                  {/* Interview Management for interviewed applications */}
+                  {selectedApplication.status === 'interviewed' && (
+                    <div className="mt-6">                      <InterviewManagement 
+                        application={selectedApplication}
+                        onInterviewUpdate={loadApplications}
+                      />
+                    </div>
+                  )}
                 </div>
-              </div>            ) : (
+              </div>) : (
               <div className="text-center p-6">
                 <FiUser className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No Application Selected</h3>
@@ -996,10 +1127,28 @@ const CompanyApplicationsManager: React.FC<CompanyApplicationsManagerProps> = ({
                   Select an application from the list to view details and take actions.
                 </p>
               </div>
-            )}
-          </div>
+            )}          </div>
         </div>
-      </div>
+      </div>      {/* Interview Scheduling Modal */}
+      {isInterviewModalOpen && applicationToSchedule && (
+        <InterviewSchedulingModal
+          isOpen={isInterviewModalOpen}
+          onClose={() => {
+            setIsInterviewModalOpen(false);
+            setApplicationToSchedule(null);
+          }}
+          application={applicationToSchedule}
+          onInterviewScheduled={handleInterviewScheduled}
+        />
+      )}      {/* Bulk Actions Toolbar */}
+      {selectedApplications.length > 0 && (
+        <BulkApplicationActions
+          selectedApplications={selectedApplications}
+          onApplicationsUpdated={handleBulkApplicationsUpdated}
+          onSelectionCleared={handleBulkSelectionCleared}
+          onScheduleInterview={handleBulkScheduleInterview}
+        />
+      )}
     </div>
   );
 };

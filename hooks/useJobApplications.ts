@@ -28,7 +28,6 @@ export const useJobApplications = (initialFilters?: ApplicationFilters): UseJobA
   const [error, setError] = useState<string | null>(null);
   const [meta, setMeta] = useState<UseJobApplicationsReturn['meta']>(null);
   const [currentFilters, setCurrentFilters] = useState<ApplicationFilters>(initialFilters || {});
-
   const fetchApplications = useCallback(async (filters?: ApplicationFilters) => {
     setLoading(true);
     setError(null);
@@ -39,10 +38,19 @@ export const useJobApplications = (initialFilters?: ApplicationFilters): UseJobA
         page: 1 // Reset to first page for new fetch
       });
       
-      setApplications(result.data);
-      setMeta(result.meta);
-      setCurrentFilters({ ...filters, page: 1 });
+      if (result.data) {
+        setApplications(result.data);
+        setMeta(result.meta);
+        setCurrentFilters({ ...filters, page: 1 });
+      } else {
+        // Handle case where data is not in expected format
+        console.error('Unexpected API response format:', result);
+        setApplications([]);
+        setMeta(null);
+        setError('Received invalid data format from the server');
+      }
     } catch (err) {
+      console.error('Error in useJobApplications hook:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch applications');
       setApplications([]);
       setMeta(null);
@@ -260,15 +268,19 @@ export const useApplicationAnalytics = (): UseApplicationAnalyticsReturn => {
 export interface UseApplicationStatusReturn {
   updating: boolean;
   error: string | null;
-  updateStatus: (id: number, status: string, notes?: string) => Promise<void>;
-  bulkUpdateStatus: (applicationIds: number[], status: string) => Promise<void>;
+  updateStatus: (id: number, status: 'pending' | 'reviewing' | 'interviewed' | 'offered' | 'hired' | 'rejected', notes?: string) => Promise<void>;
+  bulkUpdateStatus: (applicationIds: number[], status: 'pending' | 'reviewing' | 'interviewed' | 'offered' | 'hired' | 'rejected', notes?: string) => Promise<void>;
 }
 
 export const useApplicationStatus = (): UseApplicationStatusReturn => {
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const updateStatus = useCallback(async (id: number, status: string, notes?: string) => {
+  const updateStatus = useCallback(async (
+    id: number, 
+    status: 'pending' | 'reviewing' | 'interviewed' | 'offered' | 'hired' | 'rejected', 
+    notes?: string
+  ) => {
     setUpdating(true);
     setError(null);
 
@@ -281,14 +293,20 @@ export const useApplicationStatus = (): UseApplicationStatusReturn => {
     } finally {
       setUpdating(false);
     }
-  }, []);
-
-  const bulkUpdateStatus = useCallback(async (applicationIds: number[], status: string) => {
+  }, []);  const bulkUpdateStatus = useCallback(async (
+    applicationIds: number[], 
+    status: 'pending' | 'reviewing' | 'interviewed' | 'offered' | 'hired' | 'rejected', 
+    notes?: string
+  ) => {
     setUpdating(true);
     setError(null);
 
     try {
-      await JobApplicationService.bulkUpdateStatus({ application_ids: applicationIds, status });
+      await JobApplicationService.bulkUpdateStatus({ 
+        application_ids: applicationIds, 
+        status,
+        notes 
+      });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to bulk update status';
       setError(errorMessage);

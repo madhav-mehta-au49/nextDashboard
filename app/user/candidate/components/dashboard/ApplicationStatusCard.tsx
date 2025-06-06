@@ -15,23 +15,22 @@ interface Application {
   job_url: string;
 }
 
-export default function ApplicationStatusCard({ candidateId }) {
+export default function ApplicationStatusCard({ candidateId }: { candidateId: string }) {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
     const fetchApplications = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/candidates/${candidateId}/applications`);
-        if (!response.ok) {
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+        const response = await fetch(`${API_BASE}/candidates/${candidateId}/applications`);        if (!response.ok) {
           throw new Error('Failed to fetch applications');
         }
-        const data = await response.json();
-        setApplications(data.data.recent_applications || []);
-      } catch (err) {
-        setError(err.message);
+        
+        const data = await response.json() as { data: Application[] };
+        setApplications(data.data || []);} catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
         console.error('Error fetching applications:', err);
       } finally {
         setLoading(false);

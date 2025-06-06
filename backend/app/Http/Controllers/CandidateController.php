@@ -550,6 +550,13 @@ class CandidateController extends Controller
     {
         $query = $candidate->jobApplications()
             ->with(['jobListing', 'jobListing.company']);
+
+        // Include timeline if requested
+        if ($request->has('include_timeline') && $request->include_timeline) {
+            $query->with(['statusHistory' => function($query) {
+                $query->with('changedBy')->orderBy('created_at', 'desc');
+            }]);
+        }
         
         // Filter by status
         if ($request->has('status')) {
@@ -586,6 +593,131 @@ class CandidateController extends Controller
         return response()->json([
             'status' => 'success',
             'data' => JobApplicationResource::collection($applications)
+        ]);
+    }
+    
+    /**
+     * Get candidate's recent activities (status changes, interviews, etc.)
+     */
+    public function recentActivities(Request $request, Candidate $candidate): JsonResponse
+    {
+        $activities = collect();
+        $limit = $request->input('limit', 20);
+
+        // Get status changes from application history
+        $statusChanges = ApplicationStatusHistory::whereHas('jobApplication', function($query) use ($candidate) {
+                $query->where('candidate_id', $candidate->id);
+            })
+            ->with(['jobApplication.jobListing.company', 'changedBy'])
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get()
+            ->map(function($history) {
+                $application = $history->jobApplication;
+                $jobListing = $application->jobListing;
+                
+                return [
+                    'id' => 'status_' . $history->id,
+                    'type' => 'status_change',
+                    'title' => 'Application status updated',
+                    'description' => "Your application for {$jobListing->title} at {$jobListing->company->name} was updated to: " . ucfirst($history->new_status),
+                    'timestamp' => $history->created_at->toISOString(),
+                    'data' => [
+                        'application_id' => $application->id,
+                        'job_id' => $jobListing->id,
+                        'job_title' => $jobListing->title,
+                        'company_name' => $jobListing->company->name,
+                        'old_status' => $history->old_status,
+                        'new_status' => $history->new_status,
+                        'notes' => $history->notes,
+                        'changed_by' => $history->changedBy ? $history->changedBy->name : null,
+                    ]
+                ];
+            });
+
+        $activities = $activities->merge($statusChanges);
+
+        // Get interview activities
+        $interviews = Interview::whereHas('jobApplication', function($query) use ($candidate) {
+                $query->where('candidate_id', $candidate->id);
+            })
+            ->with(['jobApplication.jobListing.company'])
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get()
+            ->map(function($interview) {
+                $application = $interview->jobApplication;
+                $jobListing = $application->jobListing;
+                
+                $activityType = 'interview_scheduled';
+                $title = 'Interview scheduled';
+                $description = "An interview has been scheduled for {$jobListing->title} at {$jobListing->company->name}";
+                
+                if ($interview->status === 'completed') {
+                    $activityType = 'interview_completed';
+                    $title = 'Interview completed';
+                    $description = "Interview completed for {$jobListing->title} at {$jobListing->company->name}";
+                } elseif ($interview->status === 'cancelled') {
+                    $activityType = 'interview_updated';
+                    $title = 'Interview cancelled';
+                    $description = "Interview for {$jobListing->title} at {$jobListing->company->name} has been cancelled";
+                }
+                
+                return [
+                    'id' => 'interview_' . $interview->id,
+                    'type' => $activityType,
+                    'title' => $title,
+                    'description' => $description,
+                    'timestamp' => $interview->created_at->toISOString(),
+                    'data' => [
+                        'interview_id' => $interview->id,
+                        'application_id' => $application->id,
+                        'job_id' => $jobListing->id,
+                        'job_title' => $jobListing->title,
+                        'company_name' => $jobListing->company->name,
+                        'interview_date' => $interview->scheduled_at,
+                        'interview_type' => $interview->type,
+                        'interview_status' => $interview->status,
+                        'notes' => $interview->notes,
+                    ]
+                ];
+            });
+
+        $activities = $activities->merge($interviews);
+
+        // Get recent job applications
+        $recentApplications = $candidate->jobApplications()
+            ->with(['jobListing.company'])
+            ->orderBy('created_at', 'desc')
+            ->limit($limit / 2) // Show fewer application activities
+            ->get()
+            ->map(function($application) {
+                $jobListing = $application->jobListing;
+                
+                return [
+                    'id' => 'application_' . $application->id,
+                    'type' => 'application',
+                    'title' => 'Applied to job',
+                    'description' => "You applied for {$jobListing->title} at {$jobListing->company->name}",
+                    'timestamp' => $application->created_at->toISOString(),
+                    'data' => [
+                        'application_id' => $application->id,
+                        'job_id' => $jobListing->id,
+                        'job_title' => $jobListing->title,
+                        'company_name' => $jobListing->company->name,
+                        'status' => $application->status,
+                    ]
+                ];
+            });
+
+        $activities = $activities->merge($recentApplications);
+
+        // Sort all activities by timestamp and limit
+        $activities = $activities->sortByDesc('timestamp')->take($limit)->values();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $activities
         ]);
     }
     

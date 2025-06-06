@@ -40,6 +40,9 @@ class DatabaseSeeder extends Seeder
             
             // Candidate module seeders
             CandidateSeeder::class,
+            
+            // Application module seeders
+            JobApplicationSeeder::class,
         ]);
     }
 }

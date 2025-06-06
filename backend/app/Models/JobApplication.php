@@ -122,6 +122,14 @@ class JobApplication extends Model
     }
 
     /**
+     * Get the interviews for this application.
+     */
+    public function interviews()
+    {
+        return $this->hasMany(Interview::class);
+    }
+
+    /**
      * Scope a query to filter by status.
      */
     public function scopeWithStatus($query, $status)
@@ -190,6 +198,14 @@ class JobApplication extends Model
     /**
      * Get status color for UI.
      */
+    /**
+     * Get the status history for this application.
+     */
+    public function statusHistory()
+    {
+        return $this->hasMany(ApplicationStatusHistory::class);
+    }
+
     public function getStatusColorAttribute()
     {
         $colors = [

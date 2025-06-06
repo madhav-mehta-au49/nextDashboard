@@ -15,6 +15,7 @@ use App\Http\Controllers\CertificationController;
 use App\Http\Controllers\SkillController;
 use App\Http\Controllers\SavedJobController;
 use App\Http\Controllers\InterviewController;
+use App\Http\Controllers\TestEmailController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -32,7 +33,7 @@ Route::get('/auth/{provider}', [AuthController::class, 'redirectToProvider']);
 Route::get('/auth/{provider}/callback', [AuthController::class, 'handleProviderCallback']);
 
 // Authenticated user routes
-Route::middleware('auth:api')->group(function () {
+Route::middleware('auth:web')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
 });
@@ -55,7 +56,7 @@ Route::get('/job-listings/{jobListing}/similar', [JobListingController::class, '
 Route::get('/job-categories', [JobCategoryController::class, 'index']);
 
 // Authentication required routes
-Route::middleware('auth:api')->group(function () {
+Route::middleware('auth:web')->group(function () {
     // Company interactions (candidates and general users)
     Route::post('/companies/{company}/follow', [CompanyController::class, 'followCompany']);
     Route::delete('/companies/{company}/follow', [CompanyController::class, 'unfollowCompany']);
@@ -73,12 +74,16 @@ Route::middleware('auth:api')->group(function () {
     // Job applications for candidates
     Route::post('/job-applications', [JobApplicationController::class, 'store']);
     
+    // Candidate access to their own application details and status history
+    Route::get('/job-applications/{jobApplication}', [JobApplicationController::class, 'show']);
+    Route::get('/job-applications/{jobApplication}/status-history', [JobApplicationController::class, 'statusHistory']);
+    
     // Get current user's candidate profile (requires authentication)
     Route::get('candidates/me', [CandidateController::class, 'getCurrentUserProfile']);
 });
 
 // Company dashboard and management routes (require company authentication)
-Route::middleware(['auth:api', 'company.auth'])->group(function () {
+Route::middleware(['auth:web', 'company.auth'])->group(function () {
     // Company dashboard routes
     Route::get('/company/dashboard', [CompanyDashboardController::class, 'dashboard']);
     Route::get('/company/dashboard/jobs', [CompanyDashboardController::class, 'jobs']);
@@ -99,6 +104,7 @@ Route::middleware(['auth:api', 'company.auth'])->group(function () {
     Route::get('/job-applications/analytics', [JobApplicationController::class, 'analytics']);
     Route::post('/job-applications/bulk-status', [JobApplicationController::class, 'bulkUpdateStatus']);
     Route::get('/job-applications/{jobApplication}', [JobApplicationController::class, 'show']);
+    Route::get('/job-applications/{jobApplication}/status-history', [JobApplicationController::class, 'statusHistory']);
     Route::put('/job-applications/{jobApplication}', [JobApplicationController::class, 'update']);
     Route::delete('/job-applications/{jobApplication}', [JobApplicationController::class, 'destroy']);
     Route::get('/job-listings/{jobListing}/matching-candidates', [JobApplicationController::class, 'matchingCandidates']);
@@ -128,6 +134,7 @@ Route::apiResource('candidates', CandidateController::class);
 
 // Enhanced Candidate endpoints
 Route::get('candidates/{candidate}/applications', [CandidateController::class, 'applications']);
+Route::get('candidates/{candidate}/recent-activities', [CandidateController::class, 'recentActivities']);
 Route::get('candidates/{candidate}/saved-jobs', [CandidateController::class, 'savedJobs']);
 Route::get('candidates/{candidate}/recommendations', [CandidateController::class, 'recommendations']);
 Route::get('candidates/{candidate}/interviews', [CandidateController::class, 'interviews']);
