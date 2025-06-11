@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FiEye, FiEyeOff, FiLinkedin } from 'react-icons/fi';
-import { FcGoogle } from 'react-icons/fc';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 import Link from 'next/link';
-import { storeUserAuth, redirectBasedOnRole } from '@/app/utils/auth';
+import { storeUserAuth } from '@/app/utils/auth';
+import OAuthButtons from '@/app/components/OAuthButtons';
 
 // Declare redirectTimeout on window
 declare global {
@@ -24,14 +24,14 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setErrors({});
 
     try {
-      const response = await fetch('http://localhost:8000/api/login', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+      const response = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -41,6 +41,7 @@ export default function LoginPage() {
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
+          remember: formData.rememberMe,
         }),
       });
       
@@ -49,40 +50,28 @@ export default function LoginPage() {
         console.log('Login success:', data);
         
         if (data.data) {
-          console.log('Storing user data:', data.data.role, data.data.name);
-            // Use the auth utility to store user data consistently
+          // Store user data in auth state
           storeUserAuth({
             id: data.data.id,
             name: data.data.name,
             role: data.data.role
           });
-          
-          // Redirect to home page instead of dashboard
-          const redirectUrl = '/';
-          
-          console.log('Will redirect to home page');
-          
+
           // Clear any previous redirect attempts
           if (window.redirectTimeout) {
             clearTimeout(window.redirectTimeout);
-          }
-          
-          // Use a longer timeout to ensure state is fully updated
+          }          // Use a short timeout to ensure state is updated
           window.redirectTimeout = setTimeout(() => {
-            console.log('Redirecting now to home page');
-            
-            // First try using router for better Next.js integration
-            router.push(redirectUrl);
-              // As a fallback, use direct location change after another delay
-            setTimeout(() => {
-              if (window.location.pathname !== redirectUrl) {
-                console.log('Router redirect failed, using window.location');
-                window.location.href = redirectUrl;
-              }
-            }, 500);
-          }, 1500);
+            try {
+              // Redirect to home page after successful login
+              console.log('Redirecting to home page after login');
+              window.location.href = '/';
+            } catch (error) {
+              console.error('Redirect failed:', error);
+              window.location.href = '/';
+            }
+          }, 500);
         } else {
-          console.error('Unexpected response format:', data);
           setErrors({ email: 'Unexpected response format from server' });
         }
       } else {
@@ -95,11 +84,6 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleSocialAuth = (provider: 'google' | 'linkedin') => {
-    // For login, we don't need to specify role as it's already determined
-    window.location.href = `http://localhost:8000/auth/${provider}`;
   };
 
   return (
@@ -115,7 +99,7 @@ export default function LoginPage() {
         <div className="w-full md:w-1/2 p-8">
           <h2 className="text-2xl font-bold text-teal-600 mb-6">Log In</h2>
 
-          <form onSubmit={handleSubmit} className="space-y-4">            
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email Field */}
             <div>
               <label className="block font-medium">Email</label>
@@ -157,9 +141,9 @@ export default function LoginPage() {
             {/* Remember Me + Forgot Password */}
             <div className="flex justify-between items-center text-sm">
               <div className="flex items-center">
-                <input 
-                  type="checkbox" 
-                  className="mr-2" 
+                <input
+                  type="checkbox"
+                  className="mr-2"
                   checked={formData.rememberMe}
                   onChange={(e) => setFormData({ ...formData, rememberMe: e.target.checked })}
                 />
@@ -185,24 +169,10 @@ export default function LoginPage() {
             <hr className="flex-1 border-gray-300" />
             <span className="mx-4 text-gray-500">or log in with</span>
             <hr className="flex-1 border-gray-300" />
-          </div>          
-          {/* Social Login Buttons */}
-          <div className="flex gap-4">
-            <button 
-              onClick={() => handleSocialAuth('google')}
-              className="flex-1 flex items-center justify-center border p-3 rounded-lg hover:bg-gray-50 transition"
-            >
-              <FcGoogle className="mr-2" />
-              Google
-            </button>
-            <button 
-              onClick={() => handleSocialAuth('linkedin')}
-              className="flex-1 flex items-center justify-center border p-3 rounded-lg hover:bg-gray-50 transition"
-            >
-              <FiLinkedin className="mr-2 text-blue-700" />
-              LinkedIn
-            </button>
           </div>
+
+          {/* OAuth Buttons */}
+          <OAuthButtons onBeforeRedirect={() => setIsLoading(true)} />
 
           {/* Sign Up Link */}
           <p className="mt-4 text-center text-gray-700">

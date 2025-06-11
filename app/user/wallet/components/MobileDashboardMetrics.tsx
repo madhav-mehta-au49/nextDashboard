@@ -11,11 +11,10 @@ import {
   FaTabletAlt,
   FaCalendarWeek,
   FaBolt,
-  FaTarget,
   FaUsers,
-  FaClock,
-  FaTrendingUp
+  FaClock
 } from 'react-icons/fa';
+import { FaArrowTrendUp, FaBullseye } from 'react-icons/fa6';
 
 interface MobileDashboardMetricsProps {
   stats: PointsStats;
@@ -64,26 +63,23 @@ const MobileDashboardMetrics: React.FC<MobileDashboardMetricsProps> = ({
   // Get quick actions based on user role
   const getQuickActions = () => {
     switch (userRole) {
-      case 'candidate':
-        return [
-          { icon: FaTarget, label: 'Apply to Jobs', color: 'text-blue-600', bgColor: 'bg-blue-50' },
+      case 'candidate':        return [
+          { icon: FaBullseye, label: 'Apply to Jobs', color: 'text-blue-600', bgColor: 'bg-blue-50' },
           { icon: FaUsers, label: 'View Profiles', color: 'text-green-600', bgColor: 'bg-green-50' },
           { icon: FaBolt, label: 'Boost Profile', color: 'text-purple-600', bgColor: 'bg-purple-50' },
           { icon: FaChartBar, label: 'View Analytics', color: 'text-orange-600', bgColor: 'bg-orange-50' }
         ];
-      case 'hr':
-        return [
+      case 'hr':        return [
           { icon: FaUsers, label: 'Search Candidates', color: 'text-blue-600', bgColor: 'bg-blue-50' },
-          { icon: FaTarget, label: 'Post Jobs', color: 'text-green-600', bgColor: 'bg-green-50' },
+          { icon: FaBullseye, label: 'Post Jobs', color: 'text-green-600', bgColor: 'bg-green-50' },
           { icon: FaChartBar, label: 'HR Analytics', color: 'text-purple-600', bgColor: 'bg-purple-50' },
           { icon: FaBolt, label: 'Premium Tools', color: 'text-orange-600', bgColor: 'bg-orange-50' }
         ];
-      default:
-        return [
+      default:        return [
           { icon: FaUsers, label: 'Bulk Access', color: 'text-blue-600', bgColor: 'bg-blue-50' },
           { icon: FaChartBar, label: 'Market Insights', color: 'text-green-600', bgColor: 'bg-green-50' },
           { icon: FaBolt, label: 'Enterprise Tools', color: 'text-purple-600', bgColor: 'bg-purple-50' },
-          { icon: FaTarget, label: 'Team Management', color: 'text-orange-600', bgColor: 'bg-orange-50' }
+          { icon: FaBullseye, label: 'Team Management', color: 'text-orange-600', bgColor: 'bg-orange-50' }
         ];
     }
   };
@@ -151,7 +147,7 @@ const MobileDashboardMetrics: React.FC<MobileDashboardMetricsProps> = ({
                     <p className="text-lg font-bold text-green-900">{mobileMetrics.efficiency}%</p>
                   </div>
                   <div className="p-1.5 bg-green-100 rounded-full">
-                    <FaTrendingUp className="h-3 w-3 text-green-600" />
+                    <FaArrowTrendUp className="h-3 w-3 text-green-600" />
                   </div>
                 </div>
               </div>

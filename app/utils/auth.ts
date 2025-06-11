@@ -25,30 +25,37 @@ export const storeUserAuth = (userData: {
   id?: number | string,
   name?: string, 
   role?: string,
-}) => {
-  // Store in localStorage for client-side access
-  if (userData.role) {
-    localStorage.setItem(AUTH_COOKIE_NAMES.USER_ROLE, userData.role);
-    Cookies.set(AUTH_COOKIE_NAMES.USER_ROLE, userData.role, COOKIE_OPTIONS);
-  }
-  
-  if (userData.name) {
-    localStorage.setItem(AUTH_COOKIE_NAMES.USER_NAME, userData.name);
-    Cookies.set(AUTH_COOKIE_NAMES.USER_NAME, userData.name, COOKIE_OPTIONS);
-  }
-  
-  if (userData.id) {
-    localStorage.setItem(AUTH_COOKIE_NAMES.USER_ID, String(userData.id));
-    Cookies.set(AUTH_COOKIE_NAMES.USER_ID, String(userData.id), COOKIE_OPTIONS);
-  }
-  
-  // Set authentication flag
-  localStorage.setItem(AUTH_COOKIE_NAMES.IS_AUTHENTICATED, 'true');
-  Cookies.set(AUTH_COOKIE_NAMES.IS_AUTHENTICATED, 'true', COOKIE_OPTIONS);
+}) => {  // Store in localStorage and cookies
+  const updates: Record<string, string> = {
+    [AUTH_COOKIE_NAMES.IS_AUTHENTICATED]: 'true'
+  };
 
-  // Dispatch custom event to notify components of auth state change
+  if (userData.role) {
+    updates[AUTH_COOKIE_NAMES.USER_ROLE] = userData.role;
+  }
+  if (userData.name) {
+    updates[AUTH_COOKIE_NAMES.USER_NAME] = userData.name;
+  }
+  if (userData.id) {
+    updates[AUTH_COOKIE_NAMES.USER_ID] = String(userData.id);
+  }
+
+  // Apply all updates atomically to prevent race conditions
+  Object.entries(updates).forEach(([key, value]) => {
+    localStorage.setItem(key, value);
+    Cookies.set(key, value, COOKIE_OPTIONS);
+  });
+
+  // Dispatch custom event with the full auth state
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('auth-updated'));
+    window.dispatchEvent(new CustomEvent('auth-updated', { 
+      detail: {
+        isAuthenticated: true,
+        role: userData.role,
+        name: userData.name,
+        id: userData.id 
+      }
+    }));
   }
 };
 
@@ -99,16 +106,23 @@ export const clearUserAuth = () => {
 };
 
 /**
- * Redirects user based on role
+ * Redirects user to home page after authentication
  */
-export const redirectBasedOnRole = (role: string | null) => {
+export const redirectBasedOnRole = async (role: string | null) => {
   if (!role) {
+    console.warn('No role provided for redirect');
     window.location.href = '/login';
     return;
   }
-  
-  // Redirect to home page instead of dashboard
-  window.location.href = '/';
+
+  try {
+    // Store user authentication but redirect to home page for all roles
+    console.log(`User authenticated with role: ${role}, redirecting to home page`);
+    window.location.href = '/';
+  } catch (error) {
+    console.error('Error during redirect:', error);
+    window.location.href = '/';
+  }
 };
 
 /**

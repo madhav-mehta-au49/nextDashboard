@@ -377,3 +377,10 @@ export const getMockWalletData = (userRole: UserRole) => {
       };
   }
 };
+
+// Export combined transactions data for history page
+export const mockTransactionsData: PointsTransaction[] = [
+  ...mockCandidateTransactions,
+  ...mockHRTransactions,
+  ...mockCompanyTransactions
+];

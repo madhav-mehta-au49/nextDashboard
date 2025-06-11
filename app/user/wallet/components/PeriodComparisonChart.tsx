@@ -7,10 +7,9 @@ import {
   FaArrowUp,
   FaArrowDown,
   FaEquals,
-  FaChartBar,
-  FaTrendingUp,
-  FaTrendingDown
+  FaChartBar
 } from 'react-icons/fa';
+import { FaArrowTrendUp, FaArrowTrendDown } from 'react-icons/fa6';
 
 interface PeriodComparisonChartProps {
   stats: PointsStats;
@@ -152,9 +151,8 @@ const PeriodComparisonChart: React.FC<PeriodComparisonChartProps> = ({
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-700">Overall Trend</span>
-            <div className="flex items-center gap-2">
-              {trend === 'up' && <FaTrendingUp className="text-green-500 h-4 w-4" />}
-              {trend === 'down' && <FaTrendingDown className="text-red-500 h-4 w-4" />}
+            <div className="flex items-center gap-2">              {trend === 'up' && <FaArrowTrendUp className="text-green-500 h-4 w-4" />}
+              {trend === 'down' && <FaArrowTrendDown className="text-red-500 h-4 w-4" />}
               {trend === 'stable' && <FaEquals className="text-gray-500 h-4 w-4" />}
               <span className={`text-sm font-medium ${trend === 'up' ? 'text-green-600' :
                   trend === 'down' ? 'text-red-600' : 'text-gray-600'

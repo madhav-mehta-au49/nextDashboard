@@ -36,6 +36,8 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     const auth = getUserAuth();
     const savedPoints = localStorage.getItem('userPoints');
     
+    console.log('UserContext checking auth state:', { auth });
+
     if (auth.isAuthenticated && auth.userRole) {
       if (['candidate', 'hr', 'company', 'employer'].includes(auth.userRole)) {
         setUserRoleState(auth.userRole as UserRole);

@@ -53,6 +53,62 @@ export default function Web() {
     console.log('localStorage isAuthenticated:', localStorage.getItem('isAuthenticated'));
     console.log('localStorage userRole:', localStorage.getItem('userRole'));
   }, [isAuthenticated, userRole]);
+
+  // Check for OAuth return and update authentication state
+  React.useEffect(() => {
+    const checkOAuthReturn = async () => {
+      // Check if user just returned from OAuth (Laravel will have set cookies)
+      const urlParams = new URLSearchParams(window.location.search);
+      const hasOAuthParams = urlParams.has('code') || urlParams.has('state') || 
+                           window.location.href.includes('google/callback') ||
+                           document.cookie.includes('laravel_session');
+      
+      // Also check if we have Laravel session cookies but no frontend auth state
+      const hasLaravelSession = document.cookie.includes('laravel_session');
+      const hasOAuthCookies = document.cookie.includes('isAuthenticated') ||
+                             document.cookie.includes('userRole') ||
+                             document.cookie.includes('userName');
+      
+      if (hasLaravelSession && !isAuthenticated) {
+        console.log('Detected potential OAuth return, checking authentication...');
+        
+        try {
+          // Call auth check to see if Laravel has authenticated the user
+          const response = await fetch('/api/auth/user', {
+            credentials: 'include',
+            headers: {
+              'Accept': 'application/json',
+            }
+          });
+          
+          if (response.ok) {
+            const userData = await response.json();
+            console.log('OAuth user data found:', userData);
+            
+            if (userData.user && userData.user.role) {
+              // Import and use the auth utility to store user data
+              const { storeUserAuth } = await import('@/app/utils/auth');
+              storeUserAuth({
+                id: userData.user.id,
+                name: userData.user.name,
+                role: userData.user.role
+              });
+              
+              console.log('OAuth authentication state updated successfully');
+              // The UserContext will automatically pick up the changes via event listener
+            }
+          }
+        } catch (error) {
+          console.error('Error checking OAuth authentication:', error);
+        }
+      }
+    };
+    
+    // Run the check after a short delay to allow page to load
+    const timeoutId = setTimeout(checkOAuthReturn, 1000);
+    return () => clearTimeout(timeoutId);
+  }, []); // Only run once on mount
+  
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />

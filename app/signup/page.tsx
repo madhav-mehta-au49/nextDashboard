@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FiEye, FiEyeOff, FiUser, FiUsers, FiArrowLeft, FiCheck } from "react-icons/fi";
-import { FcGoogle } from "react-icons/fc";
-import { FaBriefcase, FaLinkedin } from "react-icons/fa";
+import { FaBriefcase } from "react-icons/fa";
+import OAuthButtons from "@/app/components/OAuthButtons";
 
 type UserRole = 'candidate' | 'employer';
 
@@ -397,25 +397,13 @@ export default function SignupPage() {
           <div className="flex items-center my-6">
             <hr className="flex-1 border-gray-300" />
             <span className="mx-4 text-gray-500">or continue with</span>
-            <hr className="flex-1 border-gray-300" />
-          </div>
+            <hr className="flex-1 border-gray-300" />          </div>
 
           {/* Social Login Buttons */}
-          <div className="flex gap-4">
-            <button 
-              onClick={() => handleSocialAuth('google')}
-              className="flex-1 flex items-center justify-center border p-3 rounded-lg hover:bg-gray-50 transition"
-            >
-              <FcGoogle className="mr-2" />
-              Google
-            </button>            <button 
-              onClick={() => handleSocialAuth('linkedin')}
-              className="flex-1 flex items-center justify-center border p-3 rounded-lg hover:bg-gray-50 transition"
-            >
-              <FaLinkedin className="mr-2 text-blue-700" />
-              LinkedIn
-            </button>
-          </div>
+          <OAuthButtons 
+            role={formData.role}
+            onBeforeRedirect={() => setIsLoading(true)}
+          />
 
           {/* Login Link */}
           <p className="mt-6 text-center text-gray-700">

@@ -38,13 +38,18 @@ return [
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('APP_URL') . '/api/auth/google/callback',
+        'redirect' => env('APP_URL') . '/auth/google/callback',
+        'guzzle' => [
+            'verify' => env('CURL_VERIFY_SSL', false),
+            'timeout' => 30,
+            'connect_timeout' => 10,
+        ],
     ],
 
     'linkedin' => [
         'client_id' => env('LINKEDIN_CLIENT_ID'),
         'client_secret' => env('LINKEDIN_CLIENT_SECRET'),
-        'redirect' => env('APP_URL') . '/api/auth/linkedin/callback',
+        'redirect' => env('APP_URL') . '/auth/linkedin/callback',
     ],
 
 ];

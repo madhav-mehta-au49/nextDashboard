@@ -1,0 +1,161 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+interface LaravelAuthResponse {
+  status: string;
+  user?: {
+    id: number;
+    email: string;
+    role: string;
+    name: string;
+  };
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    console.log('Auth check called');
+    
+    // First, check for authentication cookies set by Laravel OAuth
+    const isAuthenticated = request.cookies.get('isAuthenticated');
+    const userRole = request.cookies.get('userRole');
+    const userName = request.cookies.get('userName');
+    const userEmail = request.cookies.get('userEmail');
+      if (isAuthenticated?.value === 'true' && userRole && userName && userEmail) {
+      console.log('Found auth cookies from Laravel OAuth');
+      
+      // Create the response with updated cookies
+      const response = NextResponse.json({
+        success: true,
+        user: {
+          id: userEmail.value,
+          email: userEmail.value,
+          role: userRole.value,
+          name: decodeURIComponent(userName.value)
+        },
+        isAuthenticated: true
+      });
+      
+      // Re-set the cookies with proper domain to ensure they're accessible
+      response.cookies.set('isAuthenticated', 'true', {
+        path: '/',
+        domain: 'localhost',
+        maxAge: 7200 // 2 hours
+      });
+      
+      response.cookies.set('userRole', userRole.value, {
+        path: '/',
+        domain: 'localhost',
+        maxAge: 7200
+      });
+      
+      response.cookies.set('userName', decodeURIComponent(userName.value), {
+        path: '/',
+        domain: 'localhost',
+        maxAge: 7200
+      });
+      
+      response.cookies.set('userEmail', userEmail.value, {
+        path: '/',
+        domain: 'localhost',
+        maxAge: 7200
+      });
+      
+      return response;
+    }
+    
+    // Fallback: Get Laravel session cookies and forward them to Laravel
+    const laravelSession = request.cookies.get('laravel_session');
+    const xsrfToken = request.cookies.get('XSRF-TOKEN');
+    
+    if (!laravelSession) {
+      console.log('No Laravel session or auth cookies found');
+      return NextResponse.json({
+        success: false,
+        user: null,
+        isAuthenticated: false
+      }, { status: 401 });
+    }
+
+    // Forward request to Laravel backend to check authentication
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8000';
+    
+    const headers: Record<string, string> = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    };
+    
+    // Forward Laravel session cookies
+    if (laravelSession) {
+      headers['Cookie'] = `laravel_session=${laravelSession.value}`;
+      if (xsrfToken) {
+        headers['Cookie'] += `; XSRF-TOKEN=${xsrfToken.value}`;
+      }
+    }
+
+    console.log('Checking auth with Laravel backend:', backendUrl + '/api/user');
+      const backendResponse = await fetch(backendUrl + '/api/user', {
+      method: 'GET',
+      headers,
+    });
+
+    if (backendResponse.ok) {
+      const data = await backendResponse.json() as LaravelAuthResponse;
+      console.log('Laravel auth response:', data);
+        const responseData = data as { status: string; user?: { id: number; email: string; role: string; name: string } };
+      if (responseData.status === 'success' && responseData.user) {
+        const response = NextResponse.json({
+          success: true,
+          user: {
+            id: data.user.id.toString(),
+            email: data.user.email,
+            role: data.user.role,
+            name: data.user.name
+          },
+          isAuthenticated: true
+        });
+        
+        // Set cookies for consistent auth state
+        response.cookies.set('isAuthenticated', 'true', {
+          path: '/',
+          domain: 'localhost',
+          maxAge: 7200
+        });
+        
+        response.cookies.set('userRole', data.user.role, {
+          path: '/',
+          domain: 'localhost',
+          maxAge: 7200
+        });
+        
+        response.cookies.set('userName', data.user.name, {
+          path: '/',
+          domain: 'localhost',
+          maxAge: 7200
+        });
+        
+        response.cookies.set('userEmail', data.user.email, {
+          path: '/',
+          domain: 'localhost',
+          maxAge: 7200
+        });
+        
+        return response;
+      }
+    }
+
+    console.log('Laravel auth failed or user not authenticated');
+    return NextResponse.json({
+      success: false,
+      user: null,
+      isAuthenticated: false
+    }, { status: 401 });
+    }
+  } catch (error) {
+    console.error('Auth check error:', error);
+    return NextResponse.json({
+      success: false,
+      error: 'Internal server error',
+      user: null,
+      isAuthenticated: false
+    }, { status: 500 });
+  }
+}

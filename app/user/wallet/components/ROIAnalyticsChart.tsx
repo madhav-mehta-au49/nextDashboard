@@ -6,16 +6,14 @@ import {
   FaChartLine,
   FaDollarSign,
   FaPercentage,
-  FaTrendingUp,
-  FaTrendingDown,
   FaEquals,
   FaCalendarAlt,
   FaInfoCircle,
   FaLightbulb,
   FaArrowRight,
-  FaAward,
-  FaTarget
+  FaAward
 } from 'react-icons/fa';
+import { FaArrowTrendUp, FaArrowTrendDown, FaBullseye } from 'react-icons/fa6';
 
 interface ROIAnalyticsChartProps {
   stats: PointsStats;
@@ -187,9 +185,8 @@ const ROIAnalyticsChart: React.FC<ROIAnalyticsChartProps> = ({
               <FaPercentage className={`h-5 w-5 ${getROIColor(roiMetrics.roi)}`} />
               <h4 className="font-medium text-gray-700">Overall ROI</h4>
             </div>
-            <div className="flex items-center gap-1">
-              {roiMetrics.trend === 'up' && <FaTrendingUp className="text-green-500 h-4 w-4" />}
-              {roiMetrics.trend === 'down' && <FaTrendingDown className="text-red-500 h-4 w-4" />}
+            <div className="flex items-center gap-1">              {roiMetrics.trend === 'up' && <FaArrowTrendUp className="text-green-500 h-4 w-4" />}
+              {roiMetrics.trend === 'down' && <FaArrowTrendDown className="text-red-500 h-4 w-4" />}
               {roiMetrics.trend === 'stable' && <FaEquals className="text-gray-500 h-4 w-4" />}
               <span className="text-sm text-gray-600 capitalize">{roiMetrics.trend}</span>
             </div>
@@ -298,7 +295,7 @@ const ROIAnalyticsChart: React.FC<ROIAnalyticsChartProps> = ({
         {roiMetrics.categoryROI.length > 0 && (
           <div className="mb-6">
             <h4 className="font-medium text-gray-700 mb-4 flex items-center gap-2">
-              <FaTarget className="text-purple-500 h-4 w-4" />
+              <FaBullseye className="text-purple-500 h-4 w-4" />
               Category Performance
             </h4>
 
