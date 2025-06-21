@@ -283,20 +283,48 @@ class AuthController extends Controller
             // Set additional cookies for frontend compatibility
             $response = redirect()->to(config('app.frontend_url') . '/auth/callback');
             
+            // Get the cookie domain from frontend URL for proper cross-domain cookie setting
+            $frontendUrl = config('app.frontend_url');
+            $parsedUrl = parse_url($frontendUrl);
+            $cookieDomain = isset($parsedUrl['host']) ? $parsedUrl['host'] : null;
+            
+            // For localhost development, set domain to null to work across different ports
+            if ($cookieDomain === 'localhost') {
+                $cookieDomain = null;
+            }
+            
+            \Log::info("Setting cookies with domain: " . ($cookieDomain ?? 'null'));
+            
+            // For development environment, set SameSite=Lax to allow cross-site requests
+            $cookieSameSite = config('app.env') === 'local' ? 'Lax' : 'None';
+            
+            // Cookie should be secure in production, but can be insecure in development
+            $secure = config('app.env') !== 'local';
+            
             // Set unencrypted cookies that the frontend can read (using plain cookie() helper)
-            // These cookies are NOT encrypted and can be read by JavaScript
             $response->headers->setCookie(new \Symfony\Component\HttpFoundation\Cookie(
-                'auth_user_role', $user->role, time() + 7200, '/', null, false, false
+                'auth_user_role', $user->role, time() + 7200, '/', $cookieDomain, $secure, false, false, $cookieSameSite
             ));
             $response->headers->setCookie(new \Symfony\Component\HttpFoundation\Cookie(
-                'auth_user_name', urlencode($user->name), time() + 7200, '/', null, false, false
+                'auth_user_name', urlencode($user->name), time() + 7200, '/', $cookieDomain, $secure, false, false, $cookieSameSite
             ));
             $response->headers->setCookie(new \Symfony\Component\HttpFoundation\Cookie(
-                'auth_user_email', $user->email, time() + 7200, '/', null, false, false
+                'auth_user_email', $user->email, time() + 7200, '/', $cookieDomain, $secure, false, false, $cookieSameSite
             ));
             $response->headers->setCookie(new \Symfony\Component\HttpFoundation\Cookie(
-                'auth_status', 'authenticated', time() + 7200, '/', null, false, false
+                'auth_user_id', (string)$user->id, time() + 7200, '/', $cookieDomain, $secure, false, false, $cookieSameSite
             ));
+            $response->headers->setCookie(new \Symfony\Component\HttpFoundation\Cookie(
+                'auth_status', 'authenticated', time() + 7200, '/', $cookieDomain, $secure, false, false, $cookieSameSite
+            ));
+            
+            // Also add data to the URL as query parameters as a fallback
+            $redirectUrl = config('app.frontend_url') . '/auth/callback';
+            $redirectUrl .= '?auth_status=authenticated&auth_user_role=' . urlencode($user->role);
+            $redirectUrl .= '&auth_user_name=' . urlencode($user->name);
+            $redirectUrl .= '&auth_user_id=' . urlencode((string)$user->id);
+            
+            $response = redirect()->to($redirectUrl);
             
             \Log::info("OAuth redirect with unencrypted cookies set for user: {$user->name}, role: {$user->role}");
             

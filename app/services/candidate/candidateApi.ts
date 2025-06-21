@@ -476,24 +476,35 @@ export const getCandidateBySlug = async (slug: string) => {
 };
 
 export const getCurrentUserCandidateProfile = async () => {
-  // Mock implementation for testing without authentication
-  // Check if we have a mock candidate profile in localStorage for testing
-  const mockProfile = localStorage.getItem('mockCandidateProfile');
-  
-  if (mockProfile) {
+  try {
+    // First try to fetch from the API
+    const res = await axios.get(`${API_BASE}/candidates/me`, {
+      withCredentials: true,
+      headers: {
+        'Accept': 'application/json',
+      }
+    });
+    console.log('API response for current candidate profile:', res.data);
+    return res.data;
+  } catch (error: any) {
+    console.error('Error fetching current candidate profile:', 
+      error.response?.data?.message || error.message);
+    
+    // Fall back to mock data if available (for development/testing)
+    const mockProfile = localStorage.getItem('mockCandidateProfile');
+    if (mockProfile) {
+      console.log('Using mock candidate profile from localStorage');
+      return {
+        candidate: JSON.parse(mockProfile)
+      };
+    }
+    
+    // Return null candidate if nothing is available
+    console.log('No candidate profile found, returning null');
     return {
-      candidate: JSON.parse(mockProfile)
+      candidate: null
     };
   }
-  
-  // Return null candidate to simulate no profile exists
-  return {
-    candidate: null
-  };
-  
-  // Original implementation (commented out for now):
-  // const res = await axios.get(`${API_BASE}/candidates/me`);
-  // return res.data;
 };
 
 // Helper function for testing - simulate having a candidate profile

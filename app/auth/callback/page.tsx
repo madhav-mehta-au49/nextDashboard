@@ -11,22 +11,21 @@ export default function AuthCallbackPage() {
         console.log('OAuth callback page - checking authentication...');
         
         // Log all cookies for debugging
-        console.log('All cookies:', document.cookie);        // Check for Laravel encrypted authentication cookies
-        const hasAuthCookies = document.cookie.includes('isAuthenticated=');
-        const hasUserRole = document.cookie.includes('userRole=');
-        const hasUserName = document.cookie.includes('userName=');
+        console.log('All cookies:', document.cookie);
         
-        // Check for our new unencrypted authentication cookies
+        // Check for our unencrypted authentication cookies
         const hasAuthStatus = document.cookie.includes('auth_status=authenticated');
         const authUserRoleMatch = document.cookie.match(/auth_user_role=([^;]+)/);
         const authUserNameMatch = document.cookie.match(/auth_user_name=([^;]+)/);
         const authUserEmailMatch = document.cookie.match(/auth_user_email=([^;]+)/);
+        const authUserIdMatch = document.cookie.match(/auth_user_id=([^;]+)/);
         
         console.log('Cookie check results:', { 
-          hasAuthCookies, hasUserRole, hasUserName,
           hasAuthStatus, 
           authUserRoleMatch: !!authUserRoleMatch,
-          authUserNameMatch: !!authUserNameMatch 
+          authUserNameMatch: !!authUserNameMatch,
+          authUserEmailMatch: !!authUserEmailMatch,
+          authUserIdMatch: !!authUserIdMatch
         });
         
         if (hasAuthStatus && authUserRoleMatch) {
@@ -36,10 +35,11 @@ export default function AuthCallbackPage() {
           const role = authUserRoleMatch[1];
           const name = authUserNameMatch ? decodeURIComponent(authUserNameMatch[1]) : 'User';
           const email = authUserEmailMatch ? authUserEmailMatch[1] : '';
+          const userId = authUserIdMatch ? authUserIdMatch[1] : email;
           
           // Store authentication state using our auth utilities
           storeUserAuth({
-            id: email || 'oauth_user',
+            id: userId || email || 'oauth_user',
             name: name,
             role: role
           });
@@ -53,10 +53,31 @@ export default function AuthCallbackPage() {
           return;
         }
         
-        if (hasAuthCookies && hasUserRole) {
-          console.log('Found encrypted OAuth authentication cookies, will use API fallback');
-          // Since Laravel cookies are encrypted, we can't read them directly
-          // Fall through to the API approach
+        // Check URL parameters as fallback
+        console.log('Checking URL parameters as fallback');
+        const urlParams = new URLSearchParams(window.location.search);
+        const authStatus = urlParams.get('auth_status');
+        const userRole = urlParams.get('auth_user_role');
+        const userName = urlParams.get('auth_user_name');
+        const userId = urlParams.get('auth_user_id');
+        
+        if (authStatus === 'authenticated' && userRole) {
+          console.log('Found authentication data in URL parameters');
+          
+          // Store authentication state from URL parameters
+          storeUserAuth({
+            id: userId || 'oauth_user',
+            name: userName || 'User',
+            role: userRole
+          });
+          
+          console.log('OAuth authentication state stored successfully from URL parameters');
+          
+          // Redirect to home page after successful authentication
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 500);
+          return;
         }
         
         // Fallback: Try to get user data from Laravel API
@@ -99,9 +120,22 @@ export default function AuthCallbackPage() {
         
         // If authentication failed, redirect to login
         console.log('OAuth authentication failed, redirecting to login');
-        setTimeout(() => {
-          router.push('/login?error=oauth_failed');
-        }, 2000);
+        console.log('Checking document URL for error params:', window.location.href);
+        
+        // Try to extract error from URL query parameters if any
+        const searchParams = new URLSearchParams(window.location.search);
+        const errorParam = searchParams.get('error');
+        
+        if (errorParam) {
+          console.log('Error parameter found in URL:', errorParam);
+          setTimeout(() => {
+            router.push(`/login?error=${errorParam}`);
+          }, 2000);
+        } else {
+          setTimeout(() => {
+            router.push('/login?error=oauth_failed');
+          }, 2000);
+        }
         
       } catch (error) {
         console.error('OAuth callback error:', error);
@@ -112,7 +146,7 @@ export default function AuthCallbackPage() {
     };
     
     // Add a delay to ensure cookies are set before checking
-    const timeoutId = setTimeout(handleAuthCallback, 1000);
+    const timeoutId = setTimeout(handleAuthCallback, 2000);
     return () => clearTimeout(timeoutId);
   }, [router]);
 

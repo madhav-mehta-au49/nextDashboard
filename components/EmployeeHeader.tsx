@@ -46,7 +46,14 @@ export const EmployeeHeader: React.FC = () => {
       setIsLoadingProfile(true);
       getCurrentUserCandidateProfile()
         .then((response: any) => {
-          setCandidateProfile(response.candidate);
+          console.log('Candidate profile response:', response);
+          if (response && response.candidate) {
+            console.log('Setting candidate profile:', response.candidate);
+            setCandidateProfile(response.candidate);
+          } else {
+            console.log('No candidate profile found in response');
+            setCandidateProfile(null);
+          }
         })
         .catch((error: any) => {
           console.error('Error fetching candidate profile:', error);
